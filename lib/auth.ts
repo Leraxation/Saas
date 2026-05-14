@@ -6,7 +6,9 @@ export const authOptions: NextAuthOptions = {
     AzureADProvider({
       clientId: process.env.AZURE_AD_CLIENT_ID!,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
-      tenantId: process.env.AZURE_AD_TENANT_ID!,
+      // "common" accepts both personal (@outlook.com) and work/school accounts.
+      // Replace with your specific tenant ID to restrict to one org.
+      tenantId: process.env.AZURE_AD_TENANT_ID ?? "common",
       authorization: {
         params: {
           scope: [
