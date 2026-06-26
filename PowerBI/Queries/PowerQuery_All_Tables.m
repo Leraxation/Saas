@@ -1,16 +1,30 @@
 // ============================================================
 // POWER QUERY — CPO Command Center
-// How to import these queries in Power BI Desktop:
+//
+// FOR POWER BI SERVICE (BROWSER):
+//   1. Workspace → + New → Dataflow → Define new tables
+//   2. For each table below: + Add new table → Blank query → Advanced Editor
+//   3. Paste the matching query block, name it exactly as shown
+//   4. In every table query, replace File.Contents(FilePath) with
+//      Web.Contents("YOUR_ONEDRIVE_LINK") — see note in FilePath section
+//
+// FOR POWER BI DESKTOP:
 //   1. Home → Transform Data → Advanced Editor
 //   2. Paste each section below as a new blank query
-//   3. Name each query exactly as shown in the header comment
-//   4. Set FilePath query first, then refresh all
+//   3. Name each query exactly as shown, update FilePath first
 // ============================================================
 
 
-// ── QUERY: FilePath (Parameter) ──────────────────────────────
-// Change this to the actual location of your Excel workbook.
-// All other queries reference this single value — update here only.
+// ── QUERY: FilePath ──────────────────────────────────────────
+// BROWSER (Power BI Service / Dataflow):
+//   Skip this query entirely. In each table query replace:
+//     Excel.Workbook(File.Contents(FilePath), ...)
+//   with:
+//     Excel.Workbook(Web.Contents("https://1drv.ms/x/YOUR_SHARE_LINK&download=1"), ...)
+//   Get the link: right-click file in OneDrive → Share → Copy link
+//
+// DESKTOP:
+//   Change the string below to your local file path.
 let
     Source = "C:\Users\YourName\Documents\CPO_Command_Center.xlsx"
 in

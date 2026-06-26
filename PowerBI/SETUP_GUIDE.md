@@ -1,82 +1,123 @@
-# CPO Command Center — Power BI Setup Guide
+# CPO Command Center — Power BI Service (Browser) Setup Guide
 
-## What's in this folder
-
-| Path | What it does |
-|---|---|
-| `Model/model.bim` | Complete data model (tables + measures + M queries) — import via Tabular Editor |
-| `Queries/PowerQuery_All_Tables.m` | All Power Query M scripts — paste manually if not using Tabular Editor |
-| `Measures/01–06_*.dax` | All DAX measures, one file per command center section |
-| `Theme/CPO_CommandCenter_Theme.json` | Dark navy theme matching the command center screenshot |
+This guide is written for **Power BI Service in the browser** — no desktop app needed.
+The `.bim` file in `Model/` can be ignored; everything you need is in the steps below.
 
 ---
 
-## Step 1 — Import the data model (choose one path)
+## Overview of the approach
 
-### Option A: Tabular Editor (recommended, ~5 min)
-Tabular Editor is a free tool that lets you import a `.bim` file directly into
-a Power BI Desktop model without touching the binary `.pbix` format.
-
-1. Download **Tabular Editor 2** (free) from `tabulareditor.com`
-2. Open **Power BI Desktop** → connect to your Excel file once manually to create a blank model
-3. In Power BI Desktop → **External Tools** tab → **Tabular Editor**
-4. In Tabular Editor: **File → Open → From File** → select `Model/model.bim`
-5. Click **Save** (Ctrl+S) — this pushes the model back into Power BI Desktop
-6. Back in Power BI Desktop: **Home → Refresh**
-
-### Option B: Manual paste (no extra tools)
-1. Open Power BI Desktop → **Get Data → Excel Workbook** → select your file
-2. Import all 6 sheets: `ACTION_TRACKER`, `EMAIL_INTELLIGENCE`, `HR_ALERTS`,
-   `HR_METRICS`, `PROJECTS_TRACKER`, `DASHBOARD_SUMMARY`
-3. For each table, open **Power Query → Advanced Editor** and replace the
-   contents with the matching query from `Queries/PowerQuery_All_Tables.m`
-4. Create a blank query named **FilePath**, paste the file path string
-5. Add measures manually from the `Measures/` files (see Step 3)
-
----
-
-## Step 2 — Apply the file path
-
-Open `Queries/PowerQuery_All_Tables.m` and update the **FilePath** query:
-
-```m
-// Change this to match where your Excel file actually lives:
-"C:\Users\YourName\Documents\CPO_Command_Center.xlsx"
+```
+Excel file on OneDrive
+        ↓
+  Dataflow (Power Query Online)   ← paste from Queries/PowerQuery_All_Tables.m
+        ↓
+  Semantic Model (Dataset)        ← paste DAX from Measures/ files
+        ↓
+  Report (Command Center page)    ← apply Theme + build visuals
 ```
 
-All six table queries reference `FilePath` — update it once and all tables refresh.
+---
+
+## Step 1 — Upload your Excel to OneDrive
+
+1. Go to **onedrive.live.com** (personal) or your work OneDrive
+2. Upload `CPO_Command_Center.xlsx` to any folder
+3. Copy the file URL — you'll need it in Step 2
+
+> **Why OneDrive?** Power BI Service can refresh automatically from OneDrive.
+> A file on your desktop won't refresh after the first upload.
 
 ---
 
-## Step 3 — Add DAX measures
+## Step 2 — Create a Dataflow
 
-If using Tabular Editor, the measures are already included in `model.bim`.
+A Dataflow loads and shapes the data using Power Query, exactly like the queries
+in `Queries/PowerQuery_All_Tables.m`.
 
-For manual entry in Power BI Desktop:
-1. Create a hidden table called `_Measures`:
-   - **Modeling → New Table** → `_Measures = {""}`
-   - Right-click the table → **Hide in report view**
-2. Select `_Measures` in the Fields pane → **New Measure**
-3. Copy-paste each measure from the `Measures/` files
-4. Set the **Display Folder** in the Properties pane to match the folder prefix
-   (e.g. `1. Executive Summary`, `2. Outlook Intelligence`, etc.)
+1. In Power BI Service, open your **Workspace**
+2. Click **+ New → Dataflow**
+3. Choose **Define new tables**
+4. For each of the 6 tables, click **+ Add new table → Blank query**
+5. In the **Advanced Editor**, replace the default text with the matching query
+   from `Queries/PowerQuery_All_Tables.m` (copy the block for each table)
+6. Name each query exactly: `ACTION_TRACKER`, `EMAIL_INTELLIGENCE`, `HR_ALERTS`,
+   `HR_METRICS`, `PROJECTS_TRACKER`, `DASHBOARD_SUMMARY`
+
+### Setting the file path inside the Dataflow
+
+In the `ACTION_TRACKER` query (and all others), the `FilePath` reference points to
+your OneDrive file. Replace `File.Contents(FilePath)` with the Web.Contents
+version for OneDrive:
+
+```m
+// Replace this line in every query:
+Source = Excel.Workbook(File.Contents(FilePath), null, true),
+
+// With this (paste your actual OneDrive share link):
+Source = Excel.Workbook(Web.Contents("https://1drv.ms/x/YOUR_SHARE_LINK"), null, true),
+```
+
+> **Get the OneDrive link:** Right-click the file in OneDrive → Share → Copy link.
+> Use the direct download link format ending in `&download=1`.
+
+7. Click **Save & Close** → name the Dataflow **CPO Command Center**
+8. Click **Refresh now** — all 6 tables should load green
 
 ---
 
-## Step 4 — Apply the dark theme
+## Step 3 — Create the Semantic Model
 
-1. Power BI Desktop → **View** tab → **Themes → Browse for themes**
-2. Select `Theme/CPO_CommandCenter_Theme.json`
-3. Click **Apply** — the background, card colours, and table styles update automatically
+1. In your Workspace, find the Dataflow you just created
+2. Click **"..."** next to it → **Create report** — this auto-creates a dataset
+   OR
+   Go to **+ New → Semantic model** → connect to your Dataflow
 
 ---
 
-## Step 5 — Build the Command Center page
+## Step 4 — Add DAX Measures via the web model editor
 
-Recreate the layout from the screenshot using these visuals:
+Power BI Service has a built-in web DAX editor (no desktop needed).
 
-### Header row — 6 KPI Cards
-| Card title | Measure |
+1. In your Workspace, find the Semantic Model (dataset)
+2. Click **"..."** → **Open data model**
+   *(If you don't see this, go to Settings → Preview features → enable "Model view")*
+3. In the model editor, click **Home → New measure**
+4. Paste each measure from the `Measures/` files one at a time
+
+### Setting display folders (so the Fields pane matches the command center sections)
+
+After creating each measure:
+1. Select the measure in the model editor
+2. In the **Properties** panel on the right, find **Display folder**
+3. Type the folder name exactly as shown at the top of each `.dax` file:
+   - `1. Executive Summary`
+   - `2. Outlook Intelligence`
+   - `3. Action Tracker`
+   - `4. HR Command Center`
+   - `5. Project Delivery`
+   - `6. Compliance Monitor`
+
+The numbered prefix forces the folders to appear in order in the Fields pane.
+
+---
+
+## Step 5 — Apply the dark theme
+
+1. Open a new Report in your Workspace
+2. Click **View → Themes → Browse for themes**
+3. Upload `Theme/CPO_CommandCenter_Theme.json`
+4. Click **Apply to all pages**
+
+---
+
+## Step 6 — Build the Command Center page
+
+### Header — 6 KPI Cards
+
+Place these across the top of the canvas. Use the **Card** visual.
+
+| Card label | Measure to drag in |
 |---|---|
 | Urgent Issues | `[Urgent Issues]` |
 | Projects at Risk | `[Projects at Risk]` |
@@ -85,105 +126,84 @@ Recreate the layout from the screenshot using these visuals:
 | HR Alerts | `[HR Alerts]` |
 | Financial Alerts | `[Financial Alerts]` |
 
-Visual: **Card** visual. Set font to **Segoe UI Semibold 32pt**, colour `#4FC3F7`.
+Card formatting: font size 32, colour `#4FC3F7`, background `#1C2333`.
 
 ---
 
-### Section: Outlook Intelligence
-- **Table** visual from `EMAIL_INTELLIGENCE` table
+### Outlook Intelligence panel
+
+- Visual: **Table**
+- Table: `EMAIL_INTELLIGENCE`
 - Columns: `Sender`, `Subject`, `Priority`, `Urgency Flag`, `Follow-up`
-- Add **conditional formatting** on `Urgency Flag`:
-  - `Urgent` → background `#E53E3E` (red)
-  - `Normal` → background `#2D3748` (dark)
+- Conditional formatting on **Urgency Flag** (background colour):
+  - Rules: `Urgent` → `#E53E3E` (red) | `Normal` → `#2D3748` (dark)
 
 ---
 
-### Section: Action Tracker
-- **Table** visual from `ACTION_TRACKER` table
+### Action Tracker panel
+
+- Visual: **Table**
+- Table: `ACTION_TRACKER`
 - Columns: `Action ID`, `Description`, `Owner`, `Due Category`, `RAG Status`
-- Conditional formatting on `RAG Status` background colour:
-  - `Red` → `#E53E3E`
-  - `Amber` → `#D69E2E`
-  - `Green` → `#38A169`
-- KPI cards above the table: `[Due Today]`, `[Due This Week]`, `[Red Actions]`
+- Conditional formatting on **RAG Status** (background colour):
+  - `Red` → `#E53E3E` | `Amber` → `#D69E2E` | `Green` → `#38A169`
+- Small KPI cards above the table: `[Due Today]`, `[Due This Week]`, `[Red Actions]`
 
 ---
 
-### Section: HR Command Center
-- **Card** visuals: `[Headcount]`, `[Open Vacancies]`, `[Grievances Open]`
-- **Gauge** visual for Omanisation:
-  - Value: `[Omanisation %]`
-  - Target: `[Omanisation Target %]`
-  - Max: `0.60` (60%)
-  - Colour needle red if `[Omanisation Gap] > 0.05`
-- **Card** visual: `[Turnover Rate]`
+### HR Command Center panel
+
+| Visual | Config |
+|---|---|
+| Card | `[Headcount]` |
+| Card | `[Open Vacancies]` |
+| Card | `[Grievances Open]` |
+| Gauge | Value: `[Omanisation %]`, Target: `[Omanisation Target %]`, Max: `0.6` |
+| Card | `[Turnover Rate]` |
+| Card | `[Critical HR Alerts]` |
 
 ---
 
-### Section: Project Delivery Status
-- **Table** visual from `PROJECTS_TRACKER`
+### Project Delivery Status panel
+
+- Visual: **Table** from `PROJECTS_TRACKER`
 - Columns: `Project`, `Owner`, `Status`, `Progress`, `Risk`
-- Conditional formatting on `Status`:
-  - `On Track` → `#38A169`
-  - `In Progress` → `#4FC3F7`
-  - `At Risk` → `#D69E2E`
-  - `Delayed` → `#E53E3E`
-- Add **Data Bars** on `Progress` column (blue, 0–100)
+- Conditional formatting on **Status**:
+  - `On Track` → `#38A169` | `In Progress` → `#4FC3F7`
+  - `At Risk` → `#D69E2E` | `Delayed` → `#E53E3E`
+- Add **Data bars** on `Progress` (blue, range 0–100)
 
 ---
 
-### Section: Compliance Monitor
-- **Table** from `ACTION_TRACKER` filtered to Function IN {Policy, Legal, HR Ops, Employee Relations}
-- KPI cards: `[Compliance Actions Open]`, `[Compliance Red Actions]`, `[Policy Actions Open]`
+### Compliance Monitor panel
 
----
-
-## Measure folder structure (Fields pane view)
-
-When set up correctly, the Fields pane on `_Measures` shows:
-
-```
-_Measures
-├── 1. Executive Summary
-│   ├── Urgent Issues
-│   ├── Projects at Risk
-│   ├── Contracts Expiring
-│   ├── Approvals Pending
-│   ├── HR Alerts
-│   └── Financial Alerts
-├── 2. Outlook Intelligence
-│   ├── Urgent Emails
-│   ├── Pending Emails
-│   ├── Emails Action Required
-│   ├── Follow-up Required
-│   └── Total Emails
-├── 3. Action Tracker
-│   ├── Total Actions / Open Actions
-│   ├── Due Today / Due This Week
-│   ├── Red / Amber / Green Actions
-│   └── Action RAG % Red / Amber / Green
-├── 4. HR Command Center
-│   ├── Headcount / Omanisation % / Turnover Rate
-│   ├── Open Vacancies / Probation / Grievances
-│   ├── Performance Reviews Due
-│   └── Critical / Contract / Probation / Performance Alerts
-├── 5. Project Delivery
-│   ├── Total / On Track / At Risk / Delayed / In Progress
-│   ├── High Risk Projects
-│   ├── Avg Project Progress
-│   └── Selected Project Progress
-└── 6. Compliance Monitor
-    ├── Compliance Actions Open
-    ├── Compliance Red Actions
-    ├── Contract / Policy / Grievance Actions Open
-    └── Compliance Health %
-```
+- Visual: **Table** from `ACTION_TRACKER`
+- Add a visual-level filter: `Function` is one of `Policy`, `Legal`, `HR Ops`, `Employee Relations`
+- Columns: `Description`, `Owner`, `Function`, `RAG Status`, `Due Date`
+- KPI cards: `[Compliance Actions Open]`, `[Compliance Red Actions]`
 
 ---
 
 ## Refreshing data
 
-When you update the Excel file:
-- Power BI Desktop: **Home → Refresh**
-- Power BI Service (published): set a scheduled refresh pointing to the same Excel file
-  (use OneDrive or SharePoint path for cloud refresh to work)
+When you update the Excel file on OneDrive:
+1. Go to your Workspace → find the **Dataflow**
+2. Click **"..."** → **Refresh now**
+3. The Semantic Model and Report update automatically
+
+To set up **automatic scheduled refresh**:
+1. Dataflow → Settings → Scheduled refresh → On → pick a time (e.g. 8 AM daily)
+
+---
+
+## Fields pane — what you'll see after setup
+
+```
+_Measures
+├── 1. Executive Summary        (6 measures — header KPI cards)
+├── 2. Outlook Intelligence     (5 measures — email panel)
+├── 3. Action Tracker           (10 measures — RAG + due buckets)
+├── 4. HR Command Center        (13 measures — HR KPIs + alerts)
+├── 5. Project Delivery         (8 measures — portfolio metrics)
+└── 6. Compliance Monitor       (6 measures — risk/policy items)
+```
