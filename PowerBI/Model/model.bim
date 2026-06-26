@@ -1,0 +1,741 @@
+{
+  "name": "CPO_Command_Center",
+  "compatibilityLevel": 1550,
+  "model": {
+    "culture": "en-US",
+    "dataAccessOptions": {
+      "legacyRedirects": true,
+      "returnErrorValuesAsNull": true
+    },
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "sourceQueryCulture": "en-US",
+    "tables": [
+      {
+        "name": "ACTION_TRACKER",
+        "description": "Tracks all open and pending CPO actions with priority, owner, and RAG status.",
+        "annotations": [
+          { "name": "DisplayFolder", "value": "Data Tables" }
+        ],
+        "columns": [
+          { "name": "Action ID",     "dataType": "string",   "sourceColumn": "Action ID",     "description": "Unique action identifier" },
+          { "name": "Description",   "dataType": "string",   "sourceColumn": "Description",   "description": "Action description" },
+          { "name": "Owner",         "dataType": "string",   "sourceColumn": "Owner",         "description": "Action owner name" },
+          { "name": "Function",      "dataType": "string",   "sourceColumn": "Function",      "description": "HR function / department" },
+          { "name": "Priority",      "dataType": "string",   "sourceColumn": "Priority",      "description": "High / Medium / Low" },
+          { "name": "Status",        "dataType": "string",   "sourceColumn": "Status",        "description": "Open / Closed / In Progress" },
+          { "name": "Due Date",      "dataType": "dateTime", "sourceColumn": "Due Date",      "description": "Action due date", "formatString": "Short Date" },
+          { "name": "Notes",         "dataType": "string",   "sourceColumn": "Notes",         "description": "Additional context" },
+          { "name": "Due Category",  "dataType": "string",   "sourceColumn": "Due Category",  "description": "Due Today / This Week / Future" },
+          { "name": "RAG Status",    "dataType": "string",   "sourceColumn": "RAG Status",    "description": "Red / Amber / Green traffic-light status" }
+        ],
+        "partitions": [
+          {
+            "name": "ACTION_TRACKER-Partition",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = Excel.Workbook(File.Contents(FilePath), null, true),",
+                "    Sheet  = Source{[Item=\"ACTION_TRACKER\", Kind=\"Sheet\"]}[Data],",
+                "    Headers = Table.PromoteHeaders(Sheet, [PromoteAllScalars=true]),",
+                "    Typed  = Table.TransformColumnTypes(Headers, {",
+                "        {\"Action ID\", type text},",
+                "        {\"Description\", type text},",
+                "        {\"Owner\", type text},",
+                "        {\"Function\", type text},",
+                "        {\"Priority\", type text},",
+                "        {\"Status\", type text},",
+                "        {\"Due Date\", type date},",
+                "        {\"Notes\", type text},",
+                "        {\"Due Category\", type text},",
+                "        {\"RAG Status\", type text}",
+                "    })",
+                "in",
+                "    Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "EMAIL_INTELLIGENCE",
+        "description": "Outlook email triage: urgency flags, action required, follow-up status.",
+        "annotations": [
+          { "name": "DisplayFolder", "value": "Data Tables" }
+        ],
+        "columns": [
+          { "name": "Email ID",         "dataType": "string",   "sourceColumn": "Email ID" },
+          { "name": "Sender",           "dataType": "string",   "sourceColumn": "Sender" },
+          { "name": "Subject",          "dataType": "string",   "sourceColumn": "Subject" },
+          { "name": "Priority",         "dataType": "string",   "sourceColumn": "Priority" },
+          { "name": "Action Required",  "dataType": "string",   "sourceColumn": "Action Required",  "description": "Yes / No" },
+          { "name": "Status",           "dataType": "string",   "sourceColumn": "Status",           "description": "Pending / Closed" },
+          { "name": "Date",             "dataType": "dateTime", "sourceColumn": "Date",             "formatString": "Short Date" },
+          { "name": "Urgency Flag",     "dataType": "string",   "sourceColumn": "Urgency Flag",     "description": "Urgent / Normal" },
+          { "name": "Follow-up",        "dataType": "string",   "sourceColumn": "Follow-up",        "description": "Follow-up Required / OK" }
+        ],
+        "partitions": [
+          {
+            "name": "EMAIL_INTELLIGENCE-Partition",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source  = Excel.Workbook(File.Contents(FilePath), null, true),",
+                "    Sheet   = Source{[Item=\"EMAIL_INTELLIGENCE\", Kind=\"Sheet\"]}[Data],",
+                "    Headers = Table.PromoteHeaders(Sheet, [PromoteAllScalars=true]),",
+                "    Typed   = Table.TransformColumnTypes(Headers, {",
+                "        {\"Email ID\", type text},",
+                "        {\"Sender\", type text},",
+                "        {\"Subject\", type text},",
+                "        {\"Priority\", type text},",
+                "        {\"Action Required\", type text},",
+                "        {\"Status\", type text},",
+                "        {\"Date\", type date},",
+                "        {\"Urgency Flag\", type text},",
+                "        {\"Follow-up\", type text}",
+                "    })",
+                "in",
+                "    Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "HR_ALERTS",
+        "description": "Active HR alerts: contract expiry, probation, grievances, performance.",
+        "annotations": [
+          { "name": "DisplayFolder", "value": "Data Tables" }
+        ],
+        "columns": [
+          { "name": "Alert ID",       "dataType": "string",   "sourceColumn": "Alert ID" },
+          { "name": "Type",           "dataType": "string",   "sourceColumn": "Type",           "description": "Contract Expiry / Probation / Grievance / Performance" },
+          { "name": "Employee",       "dataType": "string",   "sourceColumn": "Employee" },
+          { "name": "Date",           "dataType": "dateTime", "sourceColumn": "Date",           "formatString": "Short Date" },
+          { "name": "Status",         "dataType": "string",   "sourceColumn": "Status",         "description": "Open / Closed" },
+          { "name": "Risk Level",     "dataType": "string",   "sourceColumn": "Risk Level",     "description": "High / Medium / Low" },
+          { "name": "Alert Category", "dataType": "string",   "sourceColumn": "Alert Category", "description": "Critical / Normal" }
+        ],
+        "partitions": [
+          {
+            "name": "HR_ALERTS-Partition",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source  = Excel.Workbook(File.Contents(FilePath), null, true),",
+                "    Sheet   = Source{[Item=\"HR_ALERTS\", Kind=\"Sheet\"]}[Data],",
+                "    Headers = Table.PromoteHeaders(Sheet, [PromoteAllScalars=true]),",
+                "    Typed   = Table.TransformColumnTypes(Headers, {",
+                "        {\"Alert ID\", type text},",
+                "        {\"Type\", type text},",
+                "        {\"Employee\", type text},",
+                "        {\"Date\", type date},",
+                "        {\"Status\", type text},",
+                "        {\"Risk Level\", type text},",
+                "        {\"Alert Category\", type text}",
+                "    })",
+                "in",
+                "    Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "HR_METRICS",
+        "description": "Snapshot HR KPIs: headcount, Omanisation %, turnover, vacancies.",
+        "annotations": [
+          { "name": "DisplayFolder", "value": "Data Tables" }
+        ],
+        "columns": [
+          { "name": "Metric", "dataType": "string",  "sourceColumn": "Metric", "description": "KPI name" },
+          { "name": "Value",  "dataType": "double",  "sourceColumn": "Value",  "description": "Current KPI value" },
+          { "name": "Notes",  "dataType": "string",  "sourceColumn": "Notes",  "description": "Context / target notes" }
+        ],
+        "partitions": [
+          {
+            "name": "HR_METRICS-Partition",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source  = Excel.Workbook(File.Contents(FilePath), null, true),",
+                "    Sheet   = Source{[Item=\"HR_METRICS\", Kind=\"Sheet\"]}[Data],",
+                "    Headers = Table.PromoteHeaders(Sheet, [PromoteAllScalars=true]),",
+                "    Typed   = Table.TransformColumnTypes(Headers, {",
+                "        {\"Metric\", type text},",
+                "        {\"Value\", type number},",
+                "        {\"Notes\", type text}",
+                "    })",
+                "in",
+                "    Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "PROJECTS_TRACKER",
+        "description": "CPO project portfolio: status, progress %, risk, and owner.",
+        "annotations": [
+          { "name": "DisplayFolder", "value": "Data Tables" }
+        ],
+        "columns": [
+          { "name": "Project",  "dataType": "string", "sourceColumn": "Project",  "description": "Project name" },
+          { "name": "Owner",    "dataType": "string", "sourceColumn": "Owner",    "description": "Project owner" },
+          { "name": "Status",   "dataType": "string", "sourceColumn": "Status",   "description": "On Track / At Risk / Delayed / In Progress" },
+          { "name": "Progress", "dataType": "int64",  "sourceColumn": "Progress", "description": "Completion percentage 0-100", "formatString": "0\\%" },
+          { "name": "Risk",     "dataType": "string", "sourceColumn": "Risk",     "description": "High / Medium / Low" },
+          { "name": "Notes",    "dataType": "string", "sourceColumn": "Notes",    "description": "Current blockers or context" }
+        ],
+        "partitions": [
+          {
+            "name": "PROJECTS_TRACKER-Partition",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source  = Excel.Workbook(File.Contents(FilePath), null, true),",
+                "    Sheet   = Source{[Item=\"PROJECTS_TRACKER\", Kind=\"Sheet\"]}[Data],",
+                "    Headers = Table.PromoteHeaders(Sheet, [PromoteAllScalars=true]),",
+                "    Typed   = Table.TransformColumnTypes(Headers, {",
+                "        {\"Project\", type text},",
+                "        {\"Owner\", type text},",
+                "        {\"Status\", type text},",
+                "        {\"Progress\", Int64.Type},",
+                "        {\"Risk\", type text},",
+                "        {\"Notes\", type text}",
+                "    })",
+                "in",
+                "    Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "DASHBOARD_SUMMARY",
+        "description": "Pre-aggregated KPI summary used to drive top-level command center cards.",
+        "annotations": [
+          { "name": "DisplayFolder", "value": "Data Tables" }
+        ],
+        "columns": [
+          { "name": "KPI",      "dataType": "string", "sourceColumn": "KPI",      "description": "KPI label" },
+          { "name": "Value",    "dataType": "int64",  "sourceColumn": "Value",    "description": "KPI numeric value" },
+          { "name": "Category", "dataType": "string", "sourceColumn": "Category", "description": "Email / Actions / HR / Projects" }
+        ],
+        "partitions": [
+          {
+            "name": "DASHBOARD_SUMMARY-Partition",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source  = Excel.Workbook(File.Contents(FilePath), null, true),",
+                "    Sheet   = Source{[Item=\"DASHBOARD_SUMMARY\", Kind=\"Sheet\"]}[Data],",
+                "    Headers = Table.PromoteHeaders(Sheet, [PromoteAllScalars=true]),",
+                "    Typed   = Table.TransformColumnTypes(Headers, {",
+                "        {\"KPI\", type text},",
+                "        {\"Value\", Int64.Type},",
+                "        {\"Category\", type text}",
+                "    })",
+                "in",
+                "    Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "_Measures",
+        "description": "Hidden measures table — holds all DAX measures organized by display folder.",
+        "isHidden": true,
+        "columns": [
+          {
+            "name": "_Placeholder",
+            "dataType": "string",
+            "isHidden": true,
+            "sourceColumn": "_Placeholder"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "_Measures-Partition",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let Source = #table({\"_Placeholder\"}, {}) in Source"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Urgent Issues",
+            "displayFolder": "1. Executive Summary",
+            "description": "Total count of urgent emails + red actions + critical HR alerts — the top-level risk number shown in the header KPI card.",
+            "formatString": "0",
+            "expression": [
+              "VAR _UrgentEmails  = COUNTROWS(FILTER(EMAIL_INTELLIGENCE, EMAIL_INTELLIGENCE[Urgency Flag] = \"Urgent\"))",
+              "VAR _RedActions    = COUNTROWS(FILTER(ACTION_TRACKER,    ACTION_TRACKER[RAG Status]   = \"Red\"))",
+              "VAR _CriticalHR    = COUNTROWS(FILTER(HR_ALERTS,         HR_ALERTS[Alert Category]    = \"Critical\" && HR_ALERTS[Status] = \"Open\"))",
+              "RETURN _UrgentEmails + _RedActions + _CriticalHR"
+            ]
+          },
+          {
+            "name": "Projects at Risk",
+            "displayFolder": "1. Executive Summary",
+            "description": "Count of projects where status is At Risk or Delayed, or risk rating is High.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(",
+              "    FILTER(",
+              "        PROJECTS_TRACKER,",
+              "        PROJECTS_TRACKER[Status] IN {\"At Risk\", \"Delayed\"} ||",
+              "        PROJECTS_TRACKER[Risk] = \"High\"",
+              "    )",
+              ")"
+            ]
+          },
+          {
+            "name": "Contracts Expiring",
+            "displayFolder": "1. Executive Summary",
+            "description": "Number of contracts expiring within 30 days, sourced from HR_METRICS.",
+            "formatString": "0",
+            "expression": [
+              "VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = \"Contracts Expiring 30 days\")",
+              "RETURN IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0)"
+            ]
+          },
+          {
+            "name": "Approvals Pending",
+            "displayFolder": "1. Executive Summary",
+            "description": "Count of open actions that are contract or approval related.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(",
+              "    FILTER(",
+              "        ACTION_TRACKER,",
+              "        ACTION_TRACKER[Status] = \"Open\" &&",
+              "        (SEARCH(\"contract\", ACTION_TRACKER[Description], 1, 0) > 0 ||",
+              "         SEARCH(\"approval\", ACTION_TRACKER[Description], 1, 0) > 0)",
+              "    )",
+              ")"
+            ]
+          },
+          {
+            "name": "HR Alerts",
+            "displayFolder": "1. Executive Summary",
+            "description": "Total open HR alerts across all categories.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(FILTER(HR_ALERTS, HR_ALERTS[Status] = \"Open\"))"
+            ]
+          },
+          {
+            "name": "Financial Alerts",
+            "displayFolder": "1. Executive Summary",
+            "description": "Count of emails from Finance or related to financial topics that are still pending.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(",
+              "    FILTER(",
+              "        EMAIL_INTELLIGENCE,",
+              "        EMAIL_INTELLIGENCE[Status] = \"Pending\" &&",
+              "        (EMAIL_INTELLIGENCE[Sender] = \"Finance\" ||",
+              "         SEARCH(\"financial\", EMAIL_INTELLIGENCE[Subject], 1, 0) > 0 ||",
+              "         SEARCH(\"reconcil\",  EMAIL_INTELLIGENCE[Subject], 1, 0) > 0)",
+              "    )",
+              ")"
+            ]
+          },
+          {
+            "name": "Urgent Emails",
+            "displayFolder": "2. Outlook Intelligence",
+            "description": "Count of emails flagged as Urgent regardless of status.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(FILTER(EMAIL_INTELLIGENCE, EMAIL_INTELLIGENCE[Urgency Flag] = \"Urgent\"))"
+            ]
+          },
+          {
+            "name": "Pending Emails",
+            "displayFolder": "2. Outlook Intelligence",
+            "description": "Emails not yet actioned (Status = Pending).",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(FILTER(EMAIL_INTELLIGENCE, EMAIL_INTELLIGENCE[Status] = \"Pending\"))"
+            ]
+          },
+          {
+            "name": "Emails Action Required",
+            "displayFolder": "2. Outlook Intelligence",
+            "description": "Emails where the CPO needs to take an action.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(FILTER(EMAIL_INTELLIGENCE, EMAIL_INTELLIGENCE[Action Required] = \"Yes\"))"
+            ]
+          },
+          {
+            "name": "Follow-up Required",
+            "displayFolder": "2. Outlook Intelligence",
+            "description": "Emails still requiring a follow-up reply or action.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(FILTER(EMAIL_INTELLIGENCE, EMAIL_INTELLIGENCE[Follow-up] = \"Follow-up Required\"))"
+            ]
+          },
+          {
+            "name": "Total Emails",
+            "displayFolder": "2. Outlook Intelligence",
+            "description": "Total emails in the intelligence feed.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(EMAIL_INTELLIGENCE)"
+            ]
+          },
+          {
+            "name": "Total Actions",
+            "displayFolder": "3. Action Tracker",
+            "description": "Total number of tracked actions.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(ACTION_TRACKER)"
+            ]
+          },
+          {
+            "name": "Open Actions",
+            "displayFolder": "3. Action Tracker",
+            "description": "Actions that are still open (not closed).",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(FILTER(ACTION_TRACKER, ACTION_TRACKER[Status] = \"Open\"))"
+            ]
+          },
+          {
+            "name": "Due Today",
+            "displayFolder": "3. Action Tracker",
+            "description": "Actions due today — highest urgency bucket.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(FILTER(ACTION_TRACKER, ACTION_TRACKER[Due Category] = \"Due Today\"))"
+            ]
+          },
+          {
+            "name": "Due This Week",
+            "displayFolder": "3. Action Tracker",
+            "description": "Actions due this week (includes today).",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(FILTER(ACTION_TRACKER, ACTION_TRACKER[Due Category] IN {\"Due Today\", \"This Week\"}))"
+            ]
+          },
+          {
+            "name": "Red Actions",
+            "displayFolder": "3. Action Tracker",
+            "description": "Actions with RAG = Red (overdue or escalation risk).",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(FILTER(ACTION_TRACKER, ACTION_TRACKER[RAG Status] = \"Red\"))"
+            ]
+          },
+          {
+            "name": "Amber Actions",
+            "displayFolder": "3. Action Tracker",
+            "description": "Actions with RAG = Amber (at risk of missing deadline).",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(FILTER(ACTION_TRACKER, ACTION_TRACKER[RAG Status] = \"Amber\"))"
+            ]
+          },
+          {
+            "name": "Green Actions",
+            "displayFolder": "3. Action Tracker",
+            "description": "Actions with RAG = Green (on track).",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(FILTER(ACTION_TRACKER, ACTION_TRACKER[RAG Status] = \"Green\"))"
+            ]
+          },
+          {
+            "name": "Action RAG % Red",
+            "displayFolder": "3. Action Tracker",
+            "description": "Percentage of actions that are Red status — used for the RAG donut/bar.",
+            "formatString": "0.0%",
+            "expression": [
+              "DIVIDE([Red Actions], [Total Actions], 0)"
+            ]
+          },
+          {
+            "name": "Action RAG % Amber",
+            "displayFolder": "3. Action Tracker",
+            "description": "Percentage of actions that are Amber status.",
+            "formatString": "0.0%",
+            "expression": [
+              "DIVIDE([Amber Actions], [Total Actions], 0)"
+            ]
+          },
+          {
+            "name": "Action RAG % Green",
+            "displayFolder": "3. Action Tracker",
+            "description": "Percentage of actions that are Green status.",
+            "formatString": "0.0%",
+            "expression": [
+              "DIVIDE([Green Actions], [Total Actions], 0)"
+            ]
+          },
+          {
+            "name": "Headcount",
+            "displayFolder": "4. HR Command Center",
+            "description": "Total active employees.",
+            "formatString": "0",
+            "expression": [
+              "VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = \"Headcount\")",
+              "RETURN IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0)"
+            ]
+          },
+          {
+            "name": "Omanisation %",
+            "displayFolder": "4. HR Command Center",
+            "description": "Current Omanisation percentage. Target is 48% by year-end.",
+            "formatString": "0.0%",
+            "expression": [
+              "VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = \"Omanisation %\")",
+              "RETURN DIVIDE(IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0), 100)"
+            ]
+          },
+          {
+            "name": "Omanisation Target %",
+            "displayFolder": "4. HR Command Center",
+            "description": "Year-end Omanisation target (48%). Used to show gap in gauge/bar.",
+            "formatString": "0.0%",
+            "expression": [
+              "0.48"
+            ]
+          },
+          {
+            "name": "Omanisation Gap",
+            "displayFolder": "4. HR Command Center",
+            "description": "Gap between current Omanisation % and 48% target.",
+            "formatString": "0.0%",
+            "expression": [
+              "[Omanisation Target %] - [Omanisation %]"
+            ]
+          },
+          {
+            "name": "Turnover Rate",
+            "displayFolder": "4. HR Command Center",
+            "description": "Rolling 12-month employee turnover rate.",
+            "formatString": "0.0%",
+            "expression": [
+              "VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = \"Turnover %\")",
+              "RETURN DIVIDE(IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0), 100)"
+            ]
+          },
+          {
+            "name": "Open Vacancies",
+            "displayFolder": "4. HR Command Center",
+            "description": "Total unfilled vacancies across all functions.",
+            "formatString": "0",
+            "expression": [
+              "VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = \"Open Vacancies\")",
+              "RETURN IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0)"
+            ]
+          },
+          {
+            "name": "Employees on Probation",
+            "displayFolder": "4. HR Command Center",
+            "description": "Employees currently in probation period with review due this month.",
+            "formatString": "0",
+            "expression": [
+              "VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = \"Employees on Probation\")",
+              "RETURN IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0)"
+            ]
+          },
+          {
+            "name": "Grievances Open",
+            "displayFolder": "4. HR Command Center",
+            "description": "Open employee grievances with escalation risk.",
+            "formatString": "0",
+            "expression": [
+              "VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = \"Grievances Open\")",
+              "RETURN IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0)"
+            ]
+          },
+          {
+            "name": "Performance Reviews Due",
+            "displayFolder": "4. HR Command Center",
+            "description": "Number of performance reviews due in the current cycle.",
+            "formatString": "0",
+            "expression": [
+              "VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = \"Performance Reviews Due\")",
+              "RETURN IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0)"
+            ]
+          },
+          {
+            "name": "Critical HR Alerts",
+            "displayFolder": "4. HR Command Center",
+            "description": "Open alerts classified as Critical (contract expiry, grievances, performance).",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(",
+              "    FILTER(",
+              "        HR_ALERTS,",
+              "        HR_ALERTS[Alert Category] = \"Critical\" &&",
+              "        HR_ALERTS[Status] = \"Open\"",
+              "    )",
+              ")"
+            ]
+          },
+          {
+            "name": "Total Projects",
+            "displayFolder": "5. Project Delivery",
+            "description": "Total projects in the CPO portfolio.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(PROJECTS_TRACKER)"
+            ]
+          },
+          {
+            "name": "Projects On Track",
+            "displayFolder": "5. Project Delivery",
+            "description": "Projects with status = On Track or In Progress with low risk.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(FILTER(PROJECTS_TRACKER, PROJECTS_TRACKER[Status] = \"On Track\"))"
+            ]
+          },
+          {
+            "name": "Projects At Risk",
+            "displayFolder": "5. Project Delivery",
+            "description": "Projects flagged as At Risk or Delayed.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(FILTER(PROJECTS_TRACKER, PROJECTS_TRACKER[Status] IN {\"At Risk\", \"Delayed\"}))"
+            ]
+          },
+          {
+            "name": "Projects Delayed",
+            "displayFolder": "5. Project Delivery",
+            "description": "Projects with status = Delayed.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(FILTER(PROJECTS_TRACKER, PROJECTS_TRACKER[Status] = \"Delayed\"))"
+            ]
+          },
+          {
+            "name": "Avg Project Progress",
+            "displayFolder": "5. Project Delivery",
+            "description": "Average completion percentage across all projects.",
+            "formatString": "0.0%",
+            "expression": [
+              "DIVIDE(AVERAGEX(PROJECTS_TRACKER, PROJECTS_TRACKER[Progress]), 100)"
+            ]
+          },
+          {
+            "name": "High Risk Projects",
+            "displayFolder": "5. Project Delivery",
+            "description": "Projects with Risk = High — these need CPO attention.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(FILTER(PROJECTS_TRACKER, PROJECTS_TRACKER[Risk] = \"High\"))"
+            ]
+          },
+          {
+            "name": "Selected Project Progress",
+            "displayFolder": "5. Project Delivery",
+            "description": "Progress % for a single selected project — used in individual project cards.",
+            "formatString": "0.0%",
+            "expression": [
+              "DIVIDE(SELECTEDVALUE(PROJECTS_TRACKER[Progress], 0), 100)"
+            ]
+          },
+          {
+            "name": "Compliance Actions Open",
+            "displayFolder": "6. Compliance Monitor",
+            "description": "Open actions in compliance-related functions (Policy, Legal, HR Ops).",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(",
+              "    FILTER(",
+              "        ACTION_TRACKER,",
+              "        ACTION_TRACKER[Status] = \"Open\" &&",
+              "        ACTION_TRACKER[Function] IN {\"Policy\", \"Legal\", \"HR Ops\", \"Employee Relations\"}",
+              "    )",
+              ")"
+            ]
+          },
+          {
+            "name": "Compliance Red Actions",
+            "displayFolder": "6. Compliance Monitor",
+            "description": "Red-status actions in compliance functions — highest risk items.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(",
+              "    FILTER(",
+              "        ACTION_TRACKER,",
+              "        ACTION_TRACKER[RAG Status] = \"Red\" &&",
+              "        ACTION_TRACKER[Function] IN {\"Policy\", \"Legal\", \"HR Ops\", \"Employee Relations\"}",
+              "    )",
+              ")"
+            ]
+          },
+          {
+            "name": "Contract Alerts Open",
+            "displayFolder": "6. Compliance Monitor",
+            "description": "Open HR alerts of type Contract Expiry.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(",
+              "    FILTER(",
+              "        HR_ALERTS,",
+              "        HR_ALERTS[Type] = \"Contract Expiry\" &&",
+              "        HR_ALERTS[Status] = \"Open\"",
+              "    )",
+              ")"
+            ]
+          },
+          {
+            "name": "Policy Actions Open",
+            "displayFolder": "6. Compliance Monitor",
+            "description": "Open actions in the Policy function.",
+            "formatString": "0",
+            "expression": [
+              "COUNTROWS(",
+              "    FILTER(",
+              "        ACTION_TRACKER,",
+              "        ACTION_TRACKER[Status] = \"Open\" &&",
+              "        ACTION_TRACKER[Function] = \"Policy\"",
+              "    )",
+              ")"
+            ]
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "expressions": [
+      {
+        "name": "FilePath",
+        "description": "Path to the CPO_Command_Center Excel workbook. Update this single value to point to your local copy.",
+        "kind": "m",
+        "expression": "\"C:\\\\Users\\\\YourName\\\\Documents\\\\CPO_Command_Center.xlsx\""
+      }
+    ],
+    "annotations": [
+      {
+        "name": "PBI_QueryOrder",
+        "value": "[\"FilePath\",\"ACTION_TRACKER\",\"EMAIL_INTELLIGENCE\",\"HR_ALERTS\",\"HR_METRICS\",\"PROJECTS_TRACKER\",\"DASHBOARD_SUMMARY\"]"
+      }
+    ]
+  }
+}

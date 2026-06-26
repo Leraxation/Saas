@@ -1,0 +1,67 @@
+// ============================================================
+// FOLDER: 1. Executive Summary
+// Purpose: Top-level KPI cards shown in the command center header.
+//          These are the 6 numbers visible at a glance to the CPO.
+// ============================================================
+
+// ── Urgent Issues ────────────────────────────────────────────
+// Adds urgent emails + red actions + critical open HR alerts.
+// Any number > 0 means something needs same-day attention.
+MEASURE _Measures[Urgent Issues] =
+VAR _UrgentEmails = COUNTROWS(FILTER(EMAIL_INTELLIGENCE, EMAIL_INTELLIGENCE[Urgency Flag] = "Urgent"))
+VAR _RedActions   = COUNTROWS(FILTER(ACTION_TRACKER,    ACTION_TRACKER[RAG Status]   = "Red"))
+VAR _CriticalHR   = COUNTROWS(FILTER(HR_ALERTS,         HR_ALERTS[Alert Category]    = "Critical" && HR_ALERTS[Status] = "Open"))
+RETURN _UrgentEmails + _RedActions + _CriticalHR
+FORMAT STRING = "0"
+
+// ── Projects at Risk ─────────────────────────────────────────
+// Counts projects with status At Risk / Delayed OR risk rated High.
+MEASURE _Measures[Projects at Risk] =
+COUNTROWS(
+    FILTER(
+        PROJECTS_TRACKER,
+        PROJECTS_TRACKER[Status] IN {"At Risk", "Delayed"} ||
+        PROJECTS_TRACKER[Risk]   = "High"
+    )
+)
+FORMAT STRING = "0"
+
+// ── Contracts Expiring ───────────────────────────────────────
+// Contracts expiring within 30 days — read from HR_METRICS snapshot row.
+MEASURE _Measures[Contracts Expiring] =
+VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = "Contracts Expiring 30 days")
+RETURN IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0)
+FORMAT STRING = "0"
+
+// ── Approvals Pending ────────────────────────────────────────
+// Open actions whose description mentions contract or approval keywords.
+MEASURE _Measures[Approvals Pending] =
+COUNTROWS(
+    FILTER(
+        ACTION_TRACKER,
+        ACTION_TRACKER[Status] = "Open" &&
+        (SEARCH("contract", ACTION_TRACKER[Description], 1, 0) > 0 ||
+         SEARCH("approval", ACTION_TRACKER[Description], 1, 0) > 0)
+    )
+)
+FORMAT STRING = "0"
+
+// ── HR Alerts ────────────────────────────────────────────────
+// All open HR alerts (contract, probation, grievance, performance).
+MEASURE _Measures[HR Alerts] =
+COUNTROWS(FILTER(HR_ALERTS, HR_ALERTS[Status] = "Open"))
+FORMAT STRING = "0"
+
+// ── Financial Alerts ─────────────────────────────────────────
+// Pending emails from Finance or with financial keywords in subject.
+MEASURE _Measures[Financial Alerts] =
+COUNTROWS(
+    FILTER(
+        EMAIL_INTELLIGENCE,
+        EMAIL_INTELLIGENCE[Status] = "Pending" &&
+        (EMAIL_INTELLIGENCE[Sender] = "Finance" ||
+         SEARCH("financial", EMAIL_INTELLIGENCE[Subject], 1, 0) > 0 ||
+         SEARCH("reconcil",  EMAIL_INTELLIGENCE[Subject], 1, 0) > 0)
+    )
+)
+FORMAT STRING = "0"

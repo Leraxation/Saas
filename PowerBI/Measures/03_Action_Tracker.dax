@@ -1,0 +1,51 @@
+// ============================================================
+// FOLDER: 3. Action Tracker
+// Purpose: Measures powering the Action Tracker panel and RAG
+//          status breakdown visuals.
+// ============================================================
+
+// ── Total / Open ─────────────────────────────────────────────
+MEASURE _Measures[Total Actions] =
+COUNTROWS(ACTION_TRACKER)
+FORMAT STRING = "0"
+
+MEASURE _Measures[Open Actions] =
+COUNTROWS(FILTER(ACTION_TRACKER, ACTION_TRACKER[Status] = "Open"))
+FORMAT STRING = "0"
+
+// ── Due Buckets ──────────────────────────────────────────────
+MEASURE _Measures[Due Today] =
+COUNTROWS(FILTER(ACTION_TRACKER, ACTION_TRACKER[Due Category] = "Due Today"))
+FORMAT STRING = "0"
+
+// Includes both "Due Today" and "This Week" so the card shows
+// the full near-term workload at a glance.
+MEASURE _Measures[Due This Week] =
+COUNTROWS(FILTER(ACTION_TRACKER, ACTION_TRACKER[Due Category] IN {"Due Today", "This Week"}))
+FORMAT STRING = "0"
+
+// ── RAG Status Counts ────────────────────────────────────────
+MEASURE _Measures[Red Actions] =
+COUNTROWS(FILTER(ACTION_TRACKER, ACTION_TRACKER[RAG Status] = "Red"))
+FORMAT STRING = "0"
+
+MEASURE _Measures[Amber Actions] =
+COUNTROWS(FILTER(ACTION_TRACKER, ACTION_TRACKER[RAG Status] = "Amber"))
+FORMAT STRING = "0"
+
+MEASURE _Measures[Green Actions] =
+COUNTROWS(FILTER(ACTION_TRACKER, ACTION_TRACKER[RAG Status] = "Green"))
+FORMAT STRING = "0"
+
+// ── RAG Percentages (for donut / progress bar visuals) ───────
+MEASURE _Measures[Action RAG % Red] =
+DIVIDE([Red Actions], [Total Actions], 0)
+FORMAT STRING = "0.0%"
+
+MEASURE _Measures[Action RAG % Amber] =
+DIVIDE([Amber Actions], [Total Actions], 0)
+FORMAT STRING = "0.0%"
+
+MEASURE _Measures[Action RAG % Green] =
+DIVIDE([Green Actions], [Total Actions], 0)
+FORMAT STRING = "0.0%"

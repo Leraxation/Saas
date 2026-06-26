@@ -1,0 +1,72 @@
+// ============================================================
+// FOLDER: 6. Compliance Monitor
+// Purpose: Compliance and legal risk metrics for the
+//          Compliance Monitor section of the command center.
+// ============================================================
+
+// Open actions in compliance-sensitive functions.
+MEASURE _Measures[Compliance Actions Open] =
+COUNTROWS(
+    FILTER(
+        ACTION_TRACKER,
+        ACTION_TRACKER[Status]   = "Open" &&
+        ACTION_TRACKER[Function] IN {"Policy", "Legal", "HR Ops", "Employee Relations"}
+    )
+)
+FORMAT STRING = "0"
+
+// Red-status actions in compliance functions — highest risk.
+MEASURE _Measures[Compliance Red Actions] =
+COUNTROWS(
+    FILTER(
+        ACTION_TRACKER,
+        ACTION_TRACKER[RAG Status] = "Red" &&
+        ACTION_TRACKER[Function]   IN {"Policy", "Legal", "HR Ops", "Employee Relations"}
+    )
+)
+FORMAT STRING = "0"
+
+MEASURE _Measures[Contract Alerts Open] =
+COUNTROWS(
+    FILTER(
+        HR_ALERTS,
+        HR_ALERTS[Type]   = "Contract Expiry" &&
+        HR_ALERTS[Status] = "Open"
+    )
+)
+FORMAT STRING = "0"
+
+MEASURE _Measures[Policy Actions Open] =
+COUNTROWS(
+    FILTER(
+        ACTION_TRACKER,
+        ACTION_TRACKER[Status]   = "Open" &&
+        ACTION_TRACKER[Function] = "Policy"
+    )
+)
+FORMAT STRING = "0"
+
+MEASURE _Measures[Grievance Actions Open] =
+COUNTROWS(
+    FILTER(
+        ACTION_TRACKER,
+        ACTION_TRACKER[Status]   = "Open" &&
+        ACTION_TRACKER[Function] = "Employee Relations"
+    )
+)
+FORMAT STRING = "0"
+
+// Overall compliance health: % of compliance actions that are Green.
+// Use this for the traffic-light summary card.
+MEASURE _Measures[Compliance Health %] =
+VAR _Total = [Compliance Actions Open]
+VAR _Green = COUNTROWS(
+    FILTER(
+        ACTION_TRACKER,
+        ACTION_TRACKER[Status]     = "Open" &&
+        ACTION_TRACKER[RAG Status] = "Green" &&
+        ACTION_TRACKER[Function]   IN {"Policy", "Legal", "HR Ops", "Employee Relations"}
+    )
+)
+RETURN DIVIDE(_Green, _Total, 0)
+FORMAT STRING = "0.0%"

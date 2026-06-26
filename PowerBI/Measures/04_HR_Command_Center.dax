@@ -1,0 +1,95 @@
+// ============================================================
+// FOLDER: 4. HR Command Center
+// Purpose: All HR KPIs and alert counts for the HR section of
+//          the command center, including the Omanisation gauge.
+// ============================================================
+
+// ── Core HR Metrics (read from HR_METRICS snapshot) ──────────
+// Helper: extracts a single numeric value from the HR_METRICS table by metric name.
+// Not a measure itself — replicate the VAR pattern inline as shown below.
+
+MEASURE _Measures[Headcount] =
+VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = "Headcount")
+RETURN IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0)
+FORMAT STRING = "0"
+
+MEASURE _Measures[Omanisation %] =
+VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = "Omanisation %")
+RETURN DIVIDE(IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0), 100)
+FORMAT STRING = "0.0%"
+
+// Static year-end target — update to match governance decisions.
+MEASURE _Measures[Omanisation Target %] =
+0.48
+FORMAT STRING = "0.0%"
+
+// Gap drives the conditional colour on the gauge: red if gap > 5pp.
+MEASURE _Measures[Omanisation Gap] =
+[Omanisation Target %] - [Omanisation %]
+FORMAT STRING = "0.0%"
+
+MEASURE _Measures[Turnover Rate] =
+VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = "Turnover %")
+RETURN DIVIDE(IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0), 100)
+FORMAT STRING = "0.0%"
+
+MEASURE _Measures[Open Vacancies] =
+VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = "Open Vacancies")
+RETURN IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0)
+FORMAT STRING = "0"
+
+MEASURE _Measures[Employees on Probation] =
+VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = "Employees on Probation")
+RETURN IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0)
+FORMAT STRING = "0"
+
+MEASURE _Measures[Grievances Open] =
+VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = "Grievances Open")
+RETURN IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0)
+FORMAT STRING = "0"
+
+MEASURE _Measures[Performance Reviews Due] =
+VAR _Row = FILTER(HR_METRICS, HR_METRICS[Metric] = "Performance Reviews Due")
+RETURN IF(COUNTROWS(_Row) > 0, MAXX(_Row, HR_METRICS[Value]), 0)
+FORMAT STRING = "0"
+
+// ── HR Alert Counts (from HR_ALERTS table) ───────────────────
+MEASURE _Measures[Critical HR Alerts] =
+COUNTROWS(
+    FILTER(
+        HR_ALERTS,
+        HR_ALERTS[Alert Category] = "Critical" &&
+        HR_ALERTS[Status]         = "Open"
+    )
+)
+FORMAT STRING = "0"
+
+MEASURE _Measures[Contract Expiry Alerts] =
+COUNTROWS(
+    FILTER(
+        HR_ALERTS,
+        HR_ALERTS[Type]   = "Contract Expiry" &&
+        HR_ALERTS[Status] = "Open"
+    )
+)
+FORMAT STRING = "0"
+
+MEASURE _Measures[Probation Alerts] =
+COUNTROWS(
+    FILTER(
+        HR_ALERTS,
+        HR_ALERTS[Type]   = "Probation Ending" &&
+        HR_ALERTS[Status] = "Open"
+    )
+)
+FORMAT STRING = "0"
+
+MEASURE _Measures[Performance Alerts] =
+COUNTROWS(
+    FILTER(
+        HR_ALERTS,
+        HR_ALERTS[Type]   = "Performance Review Due" &&
+        HR_ALERTS[Status] = "Open"
+    )
+)
+FORMAT STRING = "0"

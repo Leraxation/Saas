@@ -1,0 +1,30 @@
+// ============================================================
+// FOLDER: 2. Outlook Intelligence
+// Purpose: Metrics for the Outlook / Email Intelligence panel.
+//          Drives the email triage section of the command center.
+// ============================================================
+
+// ── Urgent Emails ────────────────────────────────────────────
+MEASURE _Measures[Urgent Emails] =
+COUNTROWS(FILTER(EMAIL_INTELLIGENCE, EMAIL_INTELLIGENCE[Urgency Flag] = "Urgent"))
+FORMAT STRING = "0"
+
+// ── Pending Emails ───────────────────────────────────────────
+MEASURE _Measures[Pending Emails] =
+COUNTROWS(FILTER(EMAIL_INTELLIGENCE, EMAIL_INTELLIGENCE[Status] = "Pending"))
+FORMAT STRING = "0"
+
+// ── Emails Action Required ───────────────────────────────────
+MEASURE _Measures[Emails Action Required] =
+COUNTROWS(FILTER(EMAIL_INTELLIGENCE, EMAIL_INTELLIGENCE[Action Required] = "Yes"))
+FORMAT STRING = "0"
+
+// ── Follow-up Required ───────────────────────────────────────
+MEASURE _Measures[Follow-up Required] =
+COUNTROWS(FILTER(EMAIL_INTELLIGENCE, EMAIL_INTELLIGENCE[Follow-up] = "Follow-up Required"))
+FORMAT STRING = "0"
+
+// ── Total Emails ─────────────────────────────────────────────
+MEASURE _Measures[Total Emails] =
+COUNTROWS(EMAIL_INTELLIGENCE)
+FORMAT STRING = "0"
