@@ -40,7 +40,7 @@ function Skeleton() {
   );
 }
 
-export function TasksList() {
+export function TasksList({ isDemo = false }: { isDemo?: boolean }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [listId, setListId] = useState<string | null>(null);
   const [completing, setCompleting] = useState<Set<string>>(new Set());
@@ -66,6 +66,11 @@ export function TasksList() {
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
   async function completeTask(taskId: string) {
+    if (isDemo) {
+      // Optimistic UI in demo — no real API call
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      return;
+    }
     if (!listId) return;
     setCompleting((prev) => new Set(prev).add(taskId));
     try {

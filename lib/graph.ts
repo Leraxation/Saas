@@ -1,6 +1,11 @@
 import { getAccessToken } from "@/lib/token";
+import * as mock from "@/lib/mock-data";
 
 const BASE = "https://graph.microsoft.com/v1.0";
+
+function isDemo() {
+  return !process.env.MICROSOFT_REFRESH_TOKEN;
+}
 
 async function gFetch(path: string) {
   const token = await getAccessToken();
@@ -13,10 +18,12 @@ async function gFetch(path: string) {
 }
 
 export async function getMe() {
+  if (isDemo()) return mock.ME;
   return gFetch("/me?$select=displayName,givenName,mail,userPrincipalName");
 }
 
 export async function getEmails() {
+  if (isDemo()) return { value: mock.EMAILS };
   const params = new URLSearchParams({
     $top: "25",
     $select: "id,subject,from,receivedDateTime,isRead,bodyPreview",
@@ -26,6 +33,7 @@ export async function getEmails() {
 }
 
 export async function getCalendarEvents() {
+  if (isDemo()) return { value: mock.CALENDAR_EVENTS };
   const now = new Date().toISOString();
   const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   const params = new URLSearchParams({
@@ -39,13 +47,12 @@ export async function getCalendarEvents() {
 }
 
 export async function getTasksWithListId() {
+  if (isDemo()) return { tasks: mock.TASKS, listId: "demo-list" };
   const lists = await gFetch("/me/todo/lists");
   if (!lists.value?.length) return { tasks: [], listId: null };
-
   const defaultList =
     lists.value.find((l: { wellknownListName: string }) => l.wellknownListName === "defaultList") ??
     lists.value[0];
-
   const params = new URLSearchParams({
     $filter: "status ne 'completed'",
     $top: "20",
