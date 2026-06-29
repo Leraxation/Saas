@@ -1,10 +1,15 @@
 import { getAccessToken } from "@/lib/token";
+import { redisGet } from "@/lib/redis";
 import * as mock from "@/lib/mock-data";
 
 const BASE = "https://graph.microsoft.com/v1.0";
 
-function isDemo() {
-  return !process.env.MICROSOFT_REFRESH_TOKEN;
+type DataSource = "graph" | "redis" | "demo";
+
+function dataSource(): DataSource {
+  if (process.env.MICROSOFT_REFRESH_TOKEN) return "graph";
+  if (process.env.UPSTASH_REDIS_REST_URL) return "redis";
+  return "demo";
 }
 
 async function gFetch(path: string) {
@@ -17,13 +22,22 @@ async function gFetch(path: string) {
   return res.json();
 }
 
+export function getDataSource(): DataSource {
+  return dataSource();
+}
+
 export async function getMe() {
-  if (isDemo()) return mock.ME;
+  if (dataSource() !== "graph") return mock.ME;
   return gFetch("/me?$select=displayName,givenName,mail,userPrincipalName");
 }
 
 export async function getEmails() {
-  if (isDemo()) return { value: mock.EMAILS };
+  const src = dataSource();
+  if (src === "demo") return { value: mock.EMAILS };
+  if (src === "redis") {
+    const emails = await redisGet<unknown[]>("pa:emails");
+    return { value: emails ?? [] };
+  }
   const params = new URLSearchParams({
     $top: "25",
     $select: "id,subject,from,receivedDateTime,isRead,bodyPreview",
@@ -33,7 +47,12 @@ export async function getEmails() {
 }
 
 export async function getCalendarEvents() {
-  if (isDemo()) return { value: mock.CALENDAR_EVENTS };
+  const src = dataSource();
+  if (src === "demo") return { value: mock.CALENDAR_EVENTS };
+  if (src === "redis") {
+    const events = await redisGet<unknown[]>("pa:calendar");
+    return { value: events ?? [] };
+  }
   const now = new Date().toISOString();
   const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   const params = new URLSearchParams({
@@ -47,7 +66,12 @@ export async function getCalendarEvents() {
 }
 
 export async function getTasksWithListId() {
-  if (isDemo()) return { tasks: mock.TASKS, listId: "demo-list" };
+  const src = dataSource();
+  if (src === "demo") return { tasks: mock.TASKS, listId: "demo-list" };
+  if (src === "redis") {
+    const tasks = await redisGet<unknown[]>("pa:tasks");
+    return { tasks: tasks ?? [], listId: null };
+  }
   const lists = await gFetch("/me/todo/lists");
   if (!lists.value?.length) return { tasks: [], listId: null };
   const defaultList =
