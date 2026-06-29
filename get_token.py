@@ -2,8 +2,8 @@ import msal
 
 # Fill these in from your Azure App Registration
 CLIENT_ID = "YOUR_CLIENT_ID_HERE"
-CLIENT_SECRET = "YOUR_CLIENT_SECRET_HERE"
-TENANT_ID = "common"  # Use 'common' for personal/multi-tenant apps
+CLIENT_SECRET = ""  # Not needed for device flow
+TENANT_ID = "YOUR_TENANT_ID_HERE"
 AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
 SCOPE = ["Mail.Read", "Calendars.Read", "Tasks.ReadWrite", "User.Read"]
 # Note: MSAL adds offline_access automatically — do not include it manually
