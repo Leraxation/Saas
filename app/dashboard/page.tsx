@@ -1,4 +1,6 @@
 import { getMe, getDataSource } from "@/lib/graph";
+
+export const dynamic = "force-dynamic";
 import { EmailsList } from "@/components/EmailsList";
 import { CalendarWidget } from "@/components/CalendarWidget";
 import { TasksList } from "@/components/TasksList";
