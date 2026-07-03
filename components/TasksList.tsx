@@ -74,12 +74,23 @@ export function TasksList({ isDemo = false }: { isDemo?: boolean }) {
     if (!listId) return;
     setCompleting((prev) => new Set(prev).add(taskId));
     try {
-      await fetch("/api/outlook/tasks/complete", {
+      const res = await fetch("/api/outlook/tasks/complete", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ listId, taskId }),
       });
+      
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: "Failed to complete task" }));
+        throw new Error(error.error || "Failed to complete task");
+      }
+      
+      // Only remove from UI if API call succeeded
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to complete task";
+      setError(message);
+      // Error notification could be improved with a toast here
     } finally {
       setCompleting((prev) => {
         const next = new Set(prev);
