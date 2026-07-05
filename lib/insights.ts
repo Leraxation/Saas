@@ -93,3 +93,58 @@ export function noiseSummary(emails: Email[]): { automated: number; total: numbe
     total: emails.length,
   };
 }
+
+export interface FocusWindow {
+  start: Date;
+  end: Date;
+  minutes: number;
+}
+
+const WORKDAY_START_HOUR = 8;
+const WORKDAY_END_HOUR = 18;
+const MIN_FOCUS_MINUTES = 45;
+
+/** Find open gaps in today's calendar big enough for deep work. */
+export function findFocusWindows(events: CalendarEvent[]): FocusWindow[] {
+  const now = new Date();
+  const dayStart = new Date(now);
+  dayStart.setHours(WORKDAY_START_HOUR, 0, 0, 0);
+  const dayEnd = new Date(now);
+  dayEnd.setHours(WORKDAY_END_HOUR, 0, 0, 0);
+
+  const windowStart = now > dayStart ? now : dayStart;
+  if (windowStart >= dayEnd) return [];
+
+  // Today's timed meetings as busy intervals, merged where they overlap
+  const busy = events
+    .filter((e) => !e.isAllDay)
+    .map((e) => ({ start: new Date(e.start.dateTime), end: new Date(e.end.dateTime) }))
+    .filter((b) => b.end > windowStart && b.start < dayEnd)
+    .sort((a, b) => a.start.getTime() - b.start.getTime());
+
+  const merged: { start: Date; end: Date }[] = [];
+  for (const b of busy) {
+    const last = merged[merged.length - 1];
+    if (last && b.start <= last.end) {
+      if (b.end > last.end) last.end = b.end;
+    } else {
+      merged.push({ ...b });
+    }
+  }
+
+  const windows: FocusWindow[] = [];
+  let cursor = windowStart;
+  for (const b of merged) {
+    if (b.start > cursor) {
+      const minutes = Math.floor((b.start.getTime() - cursor.getTime()) / 60_000);
+      if (minutes >= MIN_FOCUS_MINUTES) windows.push({ start: cursor, end: b.start, minutes });
+    }
+    if (b.end > cursor) cursor = b.end;
+  }
+  if (dayEnd > cursor) {
+    const minutes = Math.floor((dayEnd.getTime() - cursor.getTime()) / 60_000);
+    if (minutes >= MIN_FOCUS_MINUTES) windows.push({ start: cursor, end: dayEnd, minutes });
+  }
+
+  return windows.sort((a, b) => b.minutes - a.minutes).slice(0, 3);
+}

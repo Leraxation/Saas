@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useDashboard } from "@/components/DashboardProvider";
-import { rankEmails, findConflicts, noiseSummary } from "@/lib/insights";
+import { rankEmails, findConflicts, noiseSummary, findFocusWindows } from "@/lib/insights";
 
 function formatTime(dateTime: string): string {
   return new Date(dateTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -14,6 +14,7 @@ export function InsightsPanel() {
   const priorities = useMemo(() => rankEmails(emails), [emails]);
   const conflicts = useMemo(() => findConflicts(events), [events]);
   const noise = useMemo(() => noiseSummary(emails), [emails]);
+  const focusWindows = useMemo(() => findFocusWindows(events), [events]);
 
   if (loading) {
     return (
@@ -90,6 +91,33 @@ export function InsightsPanel() {
           <p className="px-4 py-5 text-center text-xs text-gray-400">
             Nothing urgent — no conflicts and no high-priority unread emails. 👌
           </p>
+        )}
+
+        {focusWindows.length > 0 && (
+          <div className="px-4 py-3">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+              Focus time today
+            </p>
+            <div className="space-y-1.5">
+              {focusWindows.map((w, i) => (
+                <div key={i} className="flex items-center gap-2.5">
+                  <svg className={`w-3.5 h-3.5 flex-shrink-0 ${i === 0 ? "text-emerald-500" : "text-gray-300"}`}
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-sm text-gray-700">
+                    {formatTime(w.start.toISOString())} – {formatTime(w.end.toISOString())}
+                    <span className="text-xs text-gray-400 ml-2">
+                      {w.minutes >= 60
+                        ? `${Math.floor(w.minutes / 60)}h${w.minutes % 60 ? ` ${w.minutes % 60}m` : ""} free`
+                        : `${w.minutes}m free`}
+                      {i === 0 && " · best for deep work"}
+                    </span>
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {noise.total > 0 && noise.automated > 0 && (
