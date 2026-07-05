@@ -6,14 +6,14 @@ const BASE = "https://graph.microsoft.com/v1.0";
 
 type DataSource = "graph" | "redis" | "demo";
 
-function dataSource(): DataSource {
+function envDataSource(): DataSource {
   if (process.env.MICROSOFT_REFRESH_TOKEN) return "graph";
   if (process.env.UPSTASH_REDIS_REST_URL) return "redis";
   return "demo";
 }
 
-async function gFetch(path: string) {
-  const token = await getAccessToken();
+async function gFetch(path: string, userToken?: string) {
+  const token = userToken ?? (await getAccessToken());
   const res = await fetch(`${BASE}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
     next: { revalidate: 0 },
@@ -22,12 +22,25 @@ async function gFetch(path: string) {
   return res.json();
 }
 
+export async function gMutate(path: string, method: string, body: unknown, userToken: string) {
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${userToken}`,
+      "Content-Type": "application/json",
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`Graph ${res.status}: ${path}`);
+  return res.status === 204 ? null : res.json();
+}
+
 export function getDataSource(): DataSource {
-  return dataSource();
+  return envDataSource();
 }
 
 export async function getLastSyncedAt(): Promise<number | null> {
-  if (dataSource() !== "redis") return null;
+  if (envDataSource() !== "redis") return null;
   try {
     return await redisGet<number>("pa:syncedAt");
   } catch {
@@ -35,15 +48,16 @@ export async function getLastSyncedAt(): Promise<number | null> {
   }
 }
 
-export async function getMe() {
-  if (dataSource() !== "graph") return mock.ME;
+export async function getMe(userToken?: string) {
+  if (userToken) return gFetch("/me?$select=displayName,givenName,mail,userPrincipalName", userToken);
+  if (envDataSource() !== "graph") return mock.ME;
   return gFetch("/me?$select=displayName,givenName,mail,userPrincipalName");
 }
 
-export async function getEmails() {
-  const src = dataSource();
-  if (src === "demo") return { value: mock.EMAILS };
-  if (src === "redis") {
+export async function getEmails(userToken?: string) {
+  const src = envDataSource();
+  if (!userToken && src === "demo") return { value: mock.EMAILS };
+  if (!userToken && src === "redis") {
     const emails = await redisGet<unknown[]>("pa:emails");
     return { value: emails ?? [] };
   }
@@ -52,13 +66,13 @@ export async function getEmails() {
     $select: "id,subject,from,receivedDateTime,isRead,bodyPreview",
     $orderby: "receivedDateTime desc",
   });
-  return gFetch(`/me/mailFolders/inbox/messages?${params}`);
+  return gFetch(`/me/mailFolders/inbox/messages?${params}`, userToken);
 }
 
-export async function getCalendarEvents() {
-  const src = dataSource();
-  if (src === "demo") return { value: mock.CALENDAR_EVENTS };
-  if (src === "redis") {
+export async function getCalendarEvents(userToken?: string) {
+  const src = envDataSource();
+  if (!userToken && src === "demo") return { value: mock.CALENDAR_EVENTS };
+  if (!userToken && src === "redis") {
     const events = await redisGet<unknown[]>("pa:calendar");
     return { value: events ?? [] };
   }
@@ -71,17 +85,17 @@ export async function getCalendarEvents() {
     $select: "id,subject,start,end,location,organizer,isAllDay",
     $orderby: "start/dateTime",
   });
-  return gFetch(`/me/calendarView?${params}`);
+  return gFetch(`/me/calendarView?${params}`, userToken);
 }
 
-export async function getTasksWithListId() {
-  const src = dataSource();
-  if (src === "demo") return { tasks: mock.TASKS, listId: "demo-list" };
-  if (src === "redis") {
+export async function getTasksWithListId(userToken?: string) {
+  const src = envDataSource();
+  if (!userToken && src === "demo") return { tasks: mock.TASKS, listId: "demo-list" };
+  if (!userToken && src === "redis") {
     const tasks = await redisGet<unknown[]>("pa:tasks");
     return { tasks: tasks ?? [], listId: null };
   }
-  const lists = await gFetch("/me/todo/lists");
+  const lists = await gFetch("/me/todo/lists", userToken);
   if (!lists.value?.length) return { tasks: [], listId: null };
   const defaultList =
     lists.value.find((l: { wellknownListName: string }) => l.wellknownListName === "defaultList") ??
@@ -91,6 +105,6 @@ export async function getTasksWithListId() {
     $top: "20",
     $orderby: "createdDateTime desc",
   });
-  const tasks = await gFetch(`/me/todo/lists/${defaultList.id}/tasks?${params}`);
+  const tasks = await gFetch(`/me/todo/lists/${defaultList.id}/tasks?${params}`, userToken);
   return { tasks: tasks.value ?? [], listId: defaultList.id as string };
 }

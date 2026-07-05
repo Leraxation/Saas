@@ -1,3 +1,5 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { getMe, getDataSource, getLastSyncedAt } from "@/lib/graph";
 import { StatsRow } from "@/components/StatsRow";
 import { EmailsList } from "@/components/EmailsList";
@@ -17,13 +19,15 @@ function syncedAgo(ts: number): string {
 }
 
 export default async function DashboardPage() {
+  const session = await getServerSession(authOptions);
+  const isLive = Boolean(session?.accessToken);
   const source = getDataSource();
-  const isDemo = source === "demo";
-  const isPowerAutomate = source === "redis";
+  const isDemo = !isLive && source === "demo";
+  const isPowerAutomate = !isLive && source === "redis";
 
   let firstName = "there";
   try {
-    const me = await getMe();
+    const me = await getMe(session?.accessToken);
     firstName = me.givenName ?? me.displayName?.split(" ")[0] ?? "there";
   } catch {}
 

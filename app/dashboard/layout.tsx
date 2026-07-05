@@ -1,12 +1,16 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { getDataSource } from "@/lib/graph";
 import { DashboardProvider } from "@/components/DashboardProvider";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { JarvisAssistant } from "@/components/JarvisAssistant";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const session = await getServerSession(authOptions);
   const source = getDataSource();
-  const readOnly = source !== "graph";
+  // Signed-in users (or a server-side refresh token) get full read/write
+  const readOnly = !session?.accessToken && source !== "graph";
   const aiEnabled = Boolean(process.env.ANTHROPIC_API_KEY);
 
   return (

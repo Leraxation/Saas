@@ -47,6 +47,7 @@ interface DashboardData {
   readOnly: boolean;
   refresh: () => void;
   completeTask: (taskId: string) => Promise<void>;
+  markEmailRead: (emailId: string) => Promise<void>;
 }
 
 const Ctx = createContext<DashboardData | null>(null);
@@ -125,6 +126,19 @@ export function DashboardProvider({
     [readOnly, listId]
   );
 
+  const markEmailRead = useCallback(
+    async (emailId: string) => {
+      setEmails((prev) => prev.map((e) => (e.id === emailId ? { ...e, isRead: true } : e)));
+      if (readOnly) return;
+      await fetch("/api/outlook/emails/read", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: emailId }),
+      });
+    },
+    [readOnly]
+  );
+
   return (
     <Ctx.Provider
       value={{
@@ -138,6 +152,7 @@ export function DashboardProvider({
         readOnly,
         refresh,
         completeTask,
+        markEmailRead,
       }}
     >
       {children}
