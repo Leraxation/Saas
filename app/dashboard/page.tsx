@@ -4,6 +4,8 @@ import { StatsRow } from "@/components/StatsRow";
 import { EmailsList } from "@/components/EmailsList";
 import { CalendarWidget } from "@/components/CalendarWidget";
 import { TasksList } from "@/components/TasksList";
+import { InsightsPanel } from "@/components/InsightsPanel";
+import { AiBriefing } from "@/components/AiBriefing";
 
 export const dynamic = "force-dynamic";
 
@@ -67,11 +69,16 @@ export default async function DashboardPage() {
         <StatsRow />
       </div>
 
+      <div className="mb-6">
+        <AiBriefing enabled={Boolean(process.env.ANTHROPIC_API_KEY)} />
+      </div>
+
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
           <EmailsList />
         </div>
         <div className="flex flex-col gap-6">
+          <InsightsPanel />
           <CalendarWidget />
           <TasksList />
         </div>
