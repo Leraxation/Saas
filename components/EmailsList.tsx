@@ -43,7 +43,7 @@ function Skeleton() {
 const AVATAR_COLORS = ["bg-violet-500", "bg-blue-500", "bg-emerald-500", "bg-orange-500", "bg-pink-500"];
 
 export function EmailsList() {
-  const { emails, loading, error, refresh } = useDashboard();
+  const { emails, loading, error, refresh, markEmailRead, readOnly } = useDashboard();
   const [query, setQuery] = useState("");
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -148,7 +148,11 @@ export function EmailsList() {
             return (
               <div key={email.id}>
                 <button
-                  onClick={() => setExpandedId(expanded ? null : email.id)}
+                  onClick={() => {
+                    setExpandedId(expanded ? null : email.id);
+                    // Opening an unread email marks it read in Outlook (live mode)
+                    if (!expanded && !email.isRead && !readOnly) markEmailRead(email.id);
+                  }}
                   className={`w-full text-left px-5 py-3.5 hover:bg-gray-50 transition-colors ${
                     !email.isRead ? "bg-blue-50/30" : ""
                   }`}

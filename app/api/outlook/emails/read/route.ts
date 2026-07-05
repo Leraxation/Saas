@@ -5,7 +5,9 @@ import { gMutate } from "@/lib/graph";
 import { getAccessToken } from "@/lib/token";
 
 export async function PATCH(request: NextRequest) {
-  const { listId, taskId } = await request.json();
+  const { id } = await request.json();
+  if (!id) return NextResponse.json({ error: "Missing email id" }, { status: 400 });
+
   try {
     const session = await getServerSession(authOptions);
     const token =
@@ -14,12 +16,12 @@ export async function PATCH(request: NextRequest) {
 
     if (!token) {
       return NextResponse.json(
-        { error: "Sign in with Microsoft to complete tasks." },
+        { error: "Sign in with Microsoft to mark emails read." },
         { status: 401 }
       );
     }
 
-    await gMutate(`/me/todo/lists/${listId}/tasks/${taskId}`, "PATCH", { status: "completed" }, token);
+    await gMutate(`/me/messages/${id}`, "PATCH", { isRead: true }, token);
     return NextResponse.json({ success: true });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Unknown error";
