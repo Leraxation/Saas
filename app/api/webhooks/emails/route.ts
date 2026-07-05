@@ -8,5 +8,6 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const emails = body.value ?? body;
   await redisSet("pa:emails", emails);
+  await redisSet("pa:syncedAt", Date.now());
   return NextResponse.json({ ok: true, count: emails.length });
 }

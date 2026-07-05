@@ -26,6 +26,15 @@ export function getDataSource(): DataSource {
   return dataSource();
 }
 
+export async function getLastSyncedAt(): Promise<number | null> {
+  if (dataSource() !== "redis") return null;
+  try {
+    return await redisGet<number>("pa:syncedAt");
+  } catch {
+    return null;
+  }
+}
+
 export async function getMe() {
   if (dataSource() !== "graph") return mock.ME;
   return gFetch("/me?$select=displayName,givenName,mail,userPrincipalName");

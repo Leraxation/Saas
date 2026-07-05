@@ -8,5 +8,6 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const events = body.value ?? body;
   await redisSet("pa:calendar", events);
+  await redisSet("pa:syncedAt", Date.now());
   return NextResponse.json({ ok: true, count: events.length });
 }
