@@ -19,7 +19,7 @@ const navItems = [
   },
   {
     label: "Emails",
-    href: "/dashboard",
+    href: "/dashboard/emails",
     icon: (
       <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round"
@@ -29,7 +29,7 @@ const navItems = [
   },
   {
     label: "Calendar",
-    href: "/dashboard",
+    href: "/dashboard/calendar",
     icon: (
       <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round"
@@ -39,7 +39,7 @@ const navItems = [
   },
   {
     label: "Tasks",
-    href: "/dashboard",
+    href: "/dashboard/tasks",
     icon: (
       <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round"
@@ -83,7 +83,7 @@ export function Sidebar() {
 
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-hidden">
         {navItems.map((item) => {
-          const isActive = pathname === item.href && item.label === "Dashboard";
+          const isActive = pathname === item.href;
           return (
             <Link
               key={item.label}

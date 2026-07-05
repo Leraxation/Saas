@@ -1,5 +1,4 @@
 import { getMe, getDataSource, getLastSyncedAt } from "@/lib/graph";
-import { DashboardProvider } from "@/components/DashboardProvider";
 import { StatsRow } from "@/components/StatsRow";
 import { EmailsList } from "@/components/EmailsList";
 import { CalendarWidget } from "@/components/CalendarWidget";
@@ -21,7 +20,6 @@ export default async function DashboardPage() {
   const source = getDataSource();
   const isDemo = source === "demo";
   const isPowerAutomate = source === "redis";
-  const readOnly = isDemo || isPowerAutomate;
 
   let firstName = "there";
   try {
@@ -35,7 +33,7 @@ export default async function DashboardPage() {
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <DashboardProvider readOnly={readOnly}>
+    <div>
       {isDemo && (
         <div className="mb-5 flex items-center gap-2.5 bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3 rounded-xl">
           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -83,6 +81,6 @@ export default async function DashboardPage() {
           <TasksList />
         </div>
       </div>
-    </DashboardProvider>
+    </div>
   );
 }
