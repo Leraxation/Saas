@@ -2,7 +2,7 @@
 
 import { signIn, signOut, useSession } from "next-auth/react";
 
-export function Header() {
+export function Header({ authConfigured = false }: { authConfigured?: boolean }) {
   const { data: session, status } = useSession();
   const user = session?.user;
   const initials =
@@ -48,6 +48,13 @@ export function Header() {
               </svg>
             </button>
           </>
+        ) : !authConfigured ? (
+          <span
+            title="Add AZURE_AD_* and NEXTAUTH_* environment variables to enable sign-in"
+            className="text-xs text-gray-400 border border-dashed border-gray-300 rounded-lg px-3 py-2"
+          >
+            Microsoft sign-in not configured
+          </span>
         ) : (
           <button
             onClick={() => signIn("azure-ad", { callbackUrl: "/dashboard" })}

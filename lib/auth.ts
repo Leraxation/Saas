@@ -1,6 +1,26 @@
-import type { NextAuthOptions } from "next-auth";
+import type { NextAuthOptions, Session } from "next-auth";
+import { getServerSession } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import AzureADProvider from "next-auth/providers/azure-ad";
+
+/** True when everything sign-in needs is configured. */
+export function authConfigured(): boolean {
+  return Boolean(
+    process.env.AZURE_AD_CLIENT_ID &&
+      process.env.AZURE_AD_CLIENT_SECRET &&
+      process.env.NEXTAUTH_SECRET
+  );
+}
+
+/** Session lookup that never throws — returns null when auth isn't configured yet. */
+export async function getSessionSafe(): Promise<Session | null> {
+  if (!authConfigured()) return null;
+  try {
+    return await getServerSession(authOptions);
+  } catch {
+    return null;
+  }
+}
 
 const TENANT = process.env.AZURE_AD_TENANT_ID ?? "common";
 

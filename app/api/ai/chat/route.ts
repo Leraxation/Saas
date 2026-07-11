@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSessionSafe } from "@/lib/auth";
 import { getEmails, getCalendarEvents, getTasksWithListId } from "@/lib/graph";
 
 export const dynamic = "force-dynamic";
@@ -40,7 +39,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No messages provided." }, { status: 400 });
     }
 
-    const session = await getServerSession(authOptions);
+    const session = await getSessionSafe();
     const userToken = session?.accessToken;
     const [emailsData, calendarData, tasksData] = await Promise.all([
       getEmails(userToken),
