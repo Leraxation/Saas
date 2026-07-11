@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSessionSafe } from "@/lib/auth";
 import { getMe, getDataSource, getLastSyncedAt } from "@/lib/graph";
 import { StatsRow } from "@/components/StatsRow";
 import { EmailsList } from "@/components/EmailsList";
@@ -19,7 +18,7 @@ function syncedAgo(ts: number): string {
 }
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSessionSafe();
   const isLive = Boolean(session?.accessToken);
   const source = getDataSource();
   const isDemo = !isLive && source === "demo";

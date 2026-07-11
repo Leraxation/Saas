@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSessionSafe } from "@/lib/auth";
 import { getCalendarEvents } from "@/lib/graph";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSessionSafe();
     const data = await getCalendarEvents(session?.accessToken);
     return NextResponse.json(data);
   } catch (e) {

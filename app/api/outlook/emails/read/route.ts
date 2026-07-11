@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSessionSafe } from "@/lib/auth";
 import { gMutate } from "@/lib/graph";
 import { getAccessToken } from "@/lib/token";
 
@@ -9,7 +8,7 @@ export async function PATCH(request: NextRequest) {
   if (!id) return NextResponse.json({ error: "Missing email id" }, { status: 400 });
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSessionSafe();
     const token =
       session?.accessToken ??
       (process.env.MICROSOFT_REFRESH_TOKEN ? await getAccessToken() : null);
