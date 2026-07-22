@@ -18,6 +18,18 @@ The app automatically picks a data source based on which environment variables a
 
 No login screen in any mode — the dashboard opens directly.
 
+## Bonus: DJ Mixer (`/mixer`)
+
+A dual-deck DJ mixer for YouTube, at **`/mixer`**. Paste any YouTube link on each deck — regular `watch` URLs, `youtu.be` short links, **Shorts/reels**, embeds, live URLs, or YouTube Music links — and mix:
+
+- Equal-power **crossfader** + master volume + per-deck level faders
+- **Tempo** control (0.25×–2×) with hold-to-nudge pitch bend and tempo **Sync** between decks
+- **Tap-BPM** per deck (Sync matches effective BPM when both decks have a tapped BPM)
+- Cue point, 4 **hot cues** per deck, and **loop** in/out with ½×/2× resizing
+- Keyboard shortcuts (shown at the bottom of the page)
+
+Playback uses the official YouTube IFrame Player API — nothing is downloaded or re-hosted.
+
 ## Quick start (demo mode)
 
 ```bash

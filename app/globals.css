@@ -40,3 +40,47 @@ body {
     animation: none;
   }
 }
+
+/* DJ mixer faders */
+input[type="range"].fader {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  background: #27272a;
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"].fader:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+input[type="range"].fader::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 22px;
+  border-radius: 4px;
+  background: var(--fader-color, #a1a1aa);
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--fader-color, #a1a1aa) 60%, transparent);
+}
+input[type="range"].fader::-moz-range-thumb {
+  width: 16px;
+  height: 22px;
+  border-radius: 4px;
+  background: var(--fader-color, #a1a1aa);
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--fader-color, #a1a1aa) 60%, transparent);
+}
+input[type="range"].fader-lg {
+  height: 10px;
+}
+input[type="range"].fader-lg::-webkit-slider-thumb {
+  width: 22px;
+  height: 30px;
+}
+input[type="range"].fader-lg::-moz-range-thumb {
+  width: 22px;
+  height: 30px;
+}
