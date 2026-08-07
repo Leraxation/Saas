@@ -47,10 +47,15 @@ export function DepartmentPanel({
   const [thinking, setThinking] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  // Tracks which department is currently displayed so a response for a department
+  // the user has since switched away from can't overwrite the new one's transcript.
+  const activeDeptRef = useRef(department.id);
 
   useEffect(() => {
+    activeDeptRef.current = department.id;
     setMessages([]);
     setInput("");
+    setThinking(false);
     inputRef.current?.focus();
   }, [department.id]);
 
@@ -61,6 +66,7 @@ export function DepartmentPanel({
   async function send(text: string) {
     const content = text.trim();
     if (!content || thinking) return;
+    const requestDeptId = department.id;
     const next: Msg[] = [...messages, { role: "user", content }];
     setMessages(next);
     setInput("");
@@ -69,18 +75,22 @@ export function DepartmentPanel({
       const res = await fetch("/api/ai/department-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ departmentId: department.id, messages: next }),
+        body: JSON.stringify({ departmentId: requestDeptId, messages: next }),
       });
       const data = await res.json();
+      if (activeDeptRef.current !== requestDeptId) return;
       setMessages([
         ...next,
         { role: "assistant", content: res.ok ? data.reply : `⚠️ ${data.error ?? "Something went wrong."}` },
       ]);
     } catch {
+      if (activeDeptRef.current !== requestDeptId) return;
       setMessages([...next, { role: "assistant", content: "⚠️ Network error — try again." }]);
     } finally {
-      setThinking(false);
-      inputRef.current?.focus();
+      if (activeDeptRef.current === requestDeptId) {
+        setThinking(false);
+        inputRef.current?.focus();
+      }
     }
   }
 

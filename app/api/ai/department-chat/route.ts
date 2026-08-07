@@ -1,12 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getDepartment } from "@/lib/departments";
+import { checkRateLimit, redisConfigured } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
+
+const MAX_MESSAGES = 12;
+const MAX_MESSAGE_CHARS = 4000;
+const RATE_LIMIT_PER_MINUTE = 12;
 
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+}
+
+function isValidMessages(messages: unknown): messages is ChatMessage[] {
+  if (!Array.isArray(messages) || messages.length === 0 || messages.length > MAX_MESSAGES) {
+    return false;
+  }
+  return messages.every(
+    (m): m is ChatMessage =>
+      typeof m === "object" &&
+      m !== null &&
+      (m.role === "user" || m.role === "assistant") &&
+      typeof m.content === "string" &&
+      m.content.length > 0 &&
+      m.content.length <= MAX_MESSAGE_CHARS
+  );
+}
+
+function clientIp(request: NextRequest): string {
+  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
 }
 
 function buildSystemPrompt(departmentId: string): string | null {
@@ -37,17 +61,31 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    if (redisConfigured()) {
+      const within = await checkRateLimit(
+        `ratelimit:department-chat:${clientIp(request)}`,
+        RATE_LIMIT_PER_MINUTE,
+        60
+      );
+      if (!within) {
+        return NextResponse.json(
+          { error: "Too many requests — try again in a minute." },
+          { status: 429 }
+        );
+      }
+    }
+
     const { departmentId, messages } = (await request.json()) as {
       departmentId: string;
-      messages: ChatMessage[];
+      messages: unknown;
     };
 
     const system = buildSystemPrompt(departmentId);
     if (!system) {
       return NextResponse.json({ error: "Unknown department." }, { status: 400 });
     }
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return NextResponse.json({ error: "No messages provided." }, { status: 400 });
+    if (!isValidMessages(messages)) {
+      return NextResponse.json({ error: "Invalid message payload." }, { status: 400 });
     }
 
     const client = new Anthropic();
@@ -56,7 +94,7 @@ export async function POST(request: NextRequest) {
       model: "claude-opus-4-8",
       max_tokens: 4096,
       system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
-      messages: messages.slice(-12).map((m) => ({
+      messages: messages.map((m) => ({
         role: m.role,
         content: m.content,
       })),
