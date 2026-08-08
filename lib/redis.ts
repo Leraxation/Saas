@@ -27,11 +27,17 @@ export function redisConfigured(): boolean {
 /**
  * Fixed-window counter built from GET/SET only (some Upstash tokens are scoped to
  * disallow INCR/EXPIRE). Not atomic — a lightweight best-effort limiter is fine here.
+ * The expiry is set only when the window starts and preserved (keepTtl) on every
+ * later write, so steady traffic can't keep pushing the window's end forward.
  */
 export async function checkRateLimit(key: string, limit: number, windowSeconds: number): Promise<boolean> {
   const client = getClient();
   const current = (await client.get<number>(key)) ?? 0;
   if (current >= limit) return false;
-  await client.set(key, current + 1, { ex: windowSeconds });
+  if (current === 0) {
+    await client.set(key, 1, { ex: windowSeconds });
+  } else {
+    await client.set(key, current + 1, { keepTtl: true });
+  }
   return true;
 }
