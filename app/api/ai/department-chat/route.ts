@@ -62,16 +62,22 @@ export async function POST(request: NextRequest) {
 
   try {
     if (redisConfigured()) {
-      const within = await checkRateLimit(
-        `ratelimit:department-chat:${clientIp(request)}`,
-        RATE_LIMIT_PER_MINUTE,
-        60
-      );
-      if (!within) {
-        return NextResponse.json(
-          { error: "Too many requests — try again in a minute." },
-          { status: 429 }
+      // Rate limiting is a best-effort cost guard, not core functionality — never let it
+      // take down chat itself (e.g. a Redis token scoped without write access).
+      try {
+        const within = await checkRateLimit(
+          `ratelimit:department-chat:${clientIp(request)}`,
+          RATE_LIMIT_PER_MINUTE,
+          60
         );
+        if (!within) {
+          return NextResponse.json(
+            { error: "Too many requests — try again in a minute." },
+            { status: 429 }
+          );
+        }
+      } catch (rateLimitError) {
+        console.error("department-chat rate limit check failed, failing open:", rateLimitError);
       }
     }
 
