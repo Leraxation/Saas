@@ -24,11 +24,20 @@ export function redisConfigured(): boolean {
   return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
 }
 
-/** Fixed-window counter. Returns true if the caller is still within `limit` requests per `windowSeconds`. */
+/**
+ * Fixed-window counter built from GET/SET only (some Upstash tokens are scoped to
+ * disallow INCR/EXPIRE). Not atomic — a lightweight best-effort limiter is fine here.
+ * The expiry is set only when the window starts and preserved (keepTtl) on every
+ * later write, so steady traffic can't keep pushing the window's end forward.
+ */
 export async function checkRateLimit(key: string, limit: number, windowSeconds: number): Promise<boolean> {
-  const count = await getClient().incr(key);
-  if (count === 1) {
-    await getClient().expire(key, windowSeconds);
+  const client = getClient();
+  const current = (await client.get<number>(key)) ?? 0;
+  if (current >= limit) return false;
+  if (current === 0) {
+    await client.set(key, 1, { ex: windowSeconds });
+  } else {
+    await client.set(key, current + 1, { keepTtl: true });
   }
-  return count <= limit;
+  return true;
 }
