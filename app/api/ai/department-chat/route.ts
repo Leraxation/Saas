@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getDepartment } from "@/lib/departments";
+import { getDepartmentData } from "@/lib/hrData";
 import { checkRateLimit, redisConfigured } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
@@ -33,9 +34,17 @@ function clientIp(request: NextRequest): string {
   return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
 }
 
-function buildSystemPrompt(departmentId: string): string | null {
+async function buildSystemPrompt(departmentId: string): Promise<string | null> {
   const dept = getDepartment(departmentId);
   if (!dept) return null;
+
+  const data = await getDepartmentData(departmentId);
+  const dataBlock = data
+    ? `Current data for your function (treat as ground truth, this is real — not a placeholder):
+- Headcount: ${data.headcountFilled} filled, ${data.headcountOpen} open role(s)
+- Open items: ${data.openItems.length ? data.openItems.join("; ") : "none logged"}
+${data.note ? `- Note: ${data.note}` : ""}${data.updatedAt ? `\n(last updated ${data.updatedAt})` : "\n(this is the starting baseline — no edits logged yet)"}`
+    : "You have no live data connected for this function yet — don't invent specific numbers or records.";
 
   return `You are the AI agent for the "${dept.name}" function inside Oman Air's People Department, reporting up to the CPO. The human owner of this function is ${dept.owner === "Vacant" ? "currently vacant — you are standing in until it's filled" : dept.owner}.
 
@@ -43,11 +52,13 @@ Purpose: ${dept.purpose}
 
 Your remit covers exactly these responsibilities: ${dept.responsibilities.join(", ")}.
 
+${dataBlock}
+
 Personality: a sharp, professional HR specialist in this domain — practical, concise, never generic corporate filler.
 
 Rules:
 - Stay inside your remit. If a question belongs to a different People Department function, say so plainly and name which one, rather than answering outside your lane.
-- You have no live company data connected yet — don't invent specific employee names, numbers, or records. Speak in terms of process, policy, and best practice, and say when something would require real data you don't have.
+- Ground answers about headcount/open items/status in the data above. For anything beyond it (specific employee names, documents, historical records), say plainly that you don't have that connected yet rather than inventing it.
 - Be concise: most replies under 120 words unless the user asks you to draft something (a policy, message, plan) — then give the full draft in a quoted block.
 - Use markdown sparingly (bold for emphasis, bullets for lists).`;
 }
@@ -86,7 +97,7 @@ export async function POST(request: NextRequest) {
       messages: unknown;
     };
 
-    const system = buildSystemPrompt(departmentId);
+    const system = await buildSystemPrompt(departmentId);
     if (!system) {
       return NextResponse.json({ error: "Unknown department." }, { status: 400 });
     }
