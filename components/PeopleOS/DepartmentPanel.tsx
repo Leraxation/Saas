@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Department } from "@/lib/departments";
+import { DepartmentStats } from "@/components/PeopleOS/DepartmentStats";
 
 interface Msg {
   role: "user" | "assistant";
@@ -131,6 +132,8 @@ export function DepartmentPanel({
           ))}
         </div>
       </div>
+
+      <DepartmentStats department={department} />
 
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
         {!enabled ? (
