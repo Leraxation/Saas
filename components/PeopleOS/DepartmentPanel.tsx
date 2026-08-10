@@ -144,8 +144,20 @@ export function DepartmentPanel({
         ) : messages.length === 0 ? (
           <div className="h-full flex flex-col justify-end">
             <p className="text-sm text-slate-400 mb-3">
-              Ask the {department.name} agent anything within its remit.
+              Ask the {department.name} agent anything within its remit, or try:
             </p>
+            <div className="flex flex-col gap-2">
+              {department.quickPrompts.map((prompt) => (
+                <button
+                  key={prompt}
+                  onClick={() => send(prompt)}
+                  className="text-left text-sm bg-slate-800/70 hover:bg-slate-800 text-slate-200
+                    px-3 py-2 rounded-lg transition-colors border border-slate-700/50"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </div>
         ) : (
           <>

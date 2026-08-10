@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { CENTER, DEPARTMENTS, type Department } from "@/lib/departments";
 
 const SIZE = 900;
@@ -54,6 +54,13 @@ export function ConstellationMap({
       }),
     []
   );
+
+  // Signal pulses are enabled client-side only (after checking prefers-reduced-motion)
+  // so the SSR/first-paint markup never includes them — avoids a hydration mismatch.
+  const [pulsesEnabled, setPulsesEnabled] = useState(false);
+  useEffect(() => {
+    setPulsesEnabled(!window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }, []);
 
   return (
     <svg
@@ -115,6 +122,24 @@ export function ConstellationMap({
               strokeWidth={isSelected ? 1.5 : 1}
               opacity={isSelected ? 0.9 : 0.35}
             />
+            {/* signal pulse: brain -> department, staggered so they read as live traffic */}
+            {pulsesEnabled && !dim && (
+              <circle r={2.2} fill={dept.accent}>
+                <animateMotion
+                  path={`M${CX},${CY} L${pos.x},${pos.y}`}
+                  dur="3.2s"
+                  begin={`${(dept.angle / 45) * 0.4}s`}
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="opacity"
+                  values="0;0.9;0"
+                  dur="3.2s"
+                  begin={`${(dept.angle / 45) * 0.4}s`}
+                  repeatCount="indefinite"
+                />
+              </circle>
+            )}
             {/* branches: department -> responsibilities */}
             {leaves.map((leaf, i) => (
               <line
