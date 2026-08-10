@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import { CENTER, DEPARTMENTS, type Department } from "@/lib/departments";
 
 const SIZE = 900;
@@ -74,11 +74,31 @@ export function ConstellationMap({
         const x = (i * 137) % SIZE;
         const y = (i * 331) % SIZE;
         const r = 0.6 + ((i * 53) % 10) / 10;
-        return <circle key={`bg-${i}`} cx={x} cy={y} r={r} fill="#ffffff" opacity={0.15} />;
+        const duration = 2.4 + ((i * 29) % 30) / 10;
+        const delay = -((i * 17) % 40) / 10;
+        const max = 0.15 + ((i * 41) % 40) / 100;
+        return (
+          <circle
+            key={`bg-${i}`}
+            cx={x}
+            cy={y}
+            r={r}
+            fill="#ffffff"
+            className="animate-twinkle"
+            style={
+              {
+                animationDuration: `${duration}s`,
+                animationDelay: `${delay}s`,
+                "--twinkle-min": 0.08,
+                "--twinkle-max": max,
+              } as CSSProperties
+            }
+          />
+        );
       })}
 
       {/* center glow */}
-      <circle cx={CX} cy={CY} r={110} fill="url(#core-glow)" />
+      <circle cx={CX} cy={CY} r={110} fill="url(#core-glow)" className="animate-core-breathe" />
 
       {nodes.map(({ dept, pos, leaves }) => {
         const isSelected = selectedId === dept.id;
@@ -142,7 +162,16 @@ export function ConstellationMap({
                 r={isSelected ? 15 : 11}
                 fill={dept.accent}
                 opacity={0.25}
-                className="transition-all duration-300"
+                className={`transition-all duration-300 ${!isSelected ? "animate-node-breathe" : ""}`}
+                style={
+                  !isSelected
+                    ? ({
+                        animationDelay: `${-(dept.angle / 45)}s`,
+                        "--breathe-r-min": "10px",
+                        "--breathe-r-max": "14px",
+                      } as CSSProperties)
+                    : undefined
+                }
               />
               <circle
                 cx={pos.x}
