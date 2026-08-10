@@ -8,6 +8,8 @@ export interface Department {
   /** Angle in degrees around the center node, 0 = due north, clockwise. */
   angle: number;
   accent: string;
+  /** Ready-to-click starter prompts shown before the first message. */
+  quickPrompts: string[];
 }
 
 export const CENTER = {
@@ -31,6 +33,11 @@ export const DEPARTMENTS: Department[] = [
     ],
     angle: 0,
     accent: "#818cf8",
+    quickPrompts: [
+      "Draft a 30-60-90 day onboarding plan for a new hire",
+      "What should a succession plan for a critical role include?",
+      "Outline a structured performance review conversation",
+    ],
   },
   {
     id: "strategy",
@@ -46,6 +53,11 @@ export const DEPARTMENTS: Department[] = [
     ],
     angle: 45,
     accent: "#60a5fa",
+    quickPrompts: [
+      "What headcount metrics should a monthly HR dashboard track?",
+      "How would you structure an org design review?",
+      "Draft an outline for a quarterly HR analytics report",
+    ],
   },
   {
     id: "employee-relations",
@@ -63,6 +75,11 @@ export const DEPARTMENTS: Department[] = [
     ],
     angle: 90,
     accent: "#38bdf8",
+    quickPrompts: [
+      "Walk me through handling a grievance escalation",
+      "Draft a fair, compliant disciplinary process outline",
+      "What should an HR business partnering check-in cover?",
+    ],
   },
   {
     id: "rewards",
@@ -79,6 +96,11 @@ export const DEPARTMENTS: Department[] = [
     ],
     angle: 135,
     accent: "#34d399",
+    quickPrompts: [
+      "How would you benchmark salaries against the regional market?",
+      "Draft a rewards & recognition program outline",
+      "What factors go into a fair job evaluation?",
+    ],
   },
   {
     id: "comms",
@@ -96,6 +118,11 @@ export const DEPARTMENTS: Department[] = [
     ],
     angle: 180,
     accent: "#fbbf24",
+    quickPrompts: [
+      "Draft an internal announcement for a policy change",
+      "How would you run an employee engagement survey?",
+      "Outline a change management plan for a new system rollout",
+    ],
   },
   {
     id: "operations",
@@ -115,6 +142,11 @@ export const DEPARTMENTS: Department[] = [
     ],
     angle: 225,
     accent: "#fb923c",
+    quickPrompts: [
+      "What should an HR governance & compliance checklist include?",
+      "Draft a visa renewal process checklist",
+      "How would you structure fleet management SOPs?",
+    ],
   },
   {
     id: "health",
@@ -131,6 +163,11 @@ export const DEPARTMENTS: Department[] = [
     ],
     angle: 270,
     accent: "#f87171",
+    quickPrompts: [
+      "What should an occupational health screening program include?",
+      "Draft an employee wellbeing initiative outline",
+      "What does medical compliance tracking typically involve?",
+    ],
   },
   {
     id: "facility",
@@ -141,6 +178,10 @@ export const DEPARTMENTS: Department[] = [
     responsibilities: ["Health, Safety & Environment (HSE)"],
     angle: 315,
     accent: "#c084fc",
+    quickPrompts: [
+      "Draft an HSE incident reporting process",
+      "What should a facility safety audit checklist include?",
+    ],
   },
 ];
 
