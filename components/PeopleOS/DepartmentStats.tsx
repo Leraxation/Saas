@@ -22,6 +22,7 @@ export function DepartmentStats({ department }: { department: Department }) {
   useEffect(() => {
     activeDeptRef.current = department.id;
     setEditing(false);
+    setSaving(false);
     setError(null);
     setLoading(true);
     fetch(`/api/people-os/departments/${department.id}`)
@@ -89,8 +90,9 @@ export function DepartmentStats({ department }: { department: Department }) {
             <input
               type="number"
               min={0}
+              step={1}
               value={filled}
-              onChange={(e) => setFilled(Number(e.target.value))}
+              onChange={(e) => setFilled(Math.round(Number(e.target.value)))}
               className="mt-1 w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm text-white"
             />
           </label>
@@ -99,8 +101,9 @@ export function DepartmentStats({ department }: { department: Department }) {
             <input
               type="number"
               min={0}
+              step={1}
               value={open}
-              onChange={(e) => setOpen(Number(e.target.value))}
+              onChange={(e) => setOpen(Math.round(Number(e.target.value)))}
               className="mt-1 w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm text-white"
             />
           </label>
@@ -174,7 +177,8 @@ export function DepartmentStats({ department }: { department: Department }) {
       {data.note && <p className="text-xs text-slate-500 mt-2 italic">{data.note}</p>}
       {!editable && (
         <p className="text-[10px] text-slate-600 mt-2">
-          Read-only demo data — set UPSTASH_REDIS_REST_URL/TOKEN to make this editable.
+          Read-only — sign in with Microsoft to edit (and set UPSTASH_REDIS_REST_URL/TOKEN if not already
+          configured).
         </p>
       )}
     </div>
