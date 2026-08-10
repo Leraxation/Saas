@@ -1,4 +1,4 @@
-/** Oman Air People Department — org structure (Approved HR Structure, June 2026). */
+/** Oman Air People Department — org structure (People Department Functional Charter / HR Organization, Phase 1). */
 export interface Department {
   id: string;
   name: string;
@@ -14,7 +14,7 @@ export interface Department {
 
 export const CENTER = {
   name: "People Department",
-  subtitle: "CPO — Oman Air",
+  subtitle: "Kumail, CPO — Oman Air",
 };
 
 export const DEPARTMENTS: Department[] = [
@@ -41,14 +41,15 @@ export const DEPARTMENTS: Department[] = [
   },
   {
     id: "strategy",
-    name: "Strategy & Planning",
+    name: "Workforce Strategy & Planning",
     owner: "Vacant",
     purpose:
-      "Enable data-driven decision making and planning: analytics, org design, reporting, and dashboards.",
+      "Enable strategic workforce decision-making through planning, analytics, and organizational design.",
     responsibilities: [
+      "Strategic Workforce Planning",
       "Organizational Design",
+      "Strategic Planning & PMO",
       "HR Analytics & Metrics",
-      "Reporting",
       "HR Dashboard",
     ],
     angle: 45,
@@ -68,10 +69,11 @@ export const DEPARTMENTS: Department[] = [
     responsibilities: [
       "Employee Relations",
       "Employee Experience",
-      "Policies & Processes",
+      "Policies & Procedures",
       "HR Business Partnering",
       "Grievances & Disciplinary",
-      "Stakeholder Management",
+      "MoL Stakeholder Management",
+      "HR Governance",
     ],
     angle: 90,
     accent: "#38bdf8",
@@ -91,7 +93,7 @@ export const DEPARTMENTS: Department[] = [
       "Salary Structures",
       "Market Benchmarking",
       "Rewards & Recognition",
-      "Staff Travel & Benefits",
+      "Staff Benefits",
       "Employee Records",
     ],
     angle: 135,
@@ -109,12 +111,11 @@ export const DEPARTMENTS: Department[] = [
     purpose:
       "Drive people engagement, culture, and work environment, and lead change through effective internal communications and practices.",
     responsibilities: [
-      "Internal Comms",
+      "Internal Communications",
       "Employee Engagement",
       "Culture Programs",
       "Change Management",
-      "Digital Transformation",
-      "HR Projects",
+      "Leadership Communications",
     ],
     angle: 180,
     accent: "#fbbf24",
@@ -129,23 +130,14 @@ export const DEPARTMENTS: Department[] = [
     name: "Operations & Services",
     owner: "Khalid",
     purpose:
-      "Provide operational support and employee services that enable effective People Department operations.",
-    responsibilities: [
-      "HR Governance & Compliance",
-      "Internal Audit",
-      "Buildings & Offices",
-      "Utilities & Maintenance",
-      "Space Management",
-      "Transportation, Reception & Hygiene",
-      "Visa Processing",
-      "Fleet Management",
-    ],
+      "Provide governance, operational support, and project delivery that enable effective People Department operations.",
+    responsibilities: ["Audit & Compliance", "Planning", "PMO", "Project Delivery"],
     angle: 225,
     accent: "#fb923c",
     quickPrompts: [
-      "What should an HR governance & compliance checklist include?",
-      "Draft a visa renewal process checklist",
-      "How would you structure fleet management SOPs?",
+      "What should an internal HR audit checklist include?",
+      "How would you structure a PMO intake process for HR projects?",
+      "Draft a project delivery status update template",
     ],
   },
   {
@@ -175,11 +167,23 @@ export const DEPARTMENTS: Department[] = [
     owner: "Jawhara",
     purpose:
       "Provide safe, compliant, cost-effective facilities that enable operational continuity and enhance employee experience.",
-    responsibilities: ["Health, Safety & Environment (HSE)"],
+    responsibilities: [
+      "Buildings & Offices",
+      "Utilities & Maintenance",
+      "Space Management",
+      "Transportation, Reception & Hygiene",
+      "Visa Processing",
+      "Facilities Maintenance",
+      "Workplace & Admin",
+      "Vendor & Contracts",
+      "Assets Management",
+      "Compliance & Governance",
+    ],
     angle: 315,
     accent: "#c084fc",
     quickPrompts: [
-      "Draft an HSE incident reporting process",
+      "Draft a visa renewal process checklist",
+      "How would you structure vendor and contract management?",
       "What should a facility safety audit checklist include?",
     ],
   },

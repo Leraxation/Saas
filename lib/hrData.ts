@@ -8,62 +8,66 @@ export interface DepartmentData {
   updatedAt: string | null;
 }
 
-/** Starting figures — a real baseline to edit from, not invented per-request by the agent. */
+/**
+ * Starting figures — sourced from the approved HR Organization (Phase 1) chart, not invented.
+ * headcountFilled/headcountOpen count the function lead plus each named team role;
+ * openItems lists the actual vacant roles by title.
+ */
 const SEED: Record<string, DepartmentData> = {
   talent: {
-    headcountFilled: 6,
-    headcountOpen: 2,
-    openItems: ["Cabin crew recruitment drive", "Q3 performance review cycle"],
-    note: "Succession plan for Ops Manager role in progress.",
+    headcountFilled: 4,
+    headcountOpen: 1,
+    openItems: ["Vacant: L&D Manager"],
+    note: "Team: Sami (Recruitment & Selection Manager), Marwa (Performance Management, TBC), Hiba (Succession Lead).",
     updatedAt: null,
   },
   strategy: {
     headcountFilled: 0,
     headcountOpen: 3,
-    openItems: ["Org design review", "Monthly HR dashboard build-out"],
-    note: "Function lead role is vacant — reporting is manual for now.",
+    openItems: ["Vacant: Function Lead", "Vacant: Strategic Planning & PMO", "Vacant: HR Analytics & Metrics Lead"],
+    note: "Entire function is currently unstaffed.",
     updatedAt: null,
   },
   "employee-relations": {
-    headcountFilled: 4,
-    headcountOpen: 1,
-    openItems: ["2 open grievance cases", "Policy handbook refresh"],
-    note: "",
+    headcountFilled: 7,
+    headcountOpen: 0,
+    openItems: [],
+    note: "Team: Saqar (EE Manager), Nadiya (HRBP Manager), Abdulhamid, Munir, Matar (TBC), Samiha (HRBPs).",
     updatedAt: null,
   },
   rewards: {
-    headcountFilled: 3,
-    headcountOpen: 0,
-    openItems: ["Annual salary benchmarking against Gulf carriers"],
-    note: "",
+    headcountFilled: 1,
+    headcountOpen: 1,
+    openItems: ["Vacant: C&B Manager"],
+    note: "Saif leads as Head of Compensation & Benefits.",
     updatedAt: null,
   },
   comms: {
     headcountFilled: 0,
     headcountOpen: 2,
-    openItems: ["Employee engagement survey", "Intranet relaunch"],
-    note: "Function lead role is vacant.",
+    openItems: ["Vacant: Head of Function", "Vacant: Change & Culture Lead"],
+    note: "Entire function is currently unstaffed.",
     updatedAt: null,
   },
   operations: {
-    headcountFilled: 8,
-    headcountOpen: 1,
-    openItems: ["Fleet management SOP update", "12 pending visa renewals"],
-    note: "",
+    headcountFilled: 4,
+    headcountOpen: 0,
+    openItems: [],
+    note: "Khalid leads a team of 3 covering Audit, Planning, PMO and project delivery.",
     updatedAt: null,
   },
   health: {
-    headcountFilled: 5,
+    headcountFilled: 4,
     headcountOpen: 0,
-    openItems: ["Annual occupational health screening"],
-    note: "",
+    openItems: [],
+    note: "Dr. Waleed leads 2 Medical Officers and an Occupational Health Specialist.",
     updatedAt: null,
   },
   facility: {
-    headcountFilled: 3,
+    headcountFilled: 6,
     headcountOpen: 0,
-    openItems: ["HSE audit — Terminal 2 hangar"],
-    note: "",
+    openItems: [],
+    note: "Jawhara leads the team, including Usama on facility operations.",
     updatedAt: null,
   },
 };
