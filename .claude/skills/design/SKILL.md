@@ -244,8 +244,8 @@ Load `references/social-photos-design.md` for sizes, templates, best practices.
 
 ### Complete Brand Package
 
-1. **Logo** → `scripts/logo/generate.py` → Generate logo variants
-2. **CIP** → `scripts/cip/generate.py --logo ...` → Create deliverable mockups
+1. **Logo** → `.claude/skills/design/scripts/logo/generate.py` → Generate logo variants
+2. **CIP** → `.claude/skills/design/scripts/cip/generate.py --logo ...` → Create deliverable mockups
 3. **Presentation** → Load `references/slides-create.md` → Build pitch deck
 
 ### New Design System
@@ -280,18 +280,18 @@ Load `references/social-photos-design.md` for sizes, templates, best practices.
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/logo/search.py` | Search logo styles, colors, industries |
-| `scripts/logo/generate.py` | Generate logos with Gemini AI |
-| `scripts/logo/core.py` | BM25 search engine for logo data |
-| `scripts/cip/search.py` | Search CIP deliverables, styles, industries |
-| `scripts/cip/generate.py` | Generate CIP mockups with Gemini |
-| `scripts/cip/render-html.py` | Render HTML presentation from CIP mockups |
-| `scripts/cip/core.py` | BM25 search engine for CIP data |
-| `scripts/icon/generate.py` | Generate SVG icons with Gemini 3.1 Pro |
+| `.claude/skills/design/scripts/logo/search.py` | Search logo styles, colors, industries |
+| `.claude/skills/design/scripts/logo/generate.py` | Generate logos with Gemini AI |
+| `.claude/skills/design/scripts/logo/core.py` | BM25 search engine for logo data |
+| `.claude/skills/design/scripts/cip/search.py` | Search CIP deliverables, styles, industries |
+| `.claude/skills/design/scripts/cip/generate.py` | Generate CIP mockups with Gemini |
+| `.claude/skills/design/scripts/cip/render-html.py` | Render HTML presentation from CIP mockups |
+| `.claude/skills/design/scripts/cip/core.py` | BM25 search engine for CIP data |
+| `.claude/skills/design/scripts/icon/generate.py` | Generate SVG icons with Gemini 3.1 Pro |
 
 ## Prerequisites
 
-**Python:** This skill uses Python scripts. On Windows, use `python` instead of `python3` (e.g., `python scripts/logo/search.py` instead of `python3 scripts/logo/search.py`).
+**Python:** This skill uses Python scripts. On Windows, use `python` instead of `python3` (e.g., `python .claude/skills/design/scripts/logo/search.py` instead of `python3 .claude/skills/design/scripts/logo/search.py`).
 
 Check if Python is installed:
 ```bash
