@@ -3,9 +3,9 @@
    ============================================================= */
 
 :root {
-  --ink: #ffffff;
-  --ink-dim: rgba(255, 255, 255, 0.72);
-  --accent: #ffcf7a;
+  --hero-ink: #ffffff;
+  --hero-ink-dim: rgba(255, 255, 255, 0.74);
+  --hero-gold: #cdb17a;
   --shell: #0b0a12;
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif;
@@ -24,7 +24,7 @@ html {
 body {
   margin: 0;
   background: var(--shell);
-  color: var(--ink);
+  color: #14131a;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
@@ -79,13 +79,14 @@ body {
   height: 100svh;
   display: flex;
   align-items: center;
-  padding: 0 var(--gutter);
+  padding: 6rem var(--gutter) 0;   /* clear the fixed header */
   pointer-events: none;    /* text never blocks scroll gestures */
 }
 
 .panel__content {
   pointer-events: auto;
   max-width: 34rem;
+  color: var(--hero-ink);
 }
 
 .panel--right  { justify-content: flex-end; text-align: left; }
@@ -98,7 +99,7 @@ body {
   font-size: 0.75rem;
   letter-spacing: 0.32em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--hero-gold);
 }
 
 .display {
@@ -110,7 +111,7 @@ body {
   text-shadow: 0 2px 40px rgba(0, 0, 0, 0.45);
 }
 
-h2 {
+.panel h2 {
   margin: 0 0 1.25rem;
   font-size: clamp(1.9rem, 4.2vw, 3.25rem);
   line-height: 1.05;
@@ -119,17 +120,17 @@ h2 {
   text-shadow: 0 2px 30px rgba(0, 0, 0, 0.45);
 }
 
-p, .lede {
+.panel p, .lede {
   margin: 0 0 1.25rem;
   font-size: clamp(1rem, 1.35vw, 1.15rem);
   line-height: 1.65;
-  color: var(--ink-dim);
+  color: var(--hero-ink-dim);
   text-shadow: 0 1px 18px rgba(0, 0, 0, 0.5);
 }
 
 .lede { max-width: 30rem; }
 
-code {
+.panel code {
   font-family: var(--font-mono);
   font-size: 0.9em;
   padding: 0.1em 0.4em;
@@ -138,7 +139,7 @@ code {
   color: #fff;
 }
 
-pre {
+.panel pre {
   margin: 1.5rem 0 0;
   padding: 1rem 1.15rem;
   overflow-x: auto;
@@ -148,9 +149,9 @@ pre {
   background: rgba(10, 8, 20, 0.55);
   backdrop-filter: blur(8px);
 }
-pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
+.panel pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
 
-.facts {
+.panel .facts {
   display: flex;
   flex-wrap: wrap;
   gap: 2.25rem;
@@ -158,22 +159,22 @@ pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
   padding: 0;
   list-style: none;
 }
-.facts li { display: flex; flex-direction: column; gap: 0.25rem; }
-.facts strong {
+.panel .facts li { display: flex; flex-direction: column; gap: 0.25rem; }
+.panel .facts strong {
   font-size: 2rem;
   font-weight: 650;
   letter-spacing: -0.03em;
-  color: var(--accent);
+  color: var(--hero-gold);
 }
-.facts span {
+.panel .facts span {
   font-size: 0.75rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ink-dim);
+  color: var(--hero-ink-dim);
 }
 
 /* Scroll hint */
-.hint {
+.panel .hint {
   display: flex;
   align-items: center;
   gap: 0.85rem;
@@ -181,9 +182,9 @@ pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
   font-size: 0.75rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--ink-dim);
+  color: var(--hero-ink-dim);
 }
-.hint__mouse {
+.panel .hint__mouse {
   position: relative;
   width: 22px;
   height: 34px;
@@ -191,7 +192,7 @@ pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
   border-radius: 12px;
   flex: none;
 }
-.hint__mouse::after {
+.panel .hint__mouse::after {
   content: "";
   position: absolute;
   left: 50%;
@@ -208,18 +209,6 @@ pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
   60%      { transform: translateY(9px); opacity: 0; }
 }
 
-/* Section after the sequence, back in normal flow */
-.outro {
-  position: relative;
-  z-index: 1;
-  min-height: 60vh;
-  display: grid;
-  place-items: center;
-  padding: 4rem var(--gutter);
-  background: var(--shell);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-.outro p { margin: 0; }
 
 /* -------------------------------------------------------------
    3. Chrome: preloader + scroll progress bar
@@ -240,7 +229,7 @@ pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
   font-size: 0.7rem;
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--ink-dim);
+  color: var(--hero-ink-dim);
   margin-bottom: 1rem;
 }
 .loader__bar {
@@ -253,14 +242,14 @@ pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
   display: block;
   height: 100%;
   width: 0%;
-  background: var(--accent);
+  background: var(--hero-gold);
   transition: width 0.25s ease-out;
 }
 .loader__pct {
   margin-top: 0.85rem;
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: var(--ink-dim);
+  color: var(--hero-ink-dim);
 }
 
 .progress {
@@ -276,7 +265,7 @@ pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
   display: block;
   height: 100%;
   width: 0%;
-  background: var(--accent);
+  background: var(--hero-gold);
   transform-origin: left center;
 }
 
@@ -284,7 +273,7 @@ pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
    4. Reveal animation baseline
    JS adds .js-reveal so content is never hidden if JS fails.
    ------------------------------------------------------------- */
-.js-reveal [data-reveal] { opacity: 0; transform: translateY(28px); }
+.js-reveal .panel [data-reveal] { opacity: 0; transform: translateY(28px); }
 
 @media (max-width: 720px) {
   .panel--right, .panel--left, .panel--center { justify-content: flex-start; text-align: left; }
@@ -292,6 +281,6 @@ pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .js-reveal [data-reveal] { opacity: 1; transform: none; }
+  .js-reveal .panel [data-reveal] { opacity: 1; transform: none; }
   .hint__mouse::after { animation: none; }
 }

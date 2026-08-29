@@ -1,140 +1,691 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Scroll Dive &mdash; Canvas Image Sequence</title>
-  <meta name="description" content="A scroll-driven image sequence player built with HTML5 Canvas, GSAP and ScrollTrigger." />
+  <title>Oman Air — Fly the Sultanate</title>
+  <meta name="description" content="Book flights, manage your trip and check in with Oman Air. Non-stop from Muscat to the Gulf, Europe, Africa and Asia." />
+  <meta name="theme-color" content="#0b0a12" />
 
   <link rel="preload" as="image" href="frames/frame_0001.webp" fetchpriority="high" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%E2%9C%88%EF%B8%8F</text></svg>" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="site.css" />
 </head>
 <body>
 
-  <!-- ============================================================
-       1. FIXED CANVAS BACKGROUND
-       Sits behind everything (z-index: 0) and never scrolls.
-       ============================================================ -->
-  <canvas id="sequence" aria-hidden="true"></canvas>
+<a class="skip" href="#booking">Skip to booking</a>
 
-  <!-- Gradient scrim so overlay text stays legible on bright frames -->
-  <div class="scrim" aria-hidden="true"></div>
+<!-- ================================================================
+     FIXED CANVAS BACKGROUND — see main.js
+     ================================================================ -->
+<canvas id="sequence" aria-hidden="true"></canvas>
+<div class="scrim" aria-hidden="true"></div>
 
-  <!-- Preloader: removed once the first batch of frames is decoded -->
-  <div class="loader" id="loader">
-    <div class="loader__inner">
-      <div class="loader__label">Loading sequence</div>
-      <div class="loader__bar"><span id="loader-fill"></span></div>
-      <div class="loader__pct" id="loader-pct">0%</div>
+<div class="loader" id="loader">
+  <div class="loader__inner">
+    <div class="loader__label">Oman Air</div>
+    <div class="loader__bar"><span id="loader-fill"></span></div>
+    <div class="loader__pct" id="loader-pct">0%</div>
+  </div>
+</div>
+
+<div class="progress" aria-hidden="true"><span id="progress-fill"></span></div>
+
+<!-- ================================================================
+     SITE HEADER — utility bar + primary navigation
+     ================================================================ -->
+<header class="header" id="header">
+
+  <div class="utility">
+    <div class="shell utility__row">
+      <ul class="utility__links">
+        <li><a href="#cargo">Oman Air Cargo</a></li>
+        <li><a href="#holidays">Oman Air Holidays</a></li>
+        <li><a href="#help">Help &amp; contact</a></li>
+      </ul>
+      <div class="utility__tools">
+        <button type="button" class="chip" id="region-btn" aria-haspopup="dialog" aria-expanded="false">
+          <span aria-hidden="true">🌐</span> <span id="region-label">Oman · English · OMR</span>
+        </button>
+        <button type="button" class="chip chip--ghost" id="lang-toggle" lang="ar">العربية</button>
+        <!-- Real Sindbad sign-in lives on the secure auth domain; this is a link,
+             never a credential form on the marketing page. -->
+        <a class="chip chip--gold" href="#sindbad">Sindbad log in</a>
+      </div>
     </div>
   </div>
 
-  <!-- Thin scroll progress indicator, pinned to the top of the viewport -->
-  <div class="progress" aria-hidden="true"><span id="progress-fill"></span></div>
+  <div class="nav">
+    <div class="shell nav__row">
+      <a class="brand" href="#top" aria-label="Oman Air home">
+        <!-- Drop the official logo SVG in here; this typographic mark is a stand-in. -->
+        <span class="brand__mark" aria-hidden="true"></span>
+        <span class="brand__text"><b>OMAN AIR</b><i>الطيران العماني</i></span>
+      </a>
 
-  <!-- ============================================================
-       2. SCROLL TRACK + CONTENT OVERLAY
-       .track is the tall element ScrollTrigger measures. Its height is
-       split 3 : 2 : 2 between shot one, the gap, and shot two — the same
-       weights the timeline in main.js uses, so copy and footage stay in step.
-       ============================================================ -->
-  <main class="track" id="track">
+      <button class="burger" id="burger" aria-expanded="false" aria-controls="primary-nav">
+        <span></span><span></span><span></span>
+        <em class="sr-only">Menu</em>
+      </button>
 
-    <!-- ---------- Shot one: the fly-by, three panels ---------- -->
-
-    <section class="panel panel--hero">
-      <div class="panel__content">
-        <p class="eyebrow" data-reveal>Chapter 01</p>
-        <h1 class="display" data-reveal>Above the<br />golden hour</h1>
-        <p class="lede" data-reveal>
-          Every frame is tied to your scroll position rather than a clock.
-          Scroll slowly and the shot creeps forward; flick the wheel and it races
-          to catch up.
-        </p>
-        <div class="hint" data-reveal>
-          <span class="hint__mouse"></span>
-          <span>Scroll to fly</span>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel panel--right">
-      <div class="panel__content">
-        <p class="eyebrow" data-reveal>Chapter 02</p>
-        <h2 data-reveal>Frames, not video</h2>
-        <p data-reveal>
-          A <code>&lt;video&gt;</code> element cannot be seeked accurately enough for
-          scrubbing &mdash; browsers snap to keyframes and stall. Painting decoded
-          stills onto a canvas gives exact, frame-perfect control at any scroll speed.
-        </p>
-        <ul class="facts" data-reveal>
-          <li><strong>245</strong><span>frames</span></li>
-          <li><strong>12</strong><span>frames per second</span></li>
-          <li><strong>700vh</strong><span>scroll track</span></li>
+      <nav class="primary" id="primary-nav" aria-label="Primary">
+        <ul class="primary__list">
+          <li class="has-menu">
+            <button type="button" aria-expanded="false">Book</button>
+            <div class="mega">
+              <div class="mega__col">
+                <h3>Plan a trip</h3>
+                <a href="#booking">Book a flight</a>
+                <a href="#booking">Flight + hotel</a>
+                <a href="#services">Car rental</a>
+                <a href="#services">Rail &amp; Fly</a>
+              </div>
+              <div class="mega__col">
+                <h3>Before you go</h3>
+                <a href="#services">Visa services</a>
+                <a href="#services">Travel insurance</a>
+                <a href="#holidays">Holidays &amp; experiences</a>
+                <a href="#offers">Current offers</a>
+              </div>
+            </div>
+          </li>
+          <li class="has-menu">
+            <button type="button" aria-expanded="false">Manage</button>
+            <div class="mega">
+              <div class="mega__col">
+                <h3>Your booking</h3>
+                <a href="#booking">Manage booking</a>
+                <a href="#booking">Online check-in</a>
+                <a href="#booking">Flight status</a>
+              </div>
+              <div class="mega__col">
+                <h3>Extras</h3>
+                <a href="#experience">Seats &amp; extra legroom</a>
+                <a href="#experience">Additional baggage</a>
+                <a href="#experience">Lounge access</a>
+                <a href="#help">Refunds</a>
+              </div>
+            </div>
+          </li>
+          <li class="has-menu">
+            <button type="button" aria-expanded="false">Experience</button>
+            <div class="mega">
+              <div class="mega__col">
+                <h3>On board</h3>
+                <a href="#experience">Economy Class</a>
+                <a href="#experience">Business Class</a>
+                <a href="#experience">First Class</a>
+              </div>
+              <div class="mega__col">
+                <h3>Service</h3>
+                <a href="#experience">Dining</a>
+                <a href="#experience">Entertainment</a>
+                <a href="#experience">Tashreef Services</a>
+                <a href="#experience">Meet &amp; Greet</a>
+              </div>
+            </div>
+          </li>
+          <li><a href="#destinations">Destinations</a></li>
+          <li><a href="#sindbad">Sindbad</a></li>
+          <li><a href="#help">Help</a></li>
         </ul>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<!-- ================================================================
+     HERO — scroll track. Content panels ride over the fixed canvas.
+     Track height is 700vh, split 3 : 2 : 2 to match CONFIG.segments.
+     ================================================================ -->
+<main id="top">
+<div class="track" id="track">
+
+  <section class="panel panel--hero">
+    <div class="panel__content">
+      <p class="eyebrow" data-reveal>Muscat · non-stop</p>
+      <h1 class="display" data-reveal>Above the<br />golden hour</h1>
+      <p class="lede" data-reveal>
+        Fly the Sultanate’s airline to more than 40 destinations across the Gulf,
+        Europe, Africa and Asia.
+      </p>
+      <div class="hint" data-reveal>
+        <span class="hint__mouse"></span>
+        <span>Scroll to fly</span>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section class="panel panel--left">
-      <div class="panel__content">
-        <p class="eyebrow" data-reveal>Chapter 03</p>
-        <h2 data-reveal>All the way in</h2>
-        <p data-reveal>
-          The camera closes on the engine and keeps going. Because the playhead is
-          scroll, not time, you decide how fast the approach happens &mdash; and you can
-          stop dead in the middle of it.
-        </p>
+  <section class="panel panel--right">
+    <div class="panel__content">
+      <p class="eyebrow" data-reveal>The fleet</p>
+      <h2 data-reveal>Wide-body comfort</h2>
+      <p data-reveal>
+        The Boeing 787 Dreamliner flies higher cabin humidity and lower cabin
+        altitude, so you land feeling closer to how you took off.
+      </p>
+      <ul class="facts" data-reveal>
+        <li><strong>40+</strong><span>destinations</span></li>
+        <li><strong>4</strong><span>continents</span></li>
+        <li><strong>1</strong><span>hub, Muscat</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="panel panel--left">
+    <div class="panel__content">
+      <p class="eyebrow" data-reveal>Engineering</p>
+      <h2 data-reveal>All the way in</h2>
+      <p data-reveal>
+        Quieter engines, a lighter airframe and a cabin designed around rest.
+        Every detail is tuned for the long sectors out of Muscat.
+      </p>
+    </div>
+  </section>
+
+  <!-- The gap: the footage fades to black here and the timeline holds it. -->
+  <div class="spacer" aria-hidden="true"></div>
+
+  <section class="panel panel--right">
+    <div class="panel__content">
+      <p class="eyebrow" data-reveal>On board</p>
+      <h2 data-reveal>Arrive rested</h2>
+      <p data-reveal>
+        Lie-flat seats, Omani hospitality and a cabin finished in the colours of
+        the country you are flying to.
+      </p>
+    </div>
+  </section>
+
+  <section class="panel panel--center">
+    <div class="panel__content">
+      <p class="eyebrow" data-reveal>Sindbad</p>
+      <h2 data-reveal>Every mile counts</h2>
+      <p data-reveal>
+        Earn and spend miles across the network and with partner airlines
+        worldwide.
+      </p>
+      <a class="btn btn--gold" href="#sindbad">Explore Sindbad</a>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<!-- ================================================================
+     BOOKING — four tabs, mirroring the current site's entry points
+     ================================================================ -->
+<section class="booking" id="booking" aria-labelledby="booking-h">
+  <div class="shell">
+    <h2 class="sr-only" id="booking-h">Book, manage and check in</h2>
+
+    <div class="card">
+      <div class="tabs" role="tablist" aria-label="Booking options">
+        <button role="tab" id="tab-book"   aria-controls="pane-book"   aria-selected="true"  class="tab is-active">Book a flight</button>
+        <button role="tab" id="tab-manage" aria-controls="pane-manage" aria-selected="false" class="tab">Manage booking</button>
+        <button role="tab" id="tab-checkin"aria-controls="pane-checkin"aria-selected="false" class="tab">Check-in</button>
+        <button role="tab" id="tab-status" aria-controls="pane-status" aria-selected="false" class="tab">Flight status</button>
       </div>
-    </section>
 
-    <!-- ---------- The gap ----------
-         No copy here: the footage fades to black between the two shots, and the
-         timeline holds that black frame across this whole stretch of scroll. -->
-    <div class="spacer" aria-hidden="true"></div>
+      <!-- ---- Book ---- -->
+      <form class="pane is-active" id="pane-book" role="tabpanel" aria-labelledby="tab-book" novalidate>
+        <div class="triptype" role="radiogroup" aria-label="Trip type">
+          <label><input type="radio" name="trip" value="return" checked /> <span>Return</span></label>
+          <label><input type="radio" name="trip" value="oneway" /> <span>One way</span></label>
+          <label><input type="radio" name="trip" value="multi" /> <span>Multi-city</span></label>
+        </div>
 
-    <!-- ---------- Shot two: the cabin, two panels ---------- -->
+        <div class="grid">
+          <div class="field">
+            <label for="from">From</label>
+            <input id="from" name="from" list="airports" placeholder="Muscat (MCT)" autocomplete="off" required />
+            <p class="err" data-err-for="from"></p>
+          </div>
 
-    <section class="panel panel--right">
-      <div class="panel__content">
-        <p class="eyebrow" data-reveal>Chapter 04</p>
-        <h2 data-reveal>And out the other side</h2>
-        <p data-reveal>
-          The second shot picks up where the darkness ends. Two sequences, one
-          canvas &mdash; the gap between them is scroll you spend in the black, not a
-          cut you fall through.
-        </p>
+          <button type="button" class="swap" id="swap" aria-label="Swap origin and destination">⇄</button>
+
+          <div class="field">
+            <label for="to">To</label>
+            <input id="to" name="to" list="airports" placeholder="Where to?" autocomplete="off" required />
+            <p class="err" data-err-for="to"></p>
+          </div>
+
+          <div class="field">
+            <label for="depart">Departing</label>
+            <input id="depart" name="depart" type="date" required />
+            <p class="err" data-err-for="depart"></p>
+          </div>
+
+          <div class="field" id="return-field">
+            <label for="ret">Returning</label>
+            <input id="ret" name="ret" type="date" />
+            <p class="err" data-err-for="ret"></p>
+          </div>
+
+          <div class="field">
+            <label for="pax">Passengers</label>
+            <select id="pax" name="pax">
+              <option>1 adult</option><option>2 adults</option><option>2 adults, 1 child</option>
+              <option>2 adults, 2 children</option><option>Other…</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="cabin">Cabin</label>
+            <select id="cabin" name="cabin">
+              <option>Economy</option><option>Business</option><option>First</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="promo">Promo code <span class="opt">optional</span></label>
+            <input id="promo" name="promo" placeholder="Add a code" />
+          </div>
+        </div>
+
+        <div class="pane__foot">
+          <label class="check"><input type="checkbox" id="flexible" /> <span>My dates are flexible</span></label>
+          <button class="btn btn--gold btn--lg" type="submit">Search flights</button>
+        </div>
+        <p class="formnote" role="status" aria-live="polite" data-note></p>
+      </form>
+
+      <!-- ---- Manage ---- -->
+      <form class="pane" id="pane-manage" role="tabpanel" aria-labelledby="tab-manage" hidden novalidate>
+        <div class="grid grid--two">
+          <div class="field">
+            <label for="pnr">Booking reference or e-ticket</label>
+            <input id="pnr" name="pnr" placeholder="6-character PNR" required />
+            <p class="err" data-err-for="pnr"></p>
+          </div>
+          <div class="field">
+            <label for="surname">Last name</label>
+            <input id="surname" name="surname" placeholder="As shown in your passport" required />
+            <p class="err" data-err-for="surname"></p>
+          </div>
+        </div>
+        <div class="pane__foot">
+          <p class="muted">Change dates, add bags, choose seats or request a refund.</p>
+          <button class="btn btn--gold btn--lg" type="submit">Retrieve booking</button>
+        </div>
+        <p class="formnote" role="status" aria-live="polite" data-note></p>
+      </form>
+
+      <!-- ---- Check-in ---- -->
+      <form class="pane" id="pane-checkin" role="tabpanel" aria-labelledby="tab-checkin" hidden novalidate>
+        <div class="grid grid--two">
+          <div class="field">
+            <label for="ci-pnr">Booking reference or e-ticket</label>
+            <input id="ci-pnr" name="ci-pnr" placeholder="6-character PNR" required />
+            <p class="err" data-err-for="ci-pnr"></p>
+          </div>
+          <div class="field">
+            <label for="ci-surname">Last name</label>
+            <input id="ci-surname" name="ci-surname" placeholder="As shown in your passport" required />
+            <p class="err" data-err-for="ci-surname"></p>
+          </div>
+        </div>
+        <div class="pane__foot">
+          <p class="muted">Check-in opens 48 hours before departure and closes 90 minutes before.</p>
+          <button class="btn btn--gold btn--lg" type="submit">Check in</button>
+        </div>
+        <p class="formnote" role="status" aria-live="polite" data-note></p>
+      </form>
+
+      <!-- ---- Flight status ---- -->
+      <form class="pane" id="pane-status" role="tabpanel" aria-labelledby="tab-status" hidden novalidate>
+        <div class="grid grid--two">
+          <div class="field">
+            <label for="fs-no">Flight number</label>
+            <input id="fs-no" name="fs-no" placeholder="WY 101" required />
+            <p class="err" data-err-for="fs-no"></p>
+          </div>
+          <div class="field">
+            <label for="fs-date">Date</label>
+            <input id="fs-date" name="fs-date" type="date" required />
+            <p class="err" data-err-for="fs-date"></p>
+          </div>
+        </div>
+        <div class="pane__foot">
+          <p class="muted">Live departures and arrivals for the last 24 and next 48 hours.</p>
+          <button class="btn btn--gold btn--lg" type="submit">Check status</button>
+        </div>
+        <p class="formnote" role="status" aria-live="polite" data-note></p>
+      </form>
+    </div>
+
+    <datalist id="airports">
+      <option value="Muscat (MCT)"></option><option value="Salalah (SLL)"></option>
+      <option value="Dubai (DXB)"></option><option value="Doha (DOH)"></option>
+      <option value="Kuwait (KWI)"></option><option value="Jeddah (JED)"></option>
+      <option value="Cairo (CAI)"></option><option value="London Heathrow (LHR)"></option>
+      <option value="Paris CDG (CDG)"></option><option value="Frankfurt (FRA)"></option>
+      <option value="Milan (MXP)"></option><option value="Istanbul (IST)"></option>
+      <option value="Delhi (DEL)"></option><option value="Mumbai (BOM)"></option>
+      <option value="Karachi (KHI)"></option><option value="Dhaka (DAC)"></option>
+      <option value="Bangkok (BKK)"></option><option value="Kuala Lumpur (KUL)"></option>
+      <option value="Singapore (SIN)"></option><option value="Zanzibar (ZNZ)"></option>
+      <option value="Nairobi (NBO)"></option>
+    </datalist>
+  </div>
+</section>
+
+<!-- ================================================================
+     OFFERS
+     ================================================================ -->
+<section class="section" id="offers" aria-labelledby="offers-h">
+  <div class="shell">
+    <header class="section__head">
+      <div>
+        <p class="kicker">Offers</p>
+        <h2 id="offers-h">Fares worth planning around</h2>
       </div>
-    </section>
+      <a class="link" href="#offers">All offers</a>
+    </header>
 
-    <section class="panel panel--center">
-      <div class="panel__content">
-        <p class="eyebrow" data-reveal>Chapter 05</p>
-        <h2 data-reveal>Drop in your own footage</h2>
-        <p data-reveal>
-          Point <code>ffmpeg</code> at a clip, list the shots in <code>CONFIG</code>,
-          and give each one a weight. The track height follows the same ratio.
-        </p>
-        <pre data-reveal><code>ffmpeg -i clip.mp4 -vf "fps=12,scale=1600:-2" \
-  -c:v libwebp -quality 76 frames/frame_%04d.webp</code></pre>
+    <!-- PLACEHOLDER FARES — replace from the fares feed before launch. -->
+    <div class="cards">
+      <article class="card2">
+        <div class="card2__media" data-tint="a"></div>
+        <div class="card2__body">
+          <p class="kicker">Europe</p>
+          <h3>London Heathrow</h3>
+          <p class="muted">Daily from Muscat · 787 Dreamliner</p>
+          <p class="price">from <b>OMR 245</b> return</p>
+        </div>
+      </article>
+      <article class="card2">
+        <div class="card2__media" data-tint="b"></div>
+        <div class="card2__body">
+          <p class="kicker">Asia</p>
+          <h3>Bangkok</h3>
+          <p class="muted">Five weekly · overnight eastbound</p>
+          <p class="price">from <b>OMR 180</b> return</p>
+        </div>
+      </article>
+      <article class="card2">
+        <div class="card2__media" data-tint="c"></div>
+        <div class="card2__body">
+          <p class="kicker">Africa</p>
+          <h3>Zanzibar</h3>
+          <p class="muted">Three weekly · seasonal</p>
+          <p class="price">from <b>OMR 165</b> return</p>
+        </div>
+      </article>
+      <article class="card2">
+        <div class="card2__media" data-tint="d"></div>
+        <div class="card2__body">
+          <p class="kicker">Gulf</p>
+          <h3>Dubai</h3>
+          <p class="muted">Up to six daily · 50 minutes</p>
+          <p class="price">from <b>OMR 55</b> return</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     DESTINATIONS — filterable network
+     ================================================================ -->
+<section class="section section--alt" id="destinations" aria-labelledby="dest-h">
+  <div class="shell">
+    <header class="section__head">
+      <div>
+        <p class="kicker">Where we fly</p>
+        <h2 id="dest-h">The network from Muscat</h2>
       </div>
-    </section>
+      <div class="filters" role="group" aria-label="Filter destinations by region">
+        <button class="pill is-active" data-region="all">All</button>
+        <button class="pill" data-region="gulf">Gulf</button>
+        <button class="pill" data-region="asia">Asia</button>
+        <button class="pill" data-region="europe">Europe</button>
+        <button class="pill" data-region="africa">Africa</button>
+      </div>
+    </header>
 
-  </main>
+    <label class="search">
+      <span class="sr-only">Search destinations</span>
+      <input type="search" id="dest-search" placeholder="Search a city or airport code" />
+    </label>
 
-  <footer class="outro">
-    <p>End of sequence &mdash; the page returns to normal flow here.</p>
-  </footer>
+    <ul class="dests" id="dests">
+      <li data-region="gulf"><b>Dubai</b><span>DXB · 50 min</span></li>
+      <li data-region="gulf"><b>Doha</b><span>DOH · 1 h 20</span></li>
+      <li data-region="gulf"><b>Kuwait</b><span>KWI · 2 h 05</span></li>
+      <li data-region="gulf"><b>Jeddah</b><span>JED · 3 h 05</span></li>
+      <li data-region="gulf"><b>Salalah</b><span>SLL · 1 h 40</span></li>
+      <li data-region="asia"><b>Delhi</b><span>DEL · 3 h 20</span></li>
+      <li data-region="asia"><b>Mumbai</b><span>BOM · 2 h 45</span></li>
+      <li data-region="asia"><b>Karachi</b><span>KHI · 1 h 55</span></li>
+      <li data-region="asia"><b>Dhaka</b><span>DAC · 5 h 10</span></li>
+      <li data-region="asia"><b>Bangkok</b><span>BKK · 6 h 10</span></li>
+      <li data-region="asia"><b>Kuala Lumpur</b><span>KUL · 7 h 05</span></li>
+      <li data-region="asia"><b>Singapore</b><span>SIN · 7 h 20</span></li>
+      <li data-region="europe"><b>London</b><span>LHR · 8 h 05</span></li>
+      <li data-region="europe"><b>Paris</b><span>CDG · 7 h 30</span></li>
+      <li data-region="europe"><b>Frankfurt</b><span>FRA · 7 h 15</span></li>
+      <li data-region="europe"><b>Milan</b><span>MXP · 7 h 00</span></li>
+      <li data-region="europe"><b>Istanbul</b><span>IST · 5 h 05</span></li>
+      <li data-region="africa"><b>Cairo</b><span>CAI · 4 h 30</span></li>
+      <li data-region="africa"><b>Zanzibar</b><span>ZNZ · 5 h 15</span></li>
+      <li data-region="africa"><b>Nairobi</b><span>NBO · 5 h 00</span></li>
+    </ul>
+    <p class="muted" id="dest-empty" hidden>No destinations match that search.</p>
+    <!-- PLACEHOLDER NETWORK — replace with the published timetable. -->
+  </div>
+</section>
 
-  <!-- GSAP 3.12.5 + ScrollTrigger from the CDN, with a vendored local copy as
-       fallback so the page also works offline / from the file:// protocol. -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-  <script>
-    // Synchronous document.write fallback keeps main.js's load order intact.
-    if (!window.gsap) document.write('<script src="vendor/gsap.min.js"><\/script>');
-    if (!window.ScrollTrigger) document.write('<script src="vendor/ScrollTrigger.min.js"><\/script>');
-  </script>
-  <script src="main.js"></script>
+<!-- ================================================================
+     EXPERIENCE — cabins and services
+     ================================================================ -->
+<section class="section" id="experience" aria-labelledby="exp-h">
+  <div class="shell">
+    <header class="section__head">
+      <div>
+        <p class="kicker">On board</p>
+        <h2 id="exp-h">Choose how you travel</h2>
+      </div>
+    </header>
+
+    <div class="cards cards--3">
+      <article class="cabin">
+        <h3>Economy Class</h3>
+        <p class="muted">Generous pitch, full meal service and seat-back entertainment on every wide-body sector.</p>
+        <ul class="ticks"><li>30 kg checked baggage</li><li>On-demand entertainment</li><li>Regional and international menus</li></ul>
+        <a class="link" href="#experience">Explore Economy</a>
+      </article>
+      <article class="cabin cabin--feature">
+        <h3>Business Class</h3>
+        <p class="muted">Lie-flat seats with direct aisle access, lounge entry and priority everything.</p>
+        <ul class="ticks"><li>Lie-flat bed</li><li>Lounge access at Muscat</li><li>Chef-designed dining on request</li></ul>
+        <a class="link" href="#experience">Explore Business</a>
+      </article>
+      <article class="cabin">
+        <h3>First Class</h3>
+        <p class="muted">Private suites, Tashreef Services on the ground and a dedicated cabin crew ratio.</p>
+        <ul class="ticks"><li>Private suite</li><li>Tashreef Services</li><li>Chauffeur transfers</li></ul>
+        <a class="link" href="#experience">Explore First</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     SINDBAD
+     ================================================================ -->
+<section class="section section--gold" id="sindbad" aria-labelledby="sin-h">
+  <div class="shell split">
+    <div>
+      <p class="kicker">Sindbad</p>
+      <h2 id="sin-h">The frequent flyer programme of Oman Air</h2>
+      <p>
+        Earn miles on every Oman Air flight and with partner airlines and hotels.
+        Spend them on award seats, upgrades, extra baggage and lounge access.
+      </p>
+      <div class="btnrow">
+        <a class="btn btn--gold" href="#sindbad">Join Sindbad</a>
+        <a class="btn btn--ghost" href="#sindbad">Sign in</a>
+      </div>
+    </div>
+    <ul class="tiers">
+      <li><b>Blue</b><span>Entry tier — start earning from your first flight</span></li>
+      <li><b>Silver</b><span>Priority check-in and extra baggage</span></li>
+      <li><b>Gold</b><span>Lounge access and guaranteed Economy seats</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================================================================
+     SERVICES + HOLIDAYS + CARGO
+     ================================================================ -->
+<section class="section" id="services" aria-labelledby="svc-h">
+  <div class="shell">
+    <header class="section__head">
+      <div>
+        <p class="kicker">Everything else</p>
+        <h2 id="svc-h">Plan the whole journey</h2>
+      </div>
+    </header>
+    <ul class="tiles">
+      <li id="holidays"><b>Holidays</b><span>Flight, hotel and transfers in one booking</span></li>
+      <li><b>Car rental</b><span>Collect at Muscat or any destination</span></li>
+      <li><b>Rail &amp; Fly</b><span>Onward rail travel across Europe</span></li>
+      <li><b>Visa services</b><span>Check requirements for Oman and beyond</span></li>
+      <li><b>Travel insurance</b><span>Cover for the whole itinerary</span></li>
+      <li id="cargo"><b>Oman Air Cargo</b><span>Freight across the network</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================================================================
+     APP
+     ================================================================ -->
+<section class="section section--alt" id="app" aria-labelledby="app-h">
+  <div class="shell split">
+    <div>
+      <p class="kicker">Mobile</p>
+      <h2 id="app-h">The Oman Air app</h2>
+      <p>Boarding passes, live flight status, seat changes and Sindbad balance — offline-ready in your pocket.</p>
+      <div class="btnrow">
+        <a class="btn btn--ghost" href="#app">App Store</a>
+        <a class="btn btn--ghost" href="#app">Google Play</a>
+      </div>
+    </div>
+    <div class="phone" aria-hidden="true"><div class="phone__screen"></div></div>
+  </div>
+</section>
+
+<!-- ================================================================
+     HELP
+     ================================================================ -->
+<section class="section" id="help" aria-labelledby="help-h">
+  <div class="shell">
+    <header class="section__head">
+      <div>
+        <p class="kicker">Help &amp; contact</p>
+        <h2 id="help-h">We are here for the whole trip</h2>
+      </div>
+    </header>
+    <ul class="tiles tiles--4">
+      <li><b>Contact us</b><span>Call centre, WhatsApp and worldwide offices</span></li>
+      <li><b>FAQs</b><span>Booking, baggage, refunds and travel documents</span></li>
+      <li><b>Special assistance</b><span>Mobility, medical and travelling with children</span></li>
+      <li><b>Feedback</b><span>Compliments, claims and complaints</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================================================================
+     FOOTER
+     ================================================================ -->
+<footer class="footer">
+  <div class="shell">
+    <div class="footer__cols">
+      <div>
+        <h3>Book &amp; manage</h3>
+        <a href="#booking">Book a flight</a><a href="#booking">Manage booking</a>
+        <a href="#booking">Online check-in</a><a href="#booking">Flight status</a>
+        <a href="#offers">Offers</a>
+      </div>
+      <div>
+        <h3>Experience</h3>
+        <a href="#experience">Cabin classes</a><a href="#experience">Dining</a>
+        <a href="#experience">Entertainment</a><a href="#experience">Lounges</a>
+        <a href="#experience">Tashreef Services</a>
+      </div>
+      <div>
+        <h3>Sindbad</h3>
+        <a href="#sindbad">Programme overview</a><a href="#sindbad">Earn miles</a>
+        <a href="#sindbad">Redeem miles</a><a href="#sindbad">Tiers &amp; benefits</a>
+        <a href="#sindbad">Partners</a>
+      </div>
+      <div>
+        <h3>About</h3>
+        <a href="#help">About Oman Air</a><a href="#help">Careers</a>
+        <a href="#help">Media centre</a><a href="#cargo">Cargo</a>
+        <a href="#help">Corporate travel</a>
+      </div>
+      <div>
+        <h3>Help</h3>
+        <a href="#help">Contact us</a><a href="#help">FAQs</a>
+        <a href="#help">Special assistance</a><a href="#help">Baggage</a>
+        <a href="#help">Feedback</a>
+      </div>
+    </div>
+
+    <div class="footer__bar">
+      <p class="muted">© <span id="year">2026</span> Oman Air SAOC. All rights reserved.</p>
+      <ul class="footer__legal">
+        <li><a href="#help">Privacy</a></li>
+        <li><a href="#help">Cookies</a></li>
+        <li><a href="#help">Conditions of carriage</a></li>
+        <li><a href="#help">Accessibility</a></li>
+      </ul>
+      <ul class="social" aria-label="Social media">
+        <li><a href="#help" aria-label="Instagram">IG</a></li>
+        <li><a href="#help" aria-label="X">X</a></li>
+        <li><a href="#help" aria-label="LinkedIn">in</a></li>
+        <li><a href="#help" aria-label="YouTube">YT</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<!-- Region / language / currency panel -->
+<div class="sheet" id="region-sheet" role="dialog" aria-modal="true" aria-labelledby="region-h" hidden>
+  <div class="sheet__panel">
+    <button class="sheet__close" id="region-close" aria-label="Close">×</button>
+    <h2 id="region-h">Region &amp; preferences</h2>
+    <div class="grid grid--two">
+      <div class="field">
+        <label for="sel-country">Country</label>
+        <select id="sel-country"><option>Oman</option><option>United Arab Emirates</option>
+          <option>United Kingdom</option><option>India</option><option>Germany</option></select>
+      </div>
+      <div class="field">
+        <label for="sel-lang">Language</label>
+        <select id="sel-lang"><option value="en">English</option><option value="ar">العربية</option></select>
+      </div>
+      <div class="field">
+        <label for="sel-ccy">Currency</label>
+        <select id="sel-ccy"><option>OMR</option><option>AED</option><option>USD</option>
+          <option>GBP</option><option>EUR</option><option>INR</option></select>
+      </div>
+    </div>
+    <button class="btn btn--gold" id="region-save">Save preferences</button>
+  </div>
+</div>
+
+<!-- GSAP 3.12.5 + ScrollTrigger, CDN with a vendored local fallback -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+  if (!window.gsap) document.write('<script src="vendor/gsap.min.js"><\/script>');
+  if (!window.ScrollTrigger) document.write('<script src="vendor/ScrollTrigger.min.js"><\/script>');
+</script>
+<script src="main.js"></script>
+<script src="site.js"></script>
 </body>
 </html>
