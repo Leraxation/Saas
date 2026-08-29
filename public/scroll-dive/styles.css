@@ -1,0 +1,294 @@
+/* =============================================================
+   Scroll Dive — canvas image-sequence background
+   ============================================================= */
+
+:root {
+  --ink: #ffffff;
+  --ink-dim: rgba(255, 255, 255, 0.72);
+  --accent: #ffcf7a;
+  --shell: #0b0a12;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --gutter: clamp(1.5rem, 6vw, 7rem);
+}
+
+* { box-sizing: border-box; }
+
+html {
+  /* ScrollTrigger drives the animation from the native scroll position,
+     so native smooth-scroll must stay off or the scrub fights it. */
+  scroll-behavior: auto;
+}
+
+body {
+  margin: 0;
+  background: var(--shell);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* -------------------------------------------------------------
+   1. The fixed canvas background
+   The backing store stays at the source frame resolution; CSS
+   stretches it across the viewport and object-fit: cover crops
+   the overflow, exactly like a background-size: cover image.
+   ------------------------------------------------------------- */
+#sequence {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100svh;         /* avoids the mobile URL-bar jump */
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+  display: block;
+  background: var(--shell);
+  will-change: contents;
+}
+
+/* Legibility scrim over the artwork */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(8, 6, 18, 0.55) 0%, rgba(8, 6, 18, 0) 32%),
+    linear-gradient(0deg, rgba(8, 6, 18, 0.6) 0%, rgba(8, 6, 18, 0) 42%),
+    linear-gradient(90deg, rgba(8, 6, 18, 0.45) 0%, rgba(8, 6, 18, 0) 55%);
+}
+
+/* -------------------------------------------------------------
+   2. Content overlay — sits above the canvas and scrolls normally
+   ------------------------------------------------------------- */
+.track {
+  position: relative;
+  z-index: 1;              /* above the fixed canvas */
+  height: 400vh;           /* the scroll runway the sequence maps onto */
+}
+
+.panel {
+  height: 100vh;
+  height: 100svh;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--gutter);
+  pointer-events: none;    /* text never blocks scroll gestures */
+}
+
+.panel__content {
+  pointer-events: auto;
+  max-width: 34rem;
+}
+
+.panel--right  { justify-content: flex-end; text-align: left; }
+.panel--left   { justify-content: flex-start; }
+.panel--center { justify-content: center; text-align: center; }
+.panel--center .panel__content { max-width: 40rem; }
+
+.eyebrow {
+  margin: 0 0 1rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.display {
+  margin: 0 0 1.5rem;
+  font-size: clamp(2.75rem, 8vw, 6rem);
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  font-weight: 700;
+  text-shadow: 0 2px 40px rgba(0, 0, 0, 0.45);
+}
+
+h2 {
+  margin: 0 0 1.25rem;
+  font-size: clamp(1.9rem, 4.2vw, 3.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-weight: 650;
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.45);
+}
+
+p, .lede {
+  margin: 0 0 1.25rem;
+  font-size: clamp(1rem, 1.35vw, 1.15rem);
+  line-height: 1.65;
+  color: var(--ink-dim);
+  text-shadow: 0 1px 18px rgba(0, 0, 0, 0.5);
+}
+
+.lede { max-width: 30rem; }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+pre {
+  margin: 1.5rem 0 0;
+  padding: 1rem 1.15rem;
+  overflow-x: auto;
+  text-align: left;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(10, 8, 20, 0.55);
+  backdrop-filter: blur(8px);
+}
+pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2.25rem;
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.facts li { display: flex; flex-direction: column; gap: 0.25rem; }
+.facts strong {
+  font-size: 2rem;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  color: var(--accent);
+}
+.facts span {
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+/* Scroll hint */
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 2.5rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.hint__mouse {
+  position: relative;
+  width: 22px;
+  height: 34px;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  flex: none;
+}
+.hint__mouse::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 7px;
+  width: 2px;
+  height: 6px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: #fff;
+  animation: wheel 1.7s ease-in-out infinite;
+}
+@keyframes wheel {
+  0%, 100% { transform: translateY(0);   opacity: 1; }
+  60%      { transform: translateY(9px); opacity: 0; }
+}
+
+/* Section after the sequence, back in normal flow */
+.outro {
+  position: relative;
+  z-index: 1;
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+  padding: 4rem var(--gutter);
+  background: var(--shell);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.outro p { margin: 0; }
+
+/* -------------------------------------------------------------
+   3. Chrome: preloader + scroll progress bar
+   ------------------------------------------------------------- */
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: var(--shell);
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+.loader.is-done { opacity: 0; visibility: hidden; }
+
+.loader__inner { width: min(22rem, 70vw); text-align: center; }
+.loader__label {
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 1rem;
+}
+.loader__bar {
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+}
+.loader__bar span {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 0.25s ease-out;
+}
+.loader__pct {
+  margin-top: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+}
+
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 5;
+  background: rgba(255, 255, 255, 0.1);
+}
+.progress span {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transform-origin: left center;
+}
+
+/* -------------------------------------------------------------
+   4. Reveal animation baseline
+   JS adds .js-reveal so content is never hidden if JS fails.
+   ------------------------------------------------------------- */
+.js-reveal [data-reveal] { opacity: 0; transform: translateY(28px); }
+
+@media (max-width: 720px) {
+  .panel--right, .panel--left, .panel--center { justify-content: flex-start; text-align: left; }
+  .facts { gap: 1.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js-reveal [data-reveal] { opacity: 1; transform: none; }
+  .hint__mouse::after { animation: none; }
+}
