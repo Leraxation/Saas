@@ -8,7 +8,7 @@ public/scroll-dive/
 ├── index.html          markup: canvas + 400vh scroll track + overlay sections
 ├── styles.css          fixed/object-fit canvas, overlay typography, loader
 ├── main.js             preloader, renderer, ScrollTrigger wiring (CONFIG at top)
-├── frames/             frame_0001.jpg … frame_0016.jpg (the demo sequence)
+├── frames/             frame_0001.jpg … frame_0032.jpg (the demo sequence)
 └── vendor/             GSAP 3.12.5 + ScrollTrigger, local fallback for the CDN
 ```
 

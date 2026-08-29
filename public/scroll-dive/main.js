@@ -8,7 +8,7 @@
    ============================================================= */
 
 const CONFIG = {
-  frameCount: 16,          // number of images in the sequence
+  frameCount: 32,          // number of images in the sequence
   firstFrame: 1,           // number of the first file (frame_0001.jpg → 1)
   pad: 4,                  // zero-padding width in the filename
   path: (n) => `frames/frame_${String(n).padStart(CONFIG.pad, "0")}.jpg`,
