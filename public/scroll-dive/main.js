@@ -2,20 +2,32 @@
    Scroll Dive — scroll-driven canvas image sequence
    HTML5 Canvas + GSAP ScrollTrigger
 
-   Swap in your own footage by editing CONFIG below:
-     ffmpeg -i clip.mp4 -vf fps=24 -q:v 4 frames/frame_%04d.jpg
-   A 6 second clip at 24 fps produces 144 files → frameCount: 144.
+   The sequence is described as a list of segments rather than one flat
+   run of frames, so a clip made of several shots keeps its structure:
+   each shot gets its own stretch of the scroll track, and a `hold`
+   segment parks on a single frame for as long as you give it.
    ============================================================= */
 
 const CONFIG = {
-  frameCount: 32,          // number of images in the sequence
-  firstFrame: 1,           // number of the first file (frame_0001.jpg → 1)
+  /* Segments in playback order.
+       { from, to, weight } plays file numbers from → to (inclusive)
+       { hold, weight }     parks on one file number
+     `weight` is that segment's share of the scroll track. The weights below
+     are 3 : 2 : 2, matching the 3 panels / 200vh spacer / 2 panels in the
+     markup — keep the two in step if you change either. */
+  segments: [
+    { from: 1,   to: 168, weight: 3 },   // shot one: the fly-by into the engine
+    { hold: 169,          weight: 2 },   // the black stretch already in the footage
+    { from: 170, to: 245, weight: 2 },   // shot two: the cabin
+  ],
+
+  firstFrame: 1,           // number of the first file on disk
   pad: 4,                  // zero-padding width in the filename
-  path: (n) => `frames/frame_${String(n).padStart(CONFIG.pad, "0")}.jpg`,
+  path: (n) => `frames/frame_${String(n).padStart(CONFIG.pad, "0")}.webp`,
 
   scrub: 1,                // seconds the canvas takes to catch up to the wheel
   concurrency: 6,          // parallel image requests while preloading
-  readyThreshold: 0.25,    // fraction decoded before the loader is dismissed
+  readyThreshold: 0.12,    // fraction decoded before the loader is dismissed
 };
 
 /* ------------------------------------------------------------------
@@ -29,10 +41,23 @@ const loaderFill = document.getElementById("loader-fill");
 const loaderPct = document.getElementById("loader-pct");
 const progressFill = document.getElementById("progress-fill");
 
-const total = CONFIG.frameCount;
+/* Flatten the segments into the list of file numbers actually needed, so
+   frames[] is a simple 0-based array however the segments are described. */
+const files = [];
+const layout = CONFIG.segments.map((seg) => {
+  const start = files.length;
+  if (seg.hold != null) {
+    files.push(seg.hold);
+  } else {
+    for (let n = seg.from; n <= seg.to; n++) files.push(n);
+  }
+  return { ...seg, start, end: files.length - 1 };
+});
+
+const total = files.length;
 const frames = new Array(total).fill(null); // decoded HTMLImageElements, by index
 
-/* Playhead. ScrollTrigger tweens `state.frame`; the renderer reads it. */
+/* Playhead. The ScrollTrigger timeline drives `state.frame`; the renderer reads it. */
 const state = { frame: 0 };
 let painted = -1;        // last index actually drawn, so we skip no-op redraws
 let rafPending = false;
@@ -99,7 +124,7 @@ function loadFrame(index) {
   return new Promise((resolve) => {
     const img = new Image();
     img.decoding = "async";
-    img.src = CONFIG.path(CONFIG.firstFrame + index);
+    img.src = CONFIG.path(files[index]);
 
     const done = () => {
       frames[index] = img;
@@ -138,9 +163,9 @@ function onFrameLoaded() {
     readyResolved = true;
     resolveReady();
   }
-  if (loaded === total) {
+  if (loaded === total && window.ScrollTrigger) {
     // Layout can shift while images resolve; re-measure the trigger.
-    if (window.ScrollTrigger) ScrollTrigger.refresh();
+    ScrollTrigger.refresh();
   }
 }
 
@@ -165,15 +190,16 @@ async function preload() {
 
 /* ------------------------------------------------------------------
    Scroll wiring
+
+   One timeline across the whole track, with a tween per segment. Because
+   the durations are the segment weights, each shot occupies exactly its
+   share of the scroll — and a `hold` simply spends its share sitting on
+   one frame.
    ------------------------------------------------------------------ */
 function initScroll() {
   gsap.registerPlugin(ScrollTrigger);
 
-  // Map the full height of .track (400vh) onto frames 0 → last.
-  gsap.to(state, {
-    frame: total - 1,
-    ease: "none",
-    snap: "frame",              // land on whole frames, never a fraction
+  const timeline = gsap.timeline({
     scrollTrigger: {
       trigger: track,
       start: "top top",
@@ -184,7 +210,17 @@ function initScroll() {
         progressFill.style.width = (self.progress * 100).toFixed(2) + "%";
       },
     },
-    onUpdate: render,
+    onUpdate: render,           // paint on every tick, including inside a hold
+  });
+
+  layout.forEach((seg, i) => {
+    timeline.to(state, {
+      frame: seg.end,           // a hold has start === end, so it just parks
+      duration: seg.weight,
+      ease: "none",
+      snap: "frame",            // land on whole frames, never a fraction
+      immediateRender: i === 0,
+    });
   });
 
   if (prefersReducedMotion) return;
@@ -207,8 +243,8 @@ function initScroll() {
   });
 }
 
-/* Handy while tuning: scrollDive.state.frame, scrollDive.frames, etc. */
-window.scrollDive = { config: CONFIG, state, frames, render };
+/* Handy while tuning: scrollDive.state.frame, scrollDive.layout, etc. */
+window.scrollDive = { config: CONFIG, files, layout, state, frames, render };
 
 /* ------------------------------------------------------------------
    Boot

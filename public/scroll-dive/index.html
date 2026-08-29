@@ -6,7 +6,7 @@
   <title>Scroll Dive &mdash; Canvas Image Sequence</title>
   <meta name="description" content="A scroll-driven image sequence player built with HTML5 Canvas, GSAP and ScrollTrigger." />
 
-  <link rel="preload" as="image" href="frames/frame_0001.jpg" fetchpriority="high" />
+  <link rel="preload" as="image" href="frames/frame_0001.webp" fetchpriority="high" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%E2%9C%88%EF%B8%8F</text></svg>" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -35,18 +35,22 @@
 
   <!-- ============================================================
        2. SCROLL TRACK + CONTENT OVERLAY
-       .track is the tall element (400vh) that ScrollTrigger measures.
-       Sections are transparent and scroll over the fixed canvas.
+       .track is the tall element ScrollTrigger measures. Its height is
+       split 3 : 2 : 2 between shot one, the gap, and shot two — the same
+       weights the timeline in main.js uses, so copy and footage stay in step.
        ============================================================ -->
   <main class="track" id="track">
+
+    <!-- ---------- Shot one: the fly-by, three panels ---------- -->
 
     <section class="panel panel--hero">
       <div class="panel__content">
         <p class="eyebrow" data-reveal>Chapter 01</p>
         <h1 class="display" data-reveal>Above the<br />golden hour</h1>
         <p class="lede" data-reveal>
-          Every frame in this sequence is tied to your scroll position rather than a clock.
-          Scroll slowly and the shot creeps forward; flick the wheel and it races to catch up.
+          Every frame is tied to your scroll position rather than a clock.
+          Scroll slowly and the shot creeps forward; flick the wheel and it races
+          to catch up.
         </p>
         <div class="hint" data-reveal>
           <span class="hint__mouse"></span>
@@ -60,14 +64,14 @@
         <p class="eyebrow" data-reveal>Chapter 02</p>
         <h2 data-reveal>Frames, not video</h2>
         <p data-reveal>
-          A <code>&lt;video&gt;</code> element cannot be seeked accurately enough for scrubbing &mdash;
-          browsers snap to keyframes and stall. Painting decoded JPEGs onto a canvas gives you exact,
-          frame-perfect control at any scroll speed.
+          A <code>&lt;video&gt;</code> element cannot be seeked accurately enough for
+          scrubbing &mdash; browsers snap to keyframes and stall. Painting decoded
+          stills onto a canvas gives exact, frame-perfect control at any scroll speed.
         </p>
         <ul class="facts" data-reveal>
-          <li><strong>32</strong><span>frames in this demo</span></li>
-          <li><strong>400vh</strong><span>scroll track</span></li>
-          <li><strong>1</strong><span>second of scrub easing</span></li>
+          <li><strong>245</strong><span>frames</span></li>
+          <li><strong>12</strong><span>frames per second</span></li>
+          <li><strong>700vh</strong><span>scroll track</span></li>
         </ul>
       </div>
     </section>
@@ -75,26 +79,44 @@
     <section class="panel panel--left">
       <div class="panel__content">
         <p class="eyebrow" data-reveal>Chapter 03</p>
-        <h2 data-reveal>Cover, not squash</h2>
+        <h2 data-reveal>All the way in</h2>
         <p data-reveal>
-          The canvas keeps the source resolution as its backing store and is stretched over the
-          viewport with <code>object-fit: cover</code>. The composition fills any window, on any
-          aspect ratio, without a single redraw on resize.
+          The camera closes on the engine and keeps going. Because the playhead is
+          scroll, not time, you decide how fast the approach happens &mdash; and you can
+          stop dead in the middle of it.
+        </p>
+      </div>
+    </section>
+
+    <!-- ---------- The gap ----------
+         No copy here: the footage fades to black between the two shots, and the
+         timeline holds that black frame across this whole stretch of scroll. -->
+    <div class="spacer" aria-hidden="true"></div>
+
+    <!-- ---------- Shot two: the cabin, two panels ---------- -->
+
+    <section class="panel panel--right">
+      <div class="panel__content">
+        <p class="eyebrow" data-reveal>Chapter 04</p>
+        <h2 data-reveal>And out the other side</h2>
+        <p data-reveal>
+          The second shot picks up where the darkness ends. Two sequences, one
+          canvas &mdash; the gap between them is scroll you spend in the black, not a
+          cut you fall through.
         </p>
       </div>
     </section>
 
     <section class="panel panel--center">
       <div class="panel__content">
-        <p class="eyebrow" data-reveal>Chapter 04</p>
-        <h2 data-reveal>Drop in your own sequence</h2>
+        <p class="eyebrow" data-reveal>Chapter 05</p>
+        <h2 data-reveal>Drop in your own footage</h2>
         <p data-reveal>
-          Export your video to numbered JPEGs, point <code>CONFIG</code> in <code>main.js</code> at the
-          folder, and set the frame count. A 6&nbsp;second clip at 24&nbsp;fps is 144 files &mdash; that is all
-          this needs to become your own.
+          Point <code>ffmpeg</code> at a clip, list the shots in <code>CONFIG</code>,
+          and give each one a weight. The track height follows the same ratio.
         </p>
-        <pre data-reveal><code>ffmpeg -i clip.mp4 -vf fps=24 \
-  -q:v 4 frames/frame_%04d.jpg</code></pre>
+        <pre data-reveal><code>ffmpeg -i clip.mp4 -vf "fps=12,scale=1600:-2" \
+  -c:v libwebp -quality 76 frames/frame_%04d.webp</code></pre>
       </div>
     </section>
 
