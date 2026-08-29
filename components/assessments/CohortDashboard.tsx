@@ -58,8 +58,11 @@ export function CohortDashboard() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Leadership Assessment</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Competencies, behaviour, cognition and 360 feedback across {analytics.participants}{" "}
-            {analytics.participants === 1 ? "leader" : "leaders"}.
+            {analytics.participants === 0
+              ? "Competencies, behaviour, cognition and 360-degree feedback in one programme."
+              : `Competencies, behaviour, cognition and 360 feedback across ${analytics.participants} ${
+                  analytics.participants === 1 ? "leader" : "leaders"
+                }.`}
           </p>
         </div>
         <Link
@@ -72,12 +75,27 @@ export function CohortDashboard() {
 
       {data.storage === "memory" && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          <strong className="font-semibold">Demo storage.</strong> No database is configured, so assessments live in
-          memory and reset when the server restarts. Set <code className="font-mono text-xs">UPSTASH_REDIS_REST_URL</code>{" "}
-          and <code className="font-mono text-xs">UPSTASH_REDIS_REST_TOKEN</code> to persist them.
+          <strong className="font-semibold">No database configured.</strong> Assessments are held in memory and are
+          lost when the server restarts. Set <code className="font-mono text-xs">UPSTASH_REDIS_REST_URL</code> and{" "}
+          <code className="font-mono text-xs">UPSTASH_REDIS_REST_TOKEN</code> to store them for real.
         </p>
       )}
 
+      {analytics.participants === 0 ? (
+        <EmptyState
+          title="No assessments yet"
+          body="Add the first leader to the programme. Once they complete the competency module their report, benchmarks and development plan become available, and the cohort views appear here as more leaders are added."
+          action={
+            <Link
+              href="/assessments/new"
+              className="inline-block rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
+            >
+              Add the first leader
+            </Link>
+          }
+        />
+      ) : (
+        <>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatTile label="Participants" value={String(analytics.participants)} hint={`${analytics.reports} scored`} />
         <StatTile
@@ -224,89 +242,76 @@ export function CohortDashboard() {
       </div>
 
       <Card title="Participants" subtitle="Every leader in the programme and where their assessment stands.">
-        {assessments.length === 0 ? (
-          <EmptyState
-            title="No participants yet"
-            body="Add a leader to start their assessment."
-            action={
-              <Link
-                href="/assessments/new"
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-              >
-                New assessment
-              </Link>
-            }
-          />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs font-medium text-slate-400 border-b border-slate-100">
-                  <th className="pb-2 pr-4">Leader</th>
-                  <th className="pb-2 pr-4">Level</th>
-                  <th className="pb-2 pr-4">Modules</th>
-                  <th className="pb-2 pr-4">360</th>
-                  <th className="pb-2 pr-4 w-40">Readiness</th>
-                  <th className="pb-2 pr-4">Updated</th>
-                  <th className="pb-2" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {assessments.map((a) => (
-                  <tr key={a.id} className="hover:bg-slate-50/70">
-                    <td className="py-3 pr-4">
-                      <Link href={`/assessments/${a.id}`} className="font-medium text-slate-900 hover:text-indigo-600">
-                        {a.participant.name}
-                      </Link>
-                      <p className="text-xs text-slate-500">
-                        {a.participant.role} · {a.participant.department}
-                      </p>
-                    </td>
-                    <td className="py-3 pr-4 text-slate-600 text-xs">{LEVEL_LABELS[a.participant.level]}</td>
-                    <td className="py-3 pr-4">
-                      <div className="flex gap-1">
-                        {(["competency", "behavioral", "cognitive"] as const).map((m) => (
-                          <span
-                            key={m}
-                            title={m}
-                            className={`w-2 h-2 rounded-full ${
-                              a.modulesComplete.includes(m) ? "bg-emerald-500" : "bg-slate-200"
-                            }`}
-                          />
-                        ))}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs font-medium text-slate-400 border-b border-slate-100">
+                <th className="pb-2 pr-4">Leader</th>
+                <th className="pb-2 pr-4">Level</th>
+                <th className="pb-2 pr-4">Modules</th>
+                <th className="pb-2 pr-4">360</th>
+                <th className="pb-2 pr-4 w-40">Readiness</th>
+                <th className="pb-2 pr-4">Updated</th>
+                <th className="pb-2" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {assessments.map((a) => (
+                <tr key={a.id} className="hover:bg-slate-50/70">
+                  <td className="py-3 pr-4">
+                    <Link href={`/assessments/${a.id}`} className="font-medium text-slate-900 hover:text-indigo-600">
+                      {a.participant.name}
+                    </Link>
+                    <p className="text-xs text-slate-500">
+                      {a.participant.role} · {a.participant.department}
+                    </p>
+                  </td>
+                  <td className="py-3 pr-4 text-slate-600 text-xs">{LEVEL_LABELS[a.participant.level]}</td>
+                  <td className="py-3 pr-4">
+                    <div className="flex gap-1">
+                      {(["competency", "behavioral", "cognitive"] as const).map((m) => (
+                        <span
+                          key={m}
+                          title={m}
+                          className={`w-2 h-2 rounded-full ${
+                            a.modulesComplete.includes(m) ? "bg-emerald-500" : "bg-slate-200"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </td>
+                  <td className="py-3 pr-4 text-xs text-slate-600 tabular-nums">
+                    {a.ratersSubmitted}/{a.ratersInvited}
+                  </td>
+                  <td className="py-3 pr-4">
+                    {a.readiness === null ? (
+                      <span className="text-xs text-slate-400">Not started</span>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <ScoreBar value={a.readiness} height={6} />
+                        <span className="text-xs font-semibold text-slate-700 tabular-nums w-8">
+                          {a.readiness.toFixed(0)}
+                        </span>
                       </div>
-                    </td>
-                    <td className="py-3 pr-4 text-xs text-slate-600 tabular-nums">
-                      {a.ratersSubmitted}/{a.ratersInvited}
-                    </td>
-                    <td className="py-3 pr-4">
-                      {a.readiness === null ? (
-                        <span className="text-xs text-slate-400">Not started</span>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <ScoreBar value={a.readiness} height={6} />
-                          <span className="text-xs font-semibold text-slate-700 tabular-nums w-8">
-                            {a.readiness.toFixed(0)}
-                          </span>
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-3 pr-4 text-xs text-slate-500">{relativeDate(a.updatedAt)}</td>
-                    <td className="py-3 text-right">
-                      <Link
-                        href={`/assessments/${a.id}/report`}
-                        className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
-                      >
-                        Report →
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                    )}
+                  </td>
+                  <td className="py-3 pr-4 text-xs text-slate-500">{relativeDate(a.updatedAt)}</td>
+                  <td className="py-3 text-right">
+                    <Link
+                      href={`/assessments/${a.id}/report`}
+                      className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                    >
+                      Report →
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
+        </>
+      )}
 
       <Card title="Norm reference" subtitle="What the benchmark percentiles compare against.">
         <div className="flex flex-wrap gap-3">

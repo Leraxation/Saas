@@ -17,7 +17,6 @@ interface Payload {
     updatedAt: string;
     plan: DevelopmentPlan | null;
     coachingNotes: CoachingNote[];
-    demo: boolean;
   };
   report: Report;
   coachingPrompts: string[];

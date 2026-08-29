@@ -1,17 +1,15 @@
 /**
  * Assessment persistence.
  *
- * Upstash Redis when it is configured, otherwise an in-process store seeded with
- * the demo cohort so the platform runs with zero setup. The in-process store is
- * per-instance and does not survive a restart — the UI says so rather than
- * pretending writes are durable.
+ * Upstash Redis when it is configured, otherwise an empty in-process store so the
+ * platform still runs without setup. The in-process store is per-instance and does
+ * not survive a restart — the UI says so rather than pretending writes are durable.
  */
 
 import { randomUUID } from "crypto";
 import { redisConfigured, redisGet, redisSet } from "@/lib/redis";
 import { RELATIONSHIPS, type Relationship } from "./framework";
 import type { ModuleId } from "./instruments";
-import { demoAssessments } from "./demo";
 import type {
   Assessment,
   AssessmentSummary,
@@ -31,18 +29,12 @@ const tokenKey = (token: string) => `assessments:token:${token}`;
 const globalStore = globalThis as unknown as { __assessmentStore?: Map<string, Assessment> };
 
 function memory(): Map<string, Assessment> {
-  if (!globalStore.__assessmentStore) {
-    globalStore.__assessmentStore = new Map(demoAssessments().map((a) => [a.id, a]));
-  }
+  globalStore.__assessmentStore ??= new Map();
   return globalStore.__assessmentStore;
 }
 
 export function storageMode(): "redis" | "memory" {
   return redisConfigured() ? "redis" : "memory";
-}
-
-export function isDemo(id: string): boolean {
-  return id.startsWith("demo-");
 }
 
 async function readIndex(): Promise<string[]> {
@@ -56,9 +48,7 @@ async function writeIndex(ids: string[]): Promise<void> {
 export async function getAssessment(id: string): Promise<Assessment | null> {
   if (!redisConfigured()) return memory().get(id) ?? null;
   try {
-    const stored = await redisGet<Assessment>(itemKey(id));
-    // Demo records stay available in Redis mode too — they are the worked examples.
-    return stored ?? (isDemo(id) ? (memory().get(id) ?? null) : null);
+    return (await redisGet<Assessment>(itemKey(id))) ?? null;
   } catch {
     return memory().get(id) ?? null;
   }
@@ -86,9 +76,9 @@ export async function listAssessments(): Promise<Assessment[]> {
   try {
     const index = await readIndex();
     const stored = await Promise.all(index.map((id) => redisGet<Assessment>(itemKey(id))));
-    const live = stored.filter((a): a is Assessment => Boolean(a));
-    const demos = demoAssessments().filter((d) => !live.some((a) => a.id === d.id));
-    return [...live, ...demos].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return stored
+      .filter((a): a is Assessment => Boolean(a))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   } catch {
     return [...memory().values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
@@ -126,7 +116,6 @@ export async function createAssessment(participant: Participant): Promise<Assess
 }
 
 export async function deleteAssessment(id: string): Promise<boolean> {
-  if (isDemo(id)) return false;
   if (!redisConfigured()) return memory().delete(id);
   const index = await readIndex();
   if (!index.includes(id)) return false;
@@ -189,12 +178,13 @@ export interface RaterContext {
 
 /** Resolves a 360 invitation token to its assessment without exposing the assessment id. */
 export async function findByToken(token: string): Promise<RaterContext | null> {
-  const direct = memory();
-  for (const assessment of direct.values()) {
-    const rater = assessment.raters.find((r) => r.token === token);
-    if (rater) return { assessment, rater };
+  if (!redisConfigured()) {
+    for (const assessment of memory().values()) {
+      const rater = assessment.raters.find((r) => r.token === token);
+      if (rater) return { assessment, rater };
+    }
+    return null;
   }
-  if (!redisConfigured()) return null;
   try {
     const id = await redisGet<string>(tokenKey(token));
     if (!id) return null;

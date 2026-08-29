@@ -24,7 +24,6 @@ interface Payload {
     updatedAt: string;
     modules: Record<string, { completedAt: string; durationSeconds: number | null }>;
     raters: RaterView[];
-    demo: boolean;
   };
   report: Report;
   storage: "redis" | "memory";
@@ -157,15 +156,13 @@ export function ParticipantHub({ assessmentId }: { assessmentId: string }) {
           >
             View report
           </Link>
-          {!assessment.demo && (
-            <button
-              type="button"
-              onClick={deleteAssessment}
-              className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
-            >
-              Delete
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={deleteAssessment}
+            className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+          >
+            Delete
+          </button>
         </div>
       </div>
 

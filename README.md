@@ -24,8 +24,8 @@ A full leadership assessment platform: participants complete three self-administ
 modules, nominated raters give 360-degree feedback, and the platform scores everything
 into a benchmarked report with a development plan and coaching support.
 
-Open **`/assessments`** — it works immediately with a demo cohort of four leaders, no
-configuration needed.
+Open **`/assessments`** and add your first leader — the platform starts empty, with no
+sample or placeholder participants.
 
 ### What it covers
 
@@ -72,8 +72,8 @@ configuration needed.
   (their ratings still count towards the pooled observer score), and written comments are
   reported by relationship only, never attributed.
 - Assessments persist to Upstash Redis when `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`
-  are set. Without them the platform runs on an in-memory store seeded with the demo cohort, and
-  says so in the UI.
+  are set. Without them the platform runs on an in-memory store that is lost on restart, and says
+  so in the UI — set the two variables before collecting anything you need to keep.
 - `ANTHROPIC_API_KEY` enables the AI-written plan narrative and the coaching agent. Without it,
   the plan is still fully generated and the coaching panel shows report-driven session prompts.
 - **The shipped norms in `lib/assessments/benchmarks.ts` are a documented reference set, not a
@@ -209,6 +209,5 @@ lib/
     development.ts            → 70-20-10 action library and plan generation
     analytics.ts              → cohort heatmap, talent grid, values roll-up
     store.ts                  → Redis-backed persistence with an in-memory fallback
-    demo.ts                   → seeded demo cohort
 get_token.py                  → one-time device-flow script (Option A)
 ```

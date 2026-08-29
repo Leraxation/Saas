@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { buildReport } from "@/lib/assessments/scoring";
 import { coachingPrompts } from "@/lib/assessments/development";
-import { deleteAssessment, getAssessment, isDemo, storageMode } from "@/lib/assessments/store";
+import { deleteAssessment, getAssessment, storageMode } from "@/lib/assessments/store";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +37,6 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       })),
       plan: assessment.plan,
       coachingNotes: assessment.coachingNotes,
-      demo: isDemo(assessment.id),
     },
     report,
     coachingPrompts: coachingPrompts(report),
@@ -47,9 +46,6 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (isDemo(id)) {
-    return NextResponse.json({ error: "Demo assessments cannot be deleted." }, { status: 403 });
-  }
   const removed = await deleteAssessment(id);
   if (!removed) {
     return NextResponse.json({ error: "Assessment not found." }, { status: 404 });

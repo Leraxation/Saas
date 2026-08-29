@@ -62,7 +62,7 @@ export function NewAssessmentForm() {
                 required
                 maxLength={80}
                 className={`${field} mt-1.5`}
-                placeholder="Nadiya Al Balushi"
+                placeholder="Full name"
               />
             </label>
             <label className="block">
@@ -85,7 +85,7 @@ export function NewAssessmentForm() {
                 required
                 maxLength={80}
                 className={`${field} mt-1.5`}
-                placeholder="Head of Business Partnering"
+                placeholder="e.g. Head of Operations"
               />
             </label>
             <label className="block">
@@ -96,7 +96,7 @@ export function NewAssessmentForm() {
                 required
                 maxLength={80}
                 className={`${field} mt-1.5`}
-                placeholder="Employee Relations"
+                placeholder="e.g. Commercial"
               />
             </label>
           </div>
