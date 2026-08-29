@@ -20,6 +20,15 @@ const LEVEL_LABELS: Record<string, string> = {
   executive: "Executive",
 };
 
+/** Module completion dots, in programme order. */
+const MODULE_DOTS = [
+  { id: "competency", label: "1. Leadership Competencies" },
+  { id: "behavioral", label: "2. Behavioral Assessment" },
+  { id: "feedback", label: "3. 360-Degree Feedback" },
+  { id: "cognitive", label: "4. Cognitive Assessment" },
+  { id: "alignment", label: "5. Organizational Alignment" },
+] as const;
+
 const BOXES = [
   ["1-3", "2-3", "3-3"],
   ["1-2", "2-2", "3-2"],
@@ -269,12 +278,14 @@ export function CohortDashboard() {
                   <td className="py-3 pr-4 text-slate-600 text-xs">{LEVEL_LABELS[a.participant.level]}</td>
                   <td className="py-3 pr-4">
                     <div className="flex gap-1">
-                      {(["competency", "behavioral", "cognitive"] as const).map((m) => (
+                      {MODULE_DOTS.map(({ id, label }) => (
                         <span
-                          key={m}
-                          title={m}
+                          key={id}
+                          title={label}
                           className={`w-2 h-2 rounded-full ${
-                            a.modulesComplete.includes(m) ? "bg-emerald-500" : "bg-slate-200"
+                            (id === "feedback" ? a.ratersSubmitted > 0 : a.modulesComplete.includes(id))
+                              ? "bg-emerald-500"
+                              : "bg-slate-200"
                           }`}
                         />
                       ))}

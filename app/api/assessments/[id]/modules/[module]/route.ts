@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  ALIGNMENT_ITEMS,
+  ALIGNMENT_LABELS,
   BEHAVIORAL_ITEMS,
   BEHAVIORAL_LABELS,
   COGNITIVE_ITEMS,
@@ -10,9 +12,9 @@ import {
   LIKERT_MIN,
   getModule,
   publicCognitiveItems,
-  type ModuleId,
+  type SelfModuleId,
 } from "@/lib/assessments/instruments";
-import { COMPETENCIES, TRAITS } from "@/lib/assessments/framework";
+import { COMPETENCIES, ORG_VALUES, TRAITS } from "@/lib/assessments/framework";
 import { getAssessment, saveModule } from "@/lib/assessments/store";
 import type { ModuleSubmission } from "@/lib/assessments/types";
 
@@ -22,13 +24,14 @@ export const dynamic = "force-dynamic";
 const MIN_COGNITIVE_SECONDS = 30;
 const MAX_COGNITIVE_SECONDS = 4 * 60 * 60;
 
-function isModuleId(value: string): value is ModuleId {
-  return value === "competency" || value === "behavioral" || value === "cognitive";
+/** 360 feedback is collected from raters, so it has no self-administered runner. */
+function isSelfModuleId(value: string): value is SelfModuleId {
+  return value === "competency" || value === "behavioral" || value === "cognitive" || value === "alignment";
 }
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string; module: string }> }) {
   const { id, module: moduleParam } = await params;
-  if (!isModuleId(moduleParam) || !getModule(moduleParam)) {
+  if (!isSelfModuleId(moduleParam) || !getModule(moduleParam)) {
     return NextResponse.json({ error: "Unknown module." }, { status: 404 });
   }
   const assessment = await getAssessment(id);
@@ -85,6 +88,25 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     });
   }
 
+  if (moduleParam === "alignment") {
+    return NextResponse.json({
+      module: definition,
+      completedAt,
+      participant: assessment.participant,
+      kind: "likert",
+      labels: ALIGNMENT_LABELS,
+      min: LIKERT_MIN,
+      max: LIKERT_MAX,
+      // One section per organisational value, so the value being rated is always in view.
+      sections: ORG_VALUES.map((v) => ({
+        id: v.id,
+        title: v.name,
+        description: v.statement,
+        items: ALIGNMENT_ITEMS.filter((i) => i.scale === v.id).map((i) => ({ id: i.id, text: i.self })),
+      })),
+    });
+  }
+
   return NextResponse.json({
     module: definition,
     completedAt,
@@ -120,7 +142,7 @@ function parseLikertResponses(
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string; module: string }> }) {
   const { id, module: moduleParam } = await params;
-  if (!isModuleId(moduleParam) || !getModule(moduleParam)) {
+  if (!isSelfModuleId(moduleParam) || !getModule(moduleParam)) {
     return NextResponse.json({ error: "Unknown module." }, { status: 404 });
   }
   const assessment = await getAssessment(id);
@@ -171,7 +193,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       durationSeconds: Math.round(duration),
     };
   } else {
-    const items = moduleParam === "competency" ? COMPETENCY_ITEMS : BEHAVIORAL_ITEMS;
+    const items =
+      moduleParam === "competency"
+        ? COMPETENCY_ITEMS
+        : moduleParam === "alignment"
+          ? ALIGNMENT_ITEMS
+          : BEHAVIORAL_ITEMS;
     const parsed = parseLikertResponses(payload, new Set(items.map((i) => i.id)));
     if ("error" in parsed) {
       return NextResponse.json({ error: parsed.error }, { status: 400 });

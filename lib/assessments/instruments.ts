@@ -1,14 +1,18 @@
 /**
- * Item banks for the three self-completed modules plus the 360 rater form.
+ * Item banks for the self-completed modules plus the 360 rater form.
  *
  * Competency items are shared between the self-assessment and the 360 form so
  * self and observer ratings are directly comparable item by item — that
  * comparability is what makes the gap analysis meaningful.
  */
 
-import { COMPETENCIES, TRAITS } from "./framework";
+import { COMPETENCIES, ORG_VALUES, TRAITS } from "./framework";
 
-export type ModuleId = "competency" | "behavioral" | "cognitive";
+/** The five assessment modules, in the order a participant works through them. */
+export type ModuleId = "competency" | "behavioral" | "feedback" | "cognitive" | "alignment";
+
+/** Modules the participant completes themselves — "feedback" is collected from raters instead. */
+export type SelfModuleId = Exclude<ModuleId, "feedback">;
 
 export interface LikertItem {
   id: string;
@@ -39,6 +43,14 @@ export const BEHAVIORAL_LABELS = [
   "Neutral",
   "Agree",
   "Strongly agree",
+];
+
+export const ALIGNMENT_LABELS = [
+  "Not at all",
+  "Slightly",
+  "Moderately",
+  "Largely",
+  "Fully",
 ];
 
 /** Four items per competency: 32 items across the model. */
@@ -117,6 +129,41 @@ export const BEHAVIORAL_ITEMS: LikertItem[] = [
   { id: "se3", scale: "sensitivity", self: "I say what I think without softening it.", observer: "", reverse: true },
   { id: "se4", scale: "sensitivity", self: "People bring me personal difficulties.", observer: "" },
   { id: "se5", scale: "sensitivity", self: "I find others' emotional reactions hard to read.", observer: "", reverse: true },
+];
+
+
+/**
+ * Organisational alignment items: four per organisational value, scored directly
+ * rather than inferred from the competency model. When this module is complete the
+ * report uses these scores; until then it falls back to the competency roll-up, so
+ * the alignment view works either way.
+ */
+export const ALIGNMENT_ITEMS: LikertItem[] = [
+  // Integrity — "We do what we said, and say what is true."
+  { id: "al-in1", scale: "Integrity", self: "I say what I believe to be true in meetings, including when it is unwelcome.", observer: "Says what they believe to be true in meetings, including when it is unwelcome." },
+  { id: "al-in2", scale: "Integrity", self: "I follow through on commitments I make to other teams.", observer: "Follows through on commitments made to other teams." },
+  { id: "al-in3", scale: "Integrity", self: "I hold the standard even when nobody would notice if I did not.", observer: "Holds the standard even when nobody would notice if they did not." },
+  { id: "al-in4", scale: "Integrity", self: "I present a more favourable picture than the facts support when reporting upward.", observer: "Presents a more favourable picture than the facts support when reporting upward.", reverse: true },
+  // Accountability — "We own the outcome, not just the task."
+  { id: "al-ac1", scale: "Accountability", self: "I take responsibility for outcomes in my area, not only for my own tasks.", observer: "Takes responsibility for outcomes in their area, not only for their own tasks." },
+  { id: "al-ac2", scale: "Accountability", self: "I raise a problem I own before someone else finds it.", observer: "Raises a problem they own before someone else finds it." },
+  { id: "al-ac3", scale: "Accountability", self: "I hold others to the standards I ask of myself.", observer: "Holds others to the standards they ask of themselves." },
+  { id: "al-ac4", scale: "Accountability", self: "When something goes wrong I focus first on who is at fault.", observer: "When something goes wrong they focus first on who is at fault.", reverse: true },
+  // Respect — "We treat every colleague as a professional."
+  { id: "al-re1", scale: "Respect", self: "I treat colleagues at every level as professionals.", observer: "Treats colleagues at every level as professionals." },
+  { id: "al-re2", scale: "Respect", self: "I make room for views that differ from mine before deciding.", observer: "Makes room for views that differ from theirs before deciding." },
+  { id: "al-re3", scale: "Respect", self: "I disagree with the argument rather than the person.", observer: "Disagrees with the argument rather than the person." },
+  { id: "al-re4", scale: "Respect", self: "I discount input from people outside my own function.", observer: "Discounts input from people outside their own function.", reverse: true },
+  // Care — "We look after our people and our customers."
+  { id: "al-ca1", scale: "Care", self: "I notice when workload is affecting someone and act on it.", observer: "Notices when workload is affecting someone and acts on it." },
+  { id: "al-ca2", scale: "Care", self: "I weigh the customer's experience in decisions that are mainly internal.", observer: "Weighs the customer's experience in decisions that are mainly internal." },
+  { id: "al-ca3", scale: "Care", self: "I make time for people who need it, not only for what is urgent.", observer: "Makes time for people who need it, not only for what is urgent." },
+  { id: "al-ca4", scale: "Care", self: "Delivery pressure leads me to push people past what is sustainable.", observer: "Delivery pressure leads them to push people past what is sustainable.", reverse: true },
+  // Ambition — "We set a standard above the industry, not level with it."
+  { id: "al-am1", scale: "Ambition", self: "I set targets against the best in the industry rather than against last year.", observer: "Sets targets against the best in the industry rather than against last year." },
+  { id: "al-am2", scale: "Ambition", self: "I challenge a plan that is merely adequate.", observer: "Challenges a plan that is merely adequate." },
+  { id: "al-am3", scale: "Ambition", self: "I connect my team's work to where the organisation is trying to get to.", observer: "Connects their team's work to where the organisation is trying to get to." },
+  { id: "al-am4", scale: "Ambition", self: "I settle for what is achievable rather than argue for what is needed.", observer: "Settles for what is achievable rather than arguing for what is needed.", reverse: true },
 ];
 
 export interface CognitiveOption {
@@ -334,21 +381,40 @@ export const MODULES: ModuleDefinition[] = [
   },
   {
     id: "behavioral",
-    name: "Behavioural Profile",
+    name: "Behavioral Assessment",
     blurb: "Psychometric scales covering personality traits that shape leadership impact.",
     itemCount: BEHAVIORAL_ITEMS.length,
     estimatedMinutes: 8,
     scaleCount: TRAITS.length,
   },
   {
+    id: "feedback",
+    name: "360-Degree Feedback",
+    blurb: "Observer ratings from managers, peers, direct reports and stakeholders on the same competency items.",
+    itemCount: COMPETENCY_ITEMS.length,
+    estimatedMinutes: 12,
+    scaleCount: COMPETENCIES.length,
+  },
+  {
     id: "cognitive",
-    name: "Cognitive Battery",
+    name: "Cognitive Assessment",
     blurb: "Timed reasoning items — numerical, verbal, abstract and adaptive problem solving.",
     itemCount: COGNITIVE_ITEMS.length,
     estimatedMinutes: 15,
     scaleCount: 4,
   },
+  {
+    id: "alignment",
+    name: "Organizational Alignment Assessment",
+    blurb: "How closely day-to-day leadership behaviour tracks the organisation's values and strategic intent.",
+    itemCount: ALIGNMENT_ITEMS.length,
+    estimatedMinutes: 7,
+    scaleCount: ORG_VALUES.length,
+  },
 ];
+
+/** Modules the participant completes themselves, in running order. */
+export const SELF_MODULES = MODULES.filter((m) => m.id !== "feedback");
 
 export function getModule(id: string): ModuleDefinition | undefined {
   return MODULES.find((m) => m.id === id);

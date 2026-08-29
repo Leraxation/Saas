@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 
 export default async function ModulePage({ params }: { params: Promise<{ id: string; module: string }> }) {
   const { id, module: moduleId } = await params;
-  if (!getModule(moduleId)) notFound();
+  // 360 feedback is collected from raters and has its own page, not a runner.
+  if (!getModule(moduleId) || moduleId === "feedback") notFound();
   return <ModuleRunner assessmentId={id} moduleId={moduleId} />;
 }

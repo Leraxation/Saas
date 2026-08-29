@@ -278,7 +278,9 @@ export function generatePlan(report: Report): DevelopmentPlan {
   const lowValue = [...report.values].sort((a, b) => a.score - b.score)[0];
   if (lowValue && lowValue.score > 0) {
     lines.push(
-      `**Organisational alignment:** lowest alignment is with *${lowValue.name}* (${lowValue.score.toFixed(0)}/100) — "${lowValue.statement}"`
+      `**Organisational alignment:** lowest alignment is with *${lowValue.name}* (${lowValue.score.toFixed(0)}/100${
+        lowValue.source === "derived" ? ", inferred from the competency scores" : ""
+      }) — "${lowValue.statement}"`
     );
   }
   if (!report.completeness.feedback) {
@@ -342,7 +344,8 @@ export function reportDigest(report: Report): string {
     }
   }
   lines.push(
-    `Values alignment: ${report.values.map((v) => `${v.name} ${v.score.toFixed(0)}`).join(", ")}.`
+    `Values alignment (${report.values[0]?.source === "measured" ? "measured directly" : "inferred from competencies — the alignment module is not complete"}): ` +
+      `${report.values.map((v) => `${v.name} ${v.score.toFixed(0)}`).join(", ")}.`
   );
   return lines.join("\n");
 }

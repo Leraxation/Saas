@@ -29,25 +29,36 @@ sample or placeholder participants.
 
 ### What it covers
 
-| Area | Where it lives |
-|---|---|
-| **Leadership competencies** | 8-competency model (strategic thinking, decision making, communication & influence, emotional intelligence, developing others, driving change, execution & accountability, collaboration), 32 self-rated items |
-| **Behavioural assessment** | 30-item psychometric profile across 6 leadership traits, reported on the 1-10 sten scale with overuse/underuse risks |
-| **360-degree feedback** | Token-linked rater forms using the *same* competency items, aggregated by manager / peer / direct report / stakeholder, with blind-spot and hidden-strength analysis |
-| **Cognitive assessment** | 15-minute timed battery: numerical, verbal & critical, abstract, and adaptive problem solving — scored server-side |
-| **Development plans** | Focus areas and 70-20-10 actions generated from the scores, each with a measure and a horizon; the narrative can optionally be written by Claude |
-| **Benchmarking** | Percentiles and bands against a level-banded norm group, per competency and for the cognitive battery |
-| **Coaching & support** | A coaching agent grounded strictly in the report's evidence, report-driven session prompts, and a coaching log |
-| **Organisational alignment** | Competency scores rolled up through the organisation's values, individually and across the cohort |
+### Structure
 
-### Flow
+The section navigation runs in this order:
 
-1. **`/assessments`** — cohort view: competency heatmap, talent grid, values alignment, participant list
-2. **`/assessments/new`** — add a leader and set their leadership level (this picks the norm group)
-3. **`/assessments/<id>`** — participant hub: launch modules, invite raters, copy each rater's private link
-4. **`/assessments/<id>/run/<module>`** — the questionnaire or timed battery
-5. **`/feedback/<token>`** — the rater's own page; no navigation, single submission, anonymised in the report
-6. **`/assessments/<id>/report`** — the scored report, development plan and coaching panel
+**Dashboard** — `/assessments`
+Cohort view: competency heatmap, talent grid, values alignment, participant list.
+
+**Assessment modules** — `/assessments/<id>`
+| # | Module | Route | What it is |
+|---|---|---|---|
+| 1 | Leadership Competencies | `/run/competency` | 32 self-rated items across the eight-competency model |
+| 2 | Behavioral Assessment | `/run/behavioral` | 30 psychometric items across 6 traits, reported on the 1-10 sten scale with overuse/underuse risks |
+| 3 | 360-Degree Feedback | `/feedback` | Rater administration plus the aggregated observer view; raters answer the *same* competency items, which is what makes the gap analysis work |
+| 4 | Cognitive Assessment | `/run/cognitive` | 15-minute timed battery — numerical, verbal & critical, abstract, adaptive problem solving; scored server-side |
+| 5 | Organizational Alignment Assessment | `/run/alignment` | 20 items measuring how closely day-to-day behaviour tracks each organisational value |
+
+**Benchmarking** — `/assessments/<id>/benchmarking`
+Percentiles, norm differences and bands per competency, plus the cognitive benchmark and how to read them.
+
+**Development Plans** — `/assessments/<id>/plan`
+Focus areas, strengths to build from, and 70-20-10 actions with a measure and a horizon each. The narrative can optionally be written by Claude.
+
+**Coaching & Support** — `/assessments/<id>/coaching`
+A coaching agent grounded strictly in the report's evidence, report-driven session prompts, and the coaching log.
+
+**Full Assessment Report** — `/assessments/<id>/report`
+Every section above on one page, rendered from the same components.
+
+Raters get their own page at **`/feedback/<token>`** — no navigation, single submission, anonymised in the report.
+Add a leader at **`/assessments/new`**; their leadership level picks the norm group.
 
 ### API
 
@@ -55,7 +66,7 @@ sample or placeholder participants.
 |---|---|---|
 | `/api/assessments` | GET / POST | Cohort summaries and analytics / create a participant |
 | `/api/assessments/[id]` | GET / DELETE | Full scored report / remove a participant |
-| `/api/assessments/[id]/modules/[module]` | GET / POST | Fetch items (cognitive answers stripped) / submit responses |
+| `/api/assessments/[id]/modules/[module]` | GET / POST | Fetch items for a self-completed module (cognitive answers stripped) / submit responses |
 | `/api/assessments/[id]/raters` | POST / DELETE | Invite raters (returns their links) / remove an un-submitted rater |
 | `/api/assessments/[id]/plan` | POST | Generate the development plan (`?ai=1` for a Claude-written narrative) |
 | `/api/assessments/[id]/coach` | POST | Coaching conversation grounded in the report |
@@ -64,6 +75,8 @@ sample or placeholder participants.
 
 ### Scoring and storage notes
 
+- Organisational alignment is **measured directly** once module 5 is complete; until then it is inferred
+  from the competencies that carry each value, and the report says which basis it used.
 - Reports are **scored from the raw responses on every load** — nothing is stored pre-computed,
   so changing a norm table or an item key re-scores existing assessments.
 - Correct answers for the cognitive battery never leave the server; the client receives items

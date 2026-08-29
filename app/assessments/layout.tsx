@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Sidebar } from "@/components/Sidebar";
+import { AssessmentNav } from "@/components/assessments/AssessmentNav";
 
 export default function AssessmentsLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,7 +18,10 @@ export default function AssessmentsLayout({ children }: { children: React.ReactN
             </Link>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <div className="flex-1 flex min-h-0">
+          <AssessmentNav />
+          <main className="flex-1 overflow-y-auto p-6 min-w-0">{children}</main>
+        </div>
       </div>
     </div>
   );

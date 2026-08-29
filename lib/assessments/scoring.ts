@@ -16,6 +16,7 @@ import {
   type Relationship,
 } from "./framework";
 import {
+  ALIGNMENT_ITEMS,
   BEHAVIORAL_ITEMS,
   COGNITIVE_ITEMS,
   COGNITIVE_TIME_LIMIT_SECONDS,
@@ -242,22 +243,44 @@ export interface ValueAlignment {
   name: string;
   statement: string;
   score: number;
+  /** Score measured directly by the alignment module, when it has been completed. */
+  direct: number | null;
+  /** Score inferred from the competencies that carry this value. */
+  derived: number;
+  /** Which of the two the headline score came from. */
+  source: "measured" | "derived";
   competencies: string[];
 }
 
-/** Organisational alignment: competency scores rolled up through the values each competency carries. */
-export function scoreValueAlignment(competencyScores: CompetencyScore[]): ValueAlignment[] {
+/**
+ * Organisational alignment. The alignment module measures each value directly; until
+ * it is completed the value is inferred from the competencies that carry it, so the
+ * view is populated either way and says which basis it is using.
+ */
+export function scoreValueAlignment(
+  competencyScores: CompetencyScore[],
+  assessment?: Assessment
+): ValueAlignment[] {
   const byId = new Map(competencyScores.map((c) => [c.competencyId, c]));
+  const measured = scaleScores(ALIGNMENT_ITEMS, assessment?.modules.alignment?.responses);
+
   return ORG_VALUES.map((v) => {
     const carriers = COMPETENCIES.filter((c) => c.values.includes(v.id));
-    const values = carriers
-      .map((c) => byId.get(c.id)?.combined)
-      .filter((n): n is number => typeof n === "number");
+    const derived = round(
+      mean(
+        carriers.map((c) => byId.get(c.id)?.combined).filter((n): n is number => typeof n === "number")
+      ),
+      1
+    );
+    const direct = measured?.[v.id] ?? null;
     return {
       valueId: v.id,
       name: v.name,
       statement: v.statement,
-      score: round(mean(values), 1),
+      score: direct ?? derived,
+      direct,
+      derived,
+      source: direct === null ? "derived" : "measured",
       competencies: carriers.map((c) => c.name),
     };
   });
@@ -371,7 +394,7 @@ export interface Report {
   blindSpots: CompetencyScore[];
   hiddenStrengths: CompetencyScore[];
   raterComments: { relationship: Relationship; strengths: string; development: string }[];
-  completeness: { competency: boolean; behavioral: boolean; cognitive: boolean; feedback: boolean };
+  completeness: Record<"competency" | "behavioral" | "feedback" | "cognitive" | "alignment", boolean>;
 }
 
 export function buildReport(assessment: Assessment): Report {
@@ -394,7 +417,7 @@ export function buildReport(assessment: Assessment): Report {
     competencies,
     traits,
     cognitive,
-    values: scoreValueAlignment(competencies),
+    values: scoreValueAlignment(competencies, assessment),
     readiness: scoreReadiness(competencies, traits, cognitive),
     coverage,
     strengths: ranked.slice(0, 3),
@@ -412,8 +435,9 @@ export function buildReport(assessment: Assessment): Report {
     completeness: {
       competency: Boolean(assessment.modules.competency),
       behavioral: Boolean(assessment.modules.behavioral),
-      cognitive: Boolean(assessment.modules.cognitive),
       feedback: coverage.submitted > 0,
+      cognitive: Boolean(assessment.modules.cognitive),
+      alignment: Boolean(assessment.modules.alignment),
     },
   };
 }

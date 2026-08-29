@@ -27,6 +27,15 @@ interface CognitivePayload {
 
 type Payload = LikertPayload | CognitivePayload;
 
+const INTROS: Record<string, string> = {
+  competency:
+    "Rate how consistently each statement describes how you actually lead today — not how you intend to lead. Your raters answer the same statements about you, which is what makes the comparison meaningful.",
+  behavioral:
+    "There are no right answers and no scores to optimise. Answer as you typically are at work; the profile reports tendencies and their risks, not a pass or a fail.",
+  alignment:
+    "Rate how far each statement describes your day-to-day behaviour, not how strongly you agree with the value itself. This measures alignment between how you lead and what the organisation says it stands for.",
+};
+
 export function ModuleRunner({ assessmentId, moduleId }: { assessmentId: string; moduleId: string }) {
   const router = useRouter();
   const [data, setData] = useState<Payload | null>(null);
@@ -136,9 +145,7 @@ export function ModuleRunner({ assessmentId, moduleId }: { assessmentId: string;
           onSubmit={(responses) => submit({ responses })}
           intro={
             <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
-              {moduleId === "competency"
-                ? "Rate how consistently each statement describes how you actually lead today — not how you intend to lead. Your raters answer the same statements about you, which is what makes the comparison meaningful."
-                : "There are no right answers and no scores to optimise. Answer as you typically are at work; the profile reports tendencies and their risks, not a pass or a fail."}
+              {INTROS[moduleId] ?? INTROS.behavioral}
             </div>
           }
         />
