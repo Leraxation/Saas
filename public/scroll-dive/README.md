@@ -6,7 +6,12 @@ with the rest of the airline homepage below it.
 
 ```
 public/scroll-dive/
-├── index.html          full page: header, hero track, booking, sections, footer
+├── src/
+│   ├── partials/       shell, header, footer, hero canvas, script blocks
+│   └── pages/          the body of each page — this is what you edit
+├── build.mjs           composes src/ into the six pages below
+├── index.html  destinations.html  experience.html            ← generated,
+├── sindbad.html  offers.html  help.html                        do not edit
 ├── styles.css          design tokens, the canvas hero and its overlay panels
 ├── site.css            header, booking card, page sections, footer, RTL
 ├── main.js             sequence engine — preloader, renderer, segment timeline
@@ -14,6 +19,16 @@ public/scroll-dive/
 ├── frames/             frame_0001.webp … frame_0245.webp (8.2 MB)
 └── vendor/             GSAP 3.12.5 + ScrollTrigger, local fallback for the CDN
 ```
+
+**The six `.html` files in the root are generated.** Edit `src/`, then run:
+
+```bash
+node public/scroll-dive/build.mjs
+```
+
+The header and footer live in `src/partials/` alone, so a nav change lands on
+every page at once. The templating is two directives — `{{name}}` for values
+from the page list in `build.mjs`, and `<!--#include partials/x-->`.
 
 Serve it statically — `npx serve public/scroll-dive`, or `npm run dev` in this
 Next.js app, which puts it at `/scroll-dive/index.html`. It also opens from
@@ -36,6 +51,9 @@ Mirroring the entry points on the current site:
 | App | Store links |
 | Help | Contact, FAQs, special assistance, feedback |
 | Footer | Five link columns, legal, social |
+
+Pages: home, destinations, experience, sindbad, offers, help. Inner pages reuse
+stills from the sequence as their hero banners, so they cost no extra assets.
 
 Beyond the current site: the scroll-sequence hero, a persisted
 region/language/currency preference, RTL layout support, client-side booking

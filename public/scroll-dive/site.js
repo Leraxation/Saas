@@ -13,7 +13,12 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 (function header() {
   const header = $("#header");
   const track = $("#track");
-  if (!header || !track) return;
+  if (!header) return;
+  if (!track) {
+    // Inner pages have no canvas hero for the bar to sit over.
+    header.classList.add("is-solid");
+    return;
+  }
 
   const update = () => {
     // Solid as soon as the canvas hero has scrolled out from under the bar.

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{title}}</title>
+  <meta name="description" content="{{description}}" />
+  <meta name="theme-color" content="#0b0a12" />
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%E2%9C%88%EF%B8%8F</text></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body class="{{bodyClass}}">
+
+{{canvas}}
+
+<!--#include partials/header.html-->
+
+{{body}}
+
+<!--#include partials/footer.html-->
+
+{{sequenceScripts}}
+<script src="site.js"></script>
+</body>
+</html>
