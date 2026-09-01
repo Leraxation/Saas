@@ -21,14 +21,55 @@ const CONFIG = {
     { from: 170, to: 245, weight: 2 },   // shot two: the cabin
   ],
 
+  /* The same sequence at two widths. Which one loads is decided at boot by
+     pickSource() below — the whole set is downloaded, so this is the single
+     biggest lever on how much data the page costs. */
+  sources: [
+    { dir: "frames-960",  width: 960 },   // 4.5 MB
+    { dir: "frames-1600", width: 1600 },  // 8.2 MB
+  ],
+
   firstFrame: 1,           // number of the first file on disk
   pad: 4,                  // zero-padding width in the filename
-  path: (n) => `frames/frame_${String(n).padStart(CONFIG.pad, "0")}.webp`,
 
   scrub: 1,                // seconds the canvas takes to catch up to the wheel
   concurrency: 6,          // parallel image requests while preloading
   readyThreshold: 0.12,    // fraction decoded before the loader is dismissed
 };
+
+/* ------------------------------------------------------------------
+   Which frame set, and how much of it
+
+   Sharpness is not the only axis. The sequence is a background behind
+   text, and the entire set is downloaded before it is fully scrubbable,
+   so on a phone or a metered connection the data cost outweighs the
+   detail — we deliberately take the smaller set there.
+   ------------------------------------------------------------------ */
+function pickSource() {
+  const sorted = [...CONFIG.sources].sort((a, b) => a.width - b.width);
+  const smallest = sorted[0];
+  const largest = sorted[sorted.length - 1];
+  const net = navigator.connection || {};
+
+  // Explicit user signal, or a connection that cannot afford it: smallest set,
+  // and only every second frame. Gaps fall back to the nearest decoded frame,
+  // which at 12 fps is a step the eye reads as the sequence simply being coarser.
+  if (net.saveData || /(^|\W)(slow-)?2g$/.test(net.effectiveType || "")) {
+    return { ...smallest, stride: 2 };
+  }
+
+  // Phones and small tablets: half the bytes matters more than the sharpness,
+  // especially as `object-fit: cover` crops most of the frame away in portrait.
+  if (window.innerWidth < 900) return { ...smallest, stride: 1 };
+
+  // Desktop: the smallest set that covers the viewport, else the largest.
+  const need = window.innerWidth * Math.min(window.devicePixelRatio || 1, 2);
+  return { ...(sorted.find((s) => s.width >= need) || largest), stride: 1 };
+}
+
+const SOURCE = pickSource();
+const framePath = (n) =>
+  `${SOURCE.dir}/frame_${String(n).padStart(CONFIG.pad, "0")}.webp`;
 
 /* ------------------------------------------------------------------
    Elements + 2D context
@@ -56,6 +97,18 @@ const layout = CONFIG.segments.map((seg) => {
 
 const total = files.length;
 const frames = new Array(total).fill(null); // decoded HTMLImageElements, by index
+
+/* Which of those frames we actually fetch. A stride above 1 thins the
+   sequence out for constrained connections, but never drops a segment
+   edge — those carry the cuts, and a missing one would show. */
+const plan = (() => {
+  const stride = SOURCE.stride || 1;
+  if (stride <= 1) return frames.map((_, i) => i);
+  const keep = new Set([0, total - 1]);
+  for (let i = 0; i < total; i += stride) keep.add(i);
+  layout.forEach((seg) => { keep.add(seg.start); keep.add(seg.end); });
+  return [...keep].sort((a, b) => a - b);
+})();
 
 /* Playhead. The ScrollTrigger timeline drives `state.frame`; the renderer reads it. */
 const state = { frame: 0 };
@@ -124,7 +177,7 @@ function loadFrame(index) {
   return new Promise((resolve) => {
     const img = new Image();
     img.decoding = "async";
-    img.src = CONFIG.path(files[index]);
+    img.src = framePath(files[index]);
 
     const done = () => {
       frames[index] = img;
@@ -153,17 +206,17 @@ const ready = new Promise((r) => (resolveReady = r));
 
 function onFrameLoaded() {
   loaded++;
-  const pct = Math.round((loaded / total) * 100);
+  const pct = Math.round((loaded / plan.length) * 100);
   loaderFill.style.width = pct + "%";
   loaderPct.textContent = pct + "%";
 
   render(); // a newly arrived frame may replace the stand-in currently on screen
 
-  if (!readyResolved && loaded / total >= CONFIG.readyThreshold) {
+  if (!readyResolved && loaded / plan.length >= CONFIG.readyThreshold) {
     readyResolved = true;
     resolveReady();
   }
-  if (loaded === total && window.ScrollTrigger) {
+  if (loaded === plan.length && window.ScrollTrigger) {
     // Layout can shift while images resolve; re-measure the trigger.
     ScrollTrigger.refresh();
   }
@@ -179,9 +232,8 @@ async function preload() {
   // Remaining frames, `concurrency` at a time, in playback order.
   let next = 1;
   const workers = Array.from({ length: CONFIG.concurrency }, async () => {
-    while (next < total) {
-      const index = next++;
-      await loadFrame(index);
+    while (next < plan.length) {
+      await loadFrame(plan[next++]);
       onFrameLoaded();
     }
   });
@@ -244,7 +296,7 @@ function initScroll() {
 }
 
 /* Handy while tuning: scrollDive.state.frame, scrollDive.layout, etc. */
-window.scrollDive = { config: CONFIG, files, layout, state, frames, render };
+window.scrollDive = { config: CONFIG, source: SOURCE, files, layout, plan, state, frames, render };
 
 /* ------------------------------------------------------------------
    Boot

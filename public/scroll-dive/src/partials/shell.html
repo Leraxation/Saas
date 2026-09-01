@@ -6,7 +6,26 @@
   <title>{{title}}</title>
   <meta name="description" content="{{description}}" />
   <meta name="theme-color" content="#0b0a12" />
+  <link rel="canonical" href="{{canonical}}" />
 
+  <!-- Placeholder fares and timings must not be indexed. Remove this line, and
+       flip robots.txt, once the content is real. -->
+  <meta name="robots" content="noindex, nofollow" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Oman Air" />
+  <meta property="og:title" content="{{title}}" />
+  <meta property="og:description" content="{{description}}" />
+  <meta property="og:url" content="{{canonical}}" />
+  <meta property="og:image" content="{{ogImage}}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{{title}}" />
+  <meta name="twitter:description" content="{{description}}" />
+  <meta name="twitter:image" content="{{ogImage}}" />
+
+  {{preload}}
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%E2%9C%88%EF%B8%8F</text></svg>" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="site.css" />

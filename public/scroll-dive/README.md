@@ -16,7 +16,9 @@ public/scroll-dive/
 ├── site.css            header, booking card, page sections, footer, RTL
 ├── main.js             sequence engine — preloader, renderer, segment timeline
 ├── site.js             nav, booking tabs, validation, filters, preferences
-├── frames/             frame_0001.webp … frame_0245.webp (8.2 MB)
+├── frames-1600/        the full-resolution sequence (8.2 MB)
+├── frames-960/         the same sequence at half width (4.5 MB)
+├── og-image.jpg  sitemap.xml  robots.txt        ← last two are generated
 └── vendor/             GSAP 3.12.5 + ScrollTrigger, local fallback for the CDN
 ```
 
@@ -59,6 +61,37 @@ Beyond the current site: the scroll-sequence hero, a persisted
 region/language/currency preference, RTL layout support, client-side booking
 validation, and live destination filtering.
 
+## Weight, and which frame set loads
+
+The whole sequence is downloaded, so the frame set is the biggest lever on what
+the page costs. `pickSource()` in `main.js` chooses one at boot:
+
+| Client | Set | Frames | Download |
+| --- | --- | --- | --- |
+| Desktop | `frames-1600` | 245 | 7.7 MB |
+| Phone / tablet (< 900 px) | `frames-960` | 245 | 3.9 MB |
+| `Save-Data`, or a 2G connection | `frames-960`, every 2nd frame | 125 | 2.0 MB |
+
+Sharpness is not the only axis. On a phone `object-fit: cover` crops most of a
+16:9 frame away anyway, so the smaller set costs little and halves the data.
+The thinned set relies on the nearest-decoded-frame fallback, and never drops a
+segment edge — those carry the cuts.
+
+Measured by loading the page in Chromium at each viewport and summing the
+frames actually requested, not estimated.
+
+The `<link rel="preload">` pair in the generated `<head>` is media-scoped to the
+same 900 px line. A `Save-Data` client still preloads one frame from the set it
+then does not use — about 35 KB, the one wasteful case.
+
+## The mobile hero is a band, not a full bleed
+
+A 16:9 frame covering a 390 × 844 phone scales to roughly 1500 px wide: you see
+about a quarter of the width, and the composition is gone. Below 720 px the
+canvas becomes a `58svh` band across the top, masked into the page at its lower
+edge, with the copy underneath on the dark ground. See the media query at the
+foot of `styles.css`.
+
 ## Before this can go live
 
 - **Brand assets.** `.brand__mark` is a placeholder disc — drop the official
@@ -73,6 +106,12 @@ validation, and live destination filtering.
   not post anywhere. `site.js` marks where the reservations system connects.
 - **No credential collection.** "Sindbad log in" is a link, deliberately — sign-in
   belongs on the secure auth domain, not on a marketing page.
+- **Crawling is blocked on purpose.** `robots.txt` disallows everything and every
+  page carries `noindex`, because indexing placeholder fares under the Oman Air
+  name would mislead. Both are marked; flip them when the content is real.
+- **Set the origin.** Canonical and Open Graph URLs are page-relative until you
+  build with `SITE_BASE_URL=https://…  node build.mjs`, which also writes the
+  `Sitemap:` line into `robots.txt`.
 
 ## The scroll sequence
 

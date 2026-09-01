@@ -19,6 +19,11 @@ import { fileURLToPath } from "node:url";
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const SRC = join(ROOT, "src");
 
+/* Absolute origin the site is served from. Open Graph and canonical URLs are
+   supposed to be absolute, so set this before launch; while it is empty the
+   tags fall back to page-relative values, which most crawlers still resolve. */
+const BASE = process.env.SITE_BASE_URL || "";
+
 /* Every page, with the nav item it should mark as current. */
 const PAGES = [
   { file: "index.html",        nav: "home",         title: "Oman Air — Fly the Sultanate",
@@ -61,6 +66,14 @@ for (const page of PAGES) {
       ? read("partials/scripts-sequence.html")
       : "",
     bodyClass: page.home ? "page-home" : "page-inner",
+    canonical: BASE ? `${BASE.replace(/\/$/, "")}/${page.file}` : page.file,
+    ogImage: BASE ? `${BASE.replace(/\/$/, "")}/og-image.jpg` : "og-image.jpg",
+    // Preload the first frame of whichever set this viewport will ask for.
+    // pickSource() in main.js draws the same 900px line.
+    preload: page.home
+      ? '<link rel="preload" as="image" media="(max-width: 899px)" href="frames-960/frame_0001.webp" fetchpriority="high" />\n  '
+        + '<link rel="preload" as="image" media="(min-width: 900px)" href="frames-1600/frame_0001.webp" fetchpriority="high" />'
+      : "",
     [`is${page.nav}`]: " aria-current=\"page\"",
   });
   // A second pass resolves includes that arrived through a substitution.
@@ -68,4 +81,27 @@ for (const page of PAGES) {
   built++;
 }
 
-console.log(`built ${built} pages`);
+/* sitemap + robots, generated from the same page list */
+const urls = PAGES.map((p) => {
+  const loc = BASE ? `${BASE.replace(/\/$/, "")}/${p.file}` : p.file;
+  return `  <url><loc>${loc}</loc><priority>${p.home ? "1.0" : "0.7"}</priority></url>`;
+}).join("\n");
+
+writeFileSync(join(ROOT, "sitemap.xml"),
+`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>
+`);
+
+writeFileSync(join(ROOT, "robots.txt"),
+`# This build carries placeholder fares, timings and contact details.
+# Indexing them under the Oman Air name would be misleading, so crawling is
+# blocked. Before launch: replace the placeholder content, delete the
+# "noindex" meta in src/partials/shell.html, and swap the rule below for
+# "Allow: /".
+User-agent: *
+Disallow: /
+${BASE ? `\nSitemap: ${BASE.replace(/\/$/, "")}/sitemap.xml\n` : ""}`);
+
+console.log(`built ${built} pages, sitemap.xml and robots.txt`);

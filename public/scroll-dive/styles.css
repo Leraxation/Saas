@@ -275,9 +275,47 @@ body {
    ------------------------------------------------------------- */
 .js-reveal .panel [data-reveal] { opacity: 0; transform: translateY(28px); }
 
+/* -------------------------------------------------------------
+   Narrow screens
+
+   A 16:9 frame covering a portrait viewport scales to roughly
+   1500px wide on a 390px phone — you see about a quarter of the
+   width, which throws the composition away entirely. So below this
+   breakpoint the sequence becomes a band across the top and the
+   copy sits underneath it, on the page's own dark ground.
+   ------------------------------------------------------------- */
 @media (max-width: 720px) {
-  .panel--right, .panel--left, .panel--center { justify-content: flex-start; text-align: left; }
-  .facts { gap: 1.5rem; }
+  #sequence {
+    height: 58svh;
+    max-height: 58svh;
+    inset: 0 0 auto 0;
+    /* Dissolve the bottom edge into the page rather than cutting it off. */
+    -webkit-mask-image: linear-gradient(180deg, #000 86%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 86%, transparent 100%);
+  }
+
+  .scrim {
+    height: 64svh;
+    inset: 0 0 auto 0;
+    /* Only the top darkening is needed here; the canvas mask handles the
+       bottom edge, and doubling up would grey out the image. */
+    background: linear-gradient(180deg, rgba(8, 6, 18, 0.55) 0%, rgba(8, 6, 18, 0) 26%);
+  }
+
+  /* Copy drops into the space below the band. */
+  .panel {
+    align-items: flex-end;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    padding: 0 var(--gutter) 3.5rem;
+  }
+  .panel__content { max-width: none; }
+
+  .display { font-size: clamp(2.1rem, 11vw, 3.1rem); line-height: 1.0; }
+  .panel h2 { font-size: clamp(1.6rem, 8vw, 2.2rem); }
+  .panel p, .lede { font-size: 1rem; }
+  .panel .facts { gap: 1.5rem; }
+  .panel .hint { margin-top: 1.75rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
