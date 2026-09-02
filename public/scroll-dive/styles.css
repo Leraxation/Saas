@@ -68,11 +68,14 @@ body {
 .track {
   position: relative;
   z-index: 1;              /* above the fixed canvas */
-  height: 700vh;           /* 3 panels + 2 of gap + 2 panels, see CONFIG.segments */
+  /* 3 panels + 2 gap + 2 panels + 1 gap + 2 panels = 10 units of 100vh,
+     matching the weights in CONFIG.segments. Change one, change the other. */
+  height: 1000vh;
 }
 
-/* The gap: empty scroll held on the footage's own black frame */
+/* The gaps: empty scroll held on the footage's own black frame */
 .spacer { height: 200vh; }
+.spacer--short { height: 100vh; }
 
 .panel {
   height: 100vh;

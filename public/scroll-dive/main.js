@@ -19,6 +19,8 @@ const CONFIG = {
     { from: 1,   to: 168, weight: 3 },   // shot one: the fly-by into the engine
     { hold: 169,          weight: 2 },   // the black stretch already in the footage
     { from: 170, to: 245, weight: 2 },   // shot two: the cabin
+    { hold: 169,          weight: 1 },   // same black frame, reused as a second beat
+    { from: 246, to: 325, weight: 2 },   // shot three: the climb-out (square, 8 fps)
   ],
 
   /* The same sequence at two widths. Which one loads is decided at boot by
@@ -114,7 +116,6 @@ const plan = (() => {
 const state = { frame: 0 };
 let painted = -1;        // last index actually drawn, so we skip no-op redraws
 let rafPending = false;
-let sized = false;
 
 const prefersReducedMotion =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -130,7 +131,6 @@ const prefersReducedMotion =
 function sizeCanvasTo(img) {
   canvas.width = img.naturalWidth;
   canvas.height = img.naturalHeight;
-  sized = true;
 }
 
 /** Nearest already-decoded frame, so fast scrolling never blanks out. */
@@ -152,7 +152,11 @@ function paint() {
   const img = resolveFrame(index);
   if (!img) return;
 
-  if (!sized) sizeCanvasTo(img);
+  // Shots can differ in aspect — the backing store follows whichever frame is
+  // on screen, and `object-fit: cover` re-crops it to the viewport for free.
+  if (canvas.width !== img.naturalWidth || canvas.height !== img.naturalHeight) {
+    sizeCanvasTo(img);
+  }
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   painted = frames[index] ? index : -1; // force a repaint once the real frame lands
 }

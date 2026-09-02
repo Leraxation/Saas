@@ -16,8 +16,8 @@ public/scroll-dive/
 ├── site.css            header, booking card, page sections, footer, RTL
 ├── main.js             sequence engine — preloader, renderer, segment timeline
 ├── site.js             nav, booking tabs, validation, filters, preferences
-├── frames-1600/        the full-resolution sequence (8.2 MB)
-├── frames-960/         the same sequence at half width (4.5 MB)
+├── frames-1600/        the full-resolution sequence (12 MB)
+├── frames-960/         the same sequence at reduced width (6.5 MB)
 ├── og-image.jpg  sitemap.xml  robots.txt        ← last two are generated
 └── vendor/             GSAP 3.12.5 + ScrollTrigger, local fallback for the CDN
 ```
@@ -68,9 +68,13 @@ the page costs. `pickSource()` in `main.js` chooses one at boot:
 
 | Client | Set | Frames | Download |
 | --- | --- | --- | --- |
-| Desktop | `frames-1600` | 245 | 7.7 MB |
-| Phone / tablet (< 900 px) | `frames-960` | 245 | 3.9 MB |
-| `Save-Data`, or a 2G connection | `frames-960`, every 2nd frame | 125 | 2.0 MB |
+| Desktop | `frames-1600` | 326 | 10.5 MB |
+| Phone / tablet (< 900 px) | `frames-960` | 326 | 5.8 MB |
+| `Save-Data`, or a 2G connection | `frames-960`, every 2nd frame | 167 | 2.9 MB |
+
+Three shots is a lot of footage to ship. If the desktop figure needs to come
+down, the cheapest cut is the third shot's frame rate or its share of the
+track — it is the newest and least load-bearing of the three.
 
 Sharpness is not the only axis. On a phone `object-fit: cover` crops most of a
 16:9 frame away anyway, so the smaller set costs little and halves the data.
@@ -95,7 +99,11 @@ foot of `styles.css`.
 ## Before this can go live
 
 - **Brand assets.** `.brand__mark` is a placeholder disc — drop the official
-  logo SVG into the `.brand` anchor in `index.html`.
+  logo SVG into the `.brand` anchor in `src/partials/header.html`.
+- **The third shot is a different livery.** Shots one and two are the white
+  Oman Air livery; the climb-out is a navy aircraft with a gold tail. On the
+  airline's own site that reads as a different carrier — a deliberate call to
+  make before launch, not an oversight to inherit.
 - **Copy and data are placeholders.** Fares, flight times, the destination list
   and the tier benefits are illustrative. Every block that needs real data is
   marked with a `PLACEHOLDER` comment in `index.html`.
@@ -123,6 +131,8 @@ segments: [
   { from: 1,   to: 168, weight: 3 },   // shot one: the fly-by into the engine
   { hold: 169,          weight: 2 },   // the black stretch already in the footage
   { from: 170, to: 245, weight: 2 },   // shot two: the cabin
+  { hold: 169,          weight: 1 },   // same black frame, reused as a second beat
+  { from: 246, to: 325, weight: 2 },   // shot three: the climb-out
 ],
 ```
 
