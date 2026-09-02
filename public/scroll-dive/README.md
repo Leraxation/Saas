@@ -100,10 +100,6 @@ foot of `styles.css`.
 
 - **Brand assets.** `.brand__mark` is a placeholder disc — drop the official
   logo SVG into the `.brand` anchor in `src/partials/header.html`.
-- **The third shot is a different livery.** Shots one and two are the white
-  Oman Air livery; the climb-out is a navy aircraft with a gold tail. On the
-  airline's own site that reads as a different carrier — a deliberate call to
-  make before launch, not an oversight to inherit.
 - **Copy and data are placeholders.** Fares, flight times, the destination list
   and the tier benefits are illustrative. Every block that needs real data is
   marked with a `PLACEHOLDER` comment in `index.html`.
