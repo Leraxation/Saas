@@ -45,6 +45,8 @@ Mirroring the entry points on the current site:
 | Utility bar | Cargo, Holidays, Help, region/language/currency, Sindbad link |
 | Primary nav | Book, Manage, Experience (mega menus) + Destinations, Sindbad, Help |
 | Booking | Book a flight, Manage booking, Check-in, Flight status — four tabs |
+| Passengers | Stepper popover: adults, children, infants, with the usual rules |
+| Multi-city | Up to five legs, added and removed inline |
 | Offers | Fare cards by region |
 | Destinations | Filterable, searchable network list |
 | Experience | Economy / Business / First, plus Tashreef and Meet & Greet links |
@@ -108,6 +110,12 @@ foot of `styles.css`.
   dictionary before exposing the Arabic switch to users.
 - **No booking engine.** The four forms validate input and then stop; they do
   not post anywhere. `site.js` marks where the reservations system connects.
+  Passenger counts post as `pax-adults` / `pax-children` / `pax-infants`, and
+  multi-city legs as `leg-from-N` / `leg-to-N` / `leg-date-N`.
+- **Passenger rules are the common defaults**, not Oman Air's published ones:
+  nine seated passengers per booking, infants limited to one per adult, and
+  age bands of 12+ / 2–11 / under 2. Confirm them against the fare rules — the
+  limits live in `PAX_MAX` and `paxLimit()` in `site.js`.
 - **No credential collection.** "Sindbad log in" is a link, deliberately — sign-in
   belongs on the secure auth domain, not on a marketing page.
 - **Crawling is blocked on purpose.** `robots.txt` disallows everything and every

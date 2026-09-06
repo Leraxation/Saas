@@ -131,19 +131,173 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
    Booking form: trip type, swap, validation
    ------------------------------------------------------------- */
 (function bookingForm() {
+  // Only the home page carries the booking card.
+  if (!$("#pane-book")) return;
+
   const today = new Date().toISOString().slice(0, 10);
   $$('input[type="date"]').forEach((i) => (i.min = today));
 
-  // Return date only applies to a return trip.
+
+  const tripType = () => $('input[name="trip"]:checked')?.value || "return";
+
+  /* ---- Trip type: return date, and the multi-city leg list ---- */
   const returnField = $("#return-field");
   const ret = $("#ret");
-  $$('input[name="trip"]').forEach((radio) => {
-    radio.addEventListener("change", () => {
-      const isReturn = $('input[name="trip"]:checked').value === "return";
-      returnField.hidden = !isReturn;
-      ret.required = isReturn;
-    });
+  const legsBox = $("#legs");
+  const simpleGrid = $("#simple-grid");
+
+  const MAX_LEGS = 5;
+  let legCount = 0;
+
+  /** One multi-city leg. Ids stay unique so labels and errors keep pointing at
+      the right field when legs are added or removed. */
+  function legMarkup(i) {
+    return `
+      <div class="leg" data-leg="${i}">
+        <span class="leg__n">${i + 1}</span>
+        <div class="field">
+          <label for="leg-from-${i}">From</label>
+          <input id="leg-from-${i}" name="leg-from-${i}" list="airports" autocomplete="off"
+                 placeholder="${i === 0 ? "Muscat (MCT)" : "City or code"}" />
+          <p class="err" data-err-for="leg-from-${i}"></p>
+        </div>
+        <div class="field">
+          <label for="leg-to-${i}">To</label>
+          <input id="leg-to-${i}" name="leg-to-${i}" list="airports" autocomplete="off" placeholder="Where to?" />
+          <p class="err" data-err-for="leg-to-${i}"></p>
+        </div>
+        <div class="field">
+          <label for="leg-date-${i}">Departing</label>
+          <input id="leg-date-${i}" name="leg-date-${i}" type="date" min="${today}" />
+          <p class="err" data-err-for="leg-date-${i}"></p>
+        </div>
+        <button type="button" class="leg__x" data-remove="${i}"
+                aria-label="Remove flight ${i + 1}"${legCount <= 2 ? " hidden" : ""}>×</button>
+      </div>`;
+  }
+
+  function renderLegs() {
+    const values = $$(".leg input", legsBox).map((i) => i.value);
+    legsBox.innerHTML =
+      Array.from({ length: legCount }, (_, i) => legMarkup(i)).join("") +
+      `<button type="button" class="leg__add" id="leg-add"${legCount >= MAX_LEGS ? " hidden" : ""}>
+         + Add another flight</button>`;
+    // Restore what was typed; the rebuild is a re-render, not a reset.
+    $$(".leg input", legsBox).forEach((input, n) => { if (values[n] != null) input.value = values[n]; });
+  }
+
+  function setTripType() {
+    const type = tripType();
+    const multi = type === "multi";
+
+    simpleGrid.hidden = multi;
+    legsBox.hidden = !multi;
+    returnField.hidden = multi || type === "oneway";
+    ret.required = type === "return";
+
+    if (multi && legCount === 0) {
+      legCount = 2;
+      renderLegs();
+    }
+  }
+
+  $$('input[name="trip"]').forEach((r) => r.addEventListener("change", setTripType));
+
+  legsBox?.addEventListener("click", (e) => {
+    const add = e.target.closest("#leg-add");
+    const remove = e.target.closest("[data-remove]");
+    if (add && legCount < MAX_LEGS) {
+      legCount++;
+      renderLegs();
+      $(`#leg-from-${legCount - 1}`)?.focus();
+    }
+    if (remove) {
+      // Drop the row's values, then rebuild so the remaining legs renumber.
+      const gone = Number(remove.dataset.remove);
+      const kept = $$(".leg", legsBox)
+        .filter((_, i) => i !== gone)
+        .map((leg) => $$("input", leg).map((i) => i.value));
+      legCount--;
+      renderLegs();
+      $$(".leg", legsBox).forEach((leg, i) =>
+        $$("input", leg).forEach((input, n) => { input.value = kept[i]?.[n] ?? ""; }));
+    }
   });
+
+  /* ---- Passengers ---- */
+  const PAX_MAX = 9;                 // seated passengers, per the usual online limit
+  const pax = { adults: 1, children: 0, infants: 0 };
+  const paxBtn = $("#pax");
+  const paxPop = $("#pax-pop");
+
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+  function paxSummary() {
+    const parts = [plural(pax.adults, "adult", "adults")];
+    if (pax.children) parts.push(plural(pax.children, "child", "children"));
+    if (pax.infants) parts.push(plural(pax.infants, "infant", "infants"));
+    return parts.join(", ");
+  }
+
+  /** Why a step is unavailable, so the limit explains itself rather than the
+      button just going dead. */
+  function paxLimit() {
+    if (pax.adults + pax.children >= PAX_MAX) return `Up to ${PAX_MAX} passengers per booking.`;
+    if (pax.infants >= pax.adults) return "Each infant travels on an adult's lap.";
+    return "";
+  }
+
+  function renderPax() {
+    const seated = pax.adults + pax.children;
+    for (const key of ["adults", "children", "infants"]) {
+      $(`#out-${key}`).textContent = String(pax[key]);
+      $(`#in-${key}`).value = String(pax[key]);
+    }
+    $("#pax-summary").textContent = paxSummary();
+
+    const disable = (key, dir, off) => {
+      const b = $(`[data-step="${key}"][data-dir="${dir}"]`);
+      if (b) b.disabled = off;
+    };
+    disable("adults", "-1", pax.adults <= 1);
+    disable("children", "-1", pax.children <= 0);
+    disable("infants", "-1", pax.infants <= 0);
+    disable("adults", "1", seated >= PAX_MAX);
+    disable("children", "1", seated >= PAX_MAX);
+    disable("infants", "1", pax.infants >= pax.adults || seated >= PAX_MAX);
+
+    $("#pax-note").textContent = paxLimit();
+  }
+
+  const openPax = (on) => {
+    paxPop.hidden = !on;
+    paxBtn.setAttribute("aria-expanded", String(on));
+    if (on) $('[data-step="adults"][data-dir="1"]').focus();
+  };
+
+  paxBtn?.addEventListener("click", (e) => { e.stopPropagation(); openPax(paxPop.hidden); });
+  $("#pax-done")?.addEventListener("click", () => { openPax(false); paxBtn.focus(); });
+  paxPop?.addEventListener("click", (e) => e.stopPropagation());
+  document.addEventListener("click", () => { if (paxPop && !paxPop.hidden) openPax(false); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && paxPop && !paxPop.hidden) { openPax(false); paxBtn.focus(); }
+  });
+
+  paxPop?.addEventListener("click", (e) => {
+    const step = e.target.closest("[data-step]");
+    if (!step) return;
+    const key = step.dataset.step;
+    const next = pax[key] + Number(step.dataset.dir);
+    if (next < 0 || (key === "adults" && next < 1)) return;
+    if (Number(step.dataset.dir) > 0 && pax.adults + pax.children + (key === "infants" ? 0 : 1) > PAX_MAX) return;
+    if (key === "infants" && next > pax.adults) return;
+    pax[key] = next;
+    // Dropping an adult can strand an infant.
+    if (pax.infants > pax.adults) pax.infants = pax.adults;
+    renderPax();
+  });
+
+  renderPax();
 
   $("#swap")?.addEventListener("click", () => {
     const from = $("#from"), to = $("#to");
@@ -176,6 +330,29 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
     "fs-date": (v) => (v ? "" : "Pick a date"),
   };
 
+  /* Multi-city fields are generated, so their rules are matched by shape
+     rather than looked up by a fixed id. */
+  function ruleFor(id) {
+    if (rules[id]) return rules[id];
+    const leg = /^leg-(from|to|date)-(\d+)$/.exec(id);
+    if (!leg) return null;
+    const [, part, nRaw] = leg;
+    const n = Number(nRaw);
+    if (part === "from") return (v) => (v.trim() ? "" : "Add a departure city");
+    if (part === "to") {
+      return (v) => {
+        if (!v.trim()) return "Add a destination";
+        const from = $(`#leg-from-${n}`)?.value.trim().toLowerCase();
+        return v.trim().toLowerCase() === from ? "Origin and destination cannot match" : "";
+      };
+    }
+    return (v) => {
+      if (!v) return "Pick a date";
+      const prev = $(`#leg-date-${n - 1}`)?.value;
+      return prev && v < prev ? "Each flight must depart after the one before" : "";
+    };
+  }
+
   $$(".pane").forEach((form) => {
     form.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -183,7 +360,7 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
       let ok = true;
       let firstBad = null;
       $$("input, select", form).forEach((input) => {
-        const rule = rules[input.id];
+        const rule = ruleFor(input.id);
         if (!rule) return;
         if (input.closest("[hidden]")) return;
         const message = rule(input.value, form);
@@ -202,7 +379,11 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
       // No booking engine is wired up on this build — the real flow posts to
       // the reservations system. Confirm the input instead of faking a result.
-      if (form.id === "pane-book" && $("#from").value.trim().toLowerCase() === $("#to").value.trim().toLowerCase()) {
+      if (
+        form.id === "pane-book" &&
+        !$("#simple-grid").hidden &&
+        $("#from").value.trim().toLowerCase() === $("#to").value.trim().toLowerCase()
+      ) {
         setError($("#to"), "Origin and destination cannot match");
         $("#to").focus();
         return;
@@ -210,13 +391,13 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
       note.textContent = "Search ready — connect this form to the reservations system to return live results.";
     });
 
-    $$("input, select", form).forEach((input) => {
-      input.addEventListener("input", () => {
-        if (input.closest(".field")?.classList.contains("is-bad")) {
-          const rule = rules[input.id];
-          if (rule) setError(input, rule(input.value, form));
-        }
-      });
+    // Clear an error as soon as the field is corrected. Delegated, so
+    // generated multi-city legs are covered without rebinding.
+    form.addEventListener("input", (e) => {
+      const input = e.target;
+      if (!input.id || !input.closest(".field")?.classList.contains("is-bad")) return;
+      const rule = ruleFor(input.id);
+      if (rule) setError(input, rule(input.value, form));
     });
   });
 })();

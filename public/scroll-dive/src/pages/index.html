@@ -126,7 +126,10 @@
           <label><input type="radio" name="trip" value="multi" /> <span>Multi-city</span></label>
         </div>
 
-        <div class="grid">
+        <!-- Multi-city legs. Built by site.js when that trip type is chosen. -->
+        <div class="legs" id="legs" hidden></div>
+
+        <div class="grid" id="simple-grid">
           <div class="field">
             <label for="from">From</label>
             <input id="from" name="from" list="airports" placeholder="Muscat (MCT)" autocomplete="off" required />
@@ -153,12 +156,47 @@
             <p class="err" data-err-for="ret"></p>
           </div>
 
-          <div class="field">
-            <label for="pax">Passengers</label>
-            <select id="pax" name="pax">
-              <option>1 adult</option><option>2 adults</option><option>2 adults, 1 child</option>
-              <option>2 adults, 2 children</option><option>Other…</option>
-            </select>
+          <!-- Passengers: a stepper popover rather than a fixed list of
+               combinations. Counts post as pax-adults / pax-children / pax-infants. -->
+          <div class="field field--pax">
+            <label id="pax-label" for="pax">Passengers</label>
+            <button type="button" class="paxbtn" id="pax" aria-haspopup="dialog"
+                    aria-expanded="false" aria-controls="pax-pop" aria-labelledby="pax-label pax">
+              <span id="pax-summary">1 adult</span>
+            </button>
+
+            <div class="paxpop" id="pax-pop" role="dialog" aria-label="Choose passengers" hidden>
+              <div class="paxrow">
+                <div><b>Adults</b><span>12 years and over</span></div>
+                <div class="stepper">
+                  <button type="button" data-step="adults" data-dir="-1" aria-label="One fewer adult">−</button>
+                  <output id="out-adults" aria-live="polite">1</output>
+                  <button type="button" data-step="adults" data-dir="1" aria-label="One more adult">+</button>
+                </div>
+              </div>
+              <div class="paxrow">
+                <div><b>Children</b><span>2 to 11 years</span></div>
+                <div class="stepper">
+                  <button type="button" data-step="children" data-dir="-1" aria-label="One fewer child">−</button>
+                  <output id="out-children" aria-live="polite">0</output>
+                  <button type="button" data-step="children" data-dir="1" aria-label="One more child">+</button>
+                </div>
+              </div>
+              <div class="paxrow">
+                <div><b>Infants</b><span>Under 2, on a lap</span></div>
+                <div class="stepper">
+                  <button type="button" data-step="infants" data-dir="-1" aria-label="One fewer infant">−</button>
+                  <output id="out-infants" aria-live="polite">0</output>
+                  <button type="button" data-step="infants" data-dir="1" aria-label="One more infant">+</button>
+                </div>
+              </div>
+              <p class="paxnote" id="pax-note" role="status" aria-live="polite"></p>
+              <button type="button" class="btn btn--gold paxdone" id="pax-done">Done</button>
+            </div>
+
+            <input type="hidden" name="pax-adults" id="in-adults" value="1" />
+            <input type="hidden" name="pax-children" id="in-children" value="0" />
+            <input type="hidden" name="pax-infants" id="in-infants" value="0" />
           </div>
 
           <div class="field">
