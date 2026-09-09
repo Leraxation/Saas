@@ -10,6 +10,7 @@ public/scroll-dive/
 │   ├── partials/       shell, header, footer, hero canvas, script blocks
 │   └── pages/          the body of each page — this is what you edit
 ├── build.mjs           composes src/ into the six pages below
+├── make-standalone.mjs builds a single self-contained file for sharing
 ├── index.html  destinations.html  experience.html            ← generated,
 ├── sindbad.html  offers.html  help.html                        do not edit
 ├── styles.css          design tokens, the canvas hero and its overlay panels
@@ -35,6 +36,20 @@ from the page list in `build.mjs`, and `<!--#include partials/x-->`.
 Serve it statically — `npx serve public/scroll-dive`, or `npm run dev` in this
 Next.js app, which puts it at `/scroll-dive/index.html`. It also opens from
 `file://`; that is what the vendored GSAP copy is for.
+
+## A single-file preview
+
+`node make-standalone.mjs` writes one HTML file with the styles, scripts, GSAP
+and the frame sequence all inlined as data URIs. It opens by double-click, with
+no server and no network — useful for sending the homepage to someone who is
+not going to clone a repo. Frames are thinned to every second one to keep the
+file around 4 MB, so the scrub is coarser than the real thing; the inner pages
+are not included.
+
+One trap if you edit that script: every insertion uses a replacer *function*.
+A replacement string would interpret `$&`, `$'`, `` $` `` and `$1` — and
+`site.js` is full of `$('#id')`, where `$'` means "everything after the match".
+That silently splices the document into its own scripts.
 
 ## What the page covers
 
