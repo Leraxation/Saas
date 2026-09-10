@@ -17,10 +17,12 @@ const CONFIG = {
      markup — keep the two in step if you change either. */
   segments: [
     { from: 1,   to: 168, weight: 3 },   // shot one: the fly-by into the engine
-    { hold: 169,          weight: 2 },   // the black stretch already in the footage
+    { hold: 169,          weight: 1 },   // the black stretch already in the footage
     { from: 170, to: 245, weight: 2 },   // shot two: the cabin
-    { hold: 169,          weight: 1 },   // same black frame, reused as a second beat
-    { from: 246, to: 325, weight: 2 },   // shot three: the climb-out (square, 8 fps)
+    { hold: 169,          weight: 1 },   // the same black frame, reused as a beat
+    { from: 326, to: 437, weight: 2 },   // shot three: the suites (16:9, 8 fps)
+    { hold: 169,          weight: 1 },   // and again
+    { from: 246, to: 325, weight: 2 },   // shot four: the climb-out (square, 8 fps)
   ],
 
   /* The same sequence at two widths. Which one loads is decided at boot by
