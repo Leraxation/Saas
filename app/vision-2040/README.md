@@ -72,29 +72,41 @@ FPS=12 WIDTH=1920 ./scripts/cut-frames.sh path/to/film.mp4
 
 Writes `public/vision2040/frames/f0000.jpg …` plus a `manifest.json`.
 
-**Why 8 fps.** Scrub frame rate is not playback frame rate — nothing plays, the
-scroll position *is* the playhead. The number that matters is how far the page
-scrolls between one frame and the next:
+**Choosing the frame rate.** Scrub frame rate is not playback frame rate —
+nothing plays, the scroll position *is* the playhead. The number that matters
+is how far the page scrolls between one frame and the next:
 
 ```
 scroll_px_per_frame = total_scroll_px / (duration_s * FPS)
+total_scroll_px     = (sum_of_segment_weights_vh / 100) * viewport_h - viewport_h
 ```
 
 Below ~6 px/frame you are buying frames nobody can tell apart; above ~20 the
-picture visibly steps on a fast scroll. The band worth hitting is 8–12.
+picture visibly steps on a fast scroll. Aim for **8–12 px/frame**.
 
-For this film — 58.04s across 570vh of scroll (230 overture + 340 Act II),
-which is 4230px of travel on a 900px viewport and 5076px on a 1080p projector:
+The consequence is that there is no single correct fps — it depends entirely on
+the ratio of scroll distance to film length. Across this page's 570vh
+(4230px of travel at 900px tall, 5076px at 1080p):
 
-| FPS | Frames | px/frame | Notes |
-|----:|-------:|---------:|-------|
-| 4 | 232 | 18.2 | steps on a fast scroll |
-| **8** | **464** | **9.1** | **default — mid-band at both sizes, ~37 MB** |
-| 12 | 696 | 6.1 | ~40% more bytes, no visible gain |
-| 24 | 1393 | 3.0 | three frames for every one the eye gets |
+| Film | 8 fps | 12 fps | 20 fps | 24 fps |
+|---|---:|---:|---:|---:|
+| 58s | **9.1 px/f** ✓ | 6.1 | 3.6 | 3.0 |
+| 12s | 44.1 ✗ | 29.4 ✗ | **17.6 px/f** ✓ | 14.6 ✓ |
 
-Raise it if a future cut has faster camera moves; lower it if bytes matter more
-than the fling case.
+A 58-second film wants 8 fps; a 12-second one over the same scroll wants 20–24.
+Run the numbers rather than copying a default.
+
+The current cut is **20 fps at 848px** — 241 frames, 14 MB — because the source
+is a 12.04s clip. 848px is the source's own width: the file is
+WhatsApp-compressed at 848×478, so upscaling it in ffmpeg would only add bytes,
+not detail. Full-bleed on a 1080p projector it will look soft; if a
+higher-resolution master exists, re-run the script against that and raise
+`WIDTH`.
+
+Note that 241 frames also keeps the set inside the 255-file limit for
+publishing the page as a Claude Artifact.
+
+
 
 ### How the scrub is wired
 

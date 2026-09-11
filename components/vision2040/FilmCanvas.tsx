@@ -50,13 +50,13 @@ export default function FilmCanvas({ triggerId }: { triggerId: string }) {
       // not a DOM layer, so it scales with the canvas and never mis-registers.
       scrim: (ctx, w, h) => {
         const v = ctx.createLinearGradient(0, 0, 0, h);
-        v.addColorStop(0, "rgba(3,6,13,0.72)");
-        v.addColorStop(0.42, "rgba(4,10,22,0.5)");
-        v.addColorStop(1, "rgba(3,6,13,0.82)");
+        v.addColorStop(0, "rgba(3,6,13,0.56)");
+        v.addColorStop(0.42, "rgba(4,10,22,0.28)");
+        v.addColorStop(1, "rgba(3,6,13,0.66)");
         ctx.fillStyle = v;
         ctx.fillRect(0, 0, w, h);
         const side = ctx.createLinearGradient(0, 0, w * 0.68, 0);
-        side.addColorStop(0, "rgba(3,6,13,0.6)");
+        side.addColorStop(0, "rgba(3,6,13,0.52)");
         side.addColorStop(1, "rgba(3,6,13,0)");
         ctx.fillStyle = side;
         ctx.fillRect(0, 0, w, h);
