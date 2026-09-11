@@ -21,3 +21,6 @@ npm-debug.log*
 # Vision 2040 film assets — fetched with scripts/fetch-film.sh, not committed
 public/vision2040/*.mp4
 public/vision2040/*.jpg
+
+# Frame sequence is generated locally, never committed
+public/vision2040/frames/

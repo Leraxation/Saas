@@ -56,14 +56,44 @@ This pulls three files into `public/vision2040/`:
 | File | What it is |
 |---|---|
 | `film.mp4` | The 58-second cinematic master, 1080p |
-| `film-scrub.mp4` | An all-keyframe encode, scrubbed frame-by-frame by scroll in Act II |
+| `film-scrub.mp4` | An all-keyframe encode — the fallback scrub source for Act II |
 | `poster.jpg` | Hero still, also the video poster frame |
 
 The presentation **runs without them** — the canvas carries every act on its own
 and the film layers simply stay dark. With them, the overture, Act II and the
 close become footage.
 
-Optional, on a machine with `ffmpeg` and time to spare:
+### Turning the film into canvas frames (the real scroll-driven scrub)
+
+```bash
+./scripts/fetch-film.sh --frames
+```
+
+This cuts `film.mp4` into a numbered JPEG sequence in
+`public/vision2040/frames/` with a `manifest.json`. Act II then paints **frame
+N straight onto the canvas** as you scroll — no video element, no playback
+clock, no decoder seek. The picture advances exactly as far as the presenter
+has scrolled and not one frame further.
+
+Defaults are 4 frames per second of film at 1280px wide — about 230 frames and
+35 MB for the 58-second master. Both are tunable:
+
+```bash
+FRAME_FPS=8 FRAME_WIDTH=1600 ./scripts/fetch-film.sh --frames
+```
+
+Higher `FRAME_FPS` buys smoother scrubbing at a linear cost in bytes. Because
+scroll speed is set by the presenter rather than a clock, 4–8 fps reads as
+smooth in the room; it is not comparable to playback frame rate.
+
+The sequence is optional and is checked at runtime. Without it Act II falls
+back to seeking `film-scrub.mp4`, the all-keyframe encode — visually near
+identical, but it leans on the browser's decoder to land each frame. Without
+that either, the canvas scenes carry the act alone.
+
+### Other options
+
+On a machine with `ffmpeg` and time to spare:
 
 ```bash
 ./scripts/fetch-film.sh --60fps
@@ -113,7 +143,7 @@ has already dismissed it.
 | | Act | What the canvas is doing |
 |---|---|---|
 | I | Overture | The film plays under the title |
-| II | The Nation | Scroll scrubs the film frame-by-frame behind three beats |
+| II | The Nation | Scroll paints film frames onto the canvas, one per scroll position, behind three beats |
 | III | The Network | Oman's coastline draws in, airports light in sequence, then the view pulls back and the international routes bloom |
 | IV | The Scale | Figures count up, then the passenger trajectory plots itself |
 | V | The Pillars | Three orbits, one per Vision 2040 axis |

@@ -18,6 +18,37 @@ import {
 const FILM = "/vision2040/film.mp4";
 const SCRUB = "/vision2040/film-scrub.mp4";
 const POSTER = "/vision2040/poster.jpg";
+const FRAMES_MANIFEST = "/vision2040/frames/manifest.json";
+
+type FrameSeq = {
+  count: number;
+  /** e.g. "/vision2040/frames/f%04d.jpg" */
+  pattern: string;
+  images: HTMLImageElement[];
+  loaded: boolean[];
+};
+
+/** Substitute the zero-padded index into a printf-style frame pattern. */
+function framePath(pattern: string, i: number) {
+  return pattern.replace(/%(0(\d+))?d/, (_m, _p, width) =>
+    String(i).padStart(width ? parseInt(width, 10) : 1, "0"),
+  );
+}
+
+/** Cover-fit draw, the canvas equivalent of object-fit: cover. */
+function drawCover(
+  ctx: CanvasRenderingContext2D,
+  img: CanvasImageSource,
+  iw: number,
+  ih: number,
+  w: number,
+  h: number,
+) {
+  const s = Math.max(w / iw, h / ih);
+  const dw = iw * s;
+  const dh = ih * s;
+  ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+}
 
 /**
  * The fixed stage behind the whole page.
@@ -39,8 +70,63 @@ export default function Stage({ api }: { api: StageApi }) {
   const motes = useRef<Mote[]>([]);
   const [hasFilm, setHasFilm] = useState(false);
   const [hasScrub, setHasScrub] = useState(false);
+  const frames = useRef<FrameSeq | null>(null);
+  const [hasFrames, setHasFrames] = useState(false);
 
   if (motes.current.length === 0) motes.current = makeMotes(320);
+
+  /**
+   * Frame sequence for Act II.
+   *
+   * This is the scroll-driven canvas in its literal form: the film is cut to
+   * stills ahead of time and the act paints frame N straight onto the canvas,
+   * so the picture advances only as far as the presenter has scrolled. There
+   * is no playback clock and no decoder seek involved at all.
+   *
+   * It is optional. Without `scripts/fetch-film.sh --frames` there is no
+   * manifest, and Act II falls back to seeking the all-keyframe encode, and
+   * failing that to the canvas scenes alone.
+   */
+  useEffect(() => {
+    let cancelled = false;
+    fetch(FRAMES_MANIFEST)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("no manifest"))))
+      .then((m: { count: number; pattern: string }) => {
+        if (cancelled || !m || !m.count || !m.pattern) return;
+        const seq: FrameSeq = {
+          count: m.count,
+          pattern: m.pattern,
+          images: new Array(m.count),
+          loaded: new Array(m.count).fill(false),
+        };
+        frames.current = seq;
+        // Load in order so the early frames — the ones the presenter reaches
+        // first — are always the ones that are ready first.
+        let next = 0;
+        const CONCURRENCY = 6;
+        const pump = () => {
+          if (cancelled || next >= seq.count) return;
+          const i = next++;
+          const img = new Image();
+          img.decoding = "async";
+          img.onload = () => {
+            seq.loaded[i] = true;
+            if (i === 0) setHasFrames(true);
+            pump();
+          };
+          img.onerror = pump;
+          img.src = framePath(seq.pattern, i);
+          seq.images[i] = img;
+        };
+        for (let c = 0; c < CONCURRENCY; c++) pump();
+      })
+      .catch(() => {
+        /* no frame sequence on this machine — the fallbacks cover it */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -79,10 +165,13 @@ export default function Stage({ api }: { api: StageApi }) {
 
       // How much of the film is showing right now. The backdrop is held back
       // by exactly this much so the footage is never muddied.
+      const inNation = nation > 0.001 && nation < 0.999;
+      // Frames win Act II when they exist; the video is the fallback.
+      const nationHasPicture = inNation && (hasFrames || hasScrub);
       const filmIn =
         Math.max(
           hasFilm ? 1 - range(overture, 0.55, 0.95) : 0,
-          hasScrub && nation > 0.001 && nation < 0.999 ? 1 : 0,
+          nationHasPicture ? 1 : 0,
           hasFilm ? range(close, 0.12, 0.4) * (1 - range(close, 0.86, 1)) : 0,
         ) * (overture > 0 || nation > 0 || close > 0 ? 1 : 0);
 
@@ -95,6 +184,33 @@ export default function Stage({ api }: { api: StageApi }) {
       ctx.globalAlpha = 1 - filmIn * 0.88;
       paintBackdrop(ctx, s.w, s.h, s.time, warmth, motes.current, s.quality);
       ctx.restore();
+
+      // ── Act II frame sequence ────────────────────────────────────────
+      const seq = frames.current;
+      if (seq && hasFrames && inNation) {
+        const want = Math.round(nation * (seq.count - 1));
+        // Show the nearest frame that has actually arrived, so an incomplete
+        // preload degrades to a slightly stale frame rather than a black one.
+        let idx = -1;
+        for (let d = 0; d < seq.count; d++) {
+          if (want - d >= 0 && seq.loaded[want - d]) { idx = want - d; break; }
+          if (want + d < seq.count && seq.loaded[want + d]) { idx = want + d; break; }
+        }
+        if (idx >= 0) {
+          const img = seq.images[idx];
+          const fade = range(nation, 0, 0.05) * (1 - range(nation, 0.94, 1));
+          ctx.save();
+          ctx.globalAlpha = fade;
+          drawCover(ctx, img, img.naturalWidth, img.naturalHeight, s.w, s.h);
+          const sc = ctx.createLinearGradient(0, 0, 0, s.h);
+          sc.addColorStop(0, "rgba(3,6,13,0.7)");
+          sc.addColorStop(0.45, "rgba(4,10,22,0.45)");
+          sc.addColorStop(1, "rgba(3,6,13,0.8)");
+          ctx.fillStyle = sc;
+          ctx.fillRect(0, 0, s.w, s.h);
+          ctx.restore();
+        }
+      }
 
       // An act's scene keeps painting once started and is only dropped when
       // the *following* act has taken over, so the canvas never goes empty
@@ -131,8 +247,8 @@ export default function Stage({ api }: { api: StageApi }) {
       }
 
       const scrub = scrubRef.current;
-      if (scrub && hasScrub && scrub.duration) {
-        const on = nation > 0.001 && nation < 0.999;
+      if (scrub && hasScrub && !hasFrames && scrub.duration) {
+        const on = inNation;
         scrub.style.opacity = on ? String(range(nation, 0, 0.06) * (1 - range(nation, 0.94, 1))) : "0";
         if (on) {
           // Scroll drives the playhead directly. This is the scroll-driven
@@ -145,7 +261,7 @@ export default function Stage({ api }: { api: StageApi }) {
     });
 
     return unsubscribe;
-  }, [api, hasFilm, hasScrub]);
+  }, [api, hasFilm, hasScrub, hasFrames]);
 
   return (
     <div className="v-stage" aria-hidden="true">
