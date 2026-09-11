@@ -20,6 +20,17 @@ const SCRUB = "/vision2040/film-scrub.mp4";
 const POSTER = "/vision2040/poster.jpg";
 const FRAMES_MANIFEST = "/vision2040/frames/manifest.json";
 
+/**
+ * The film runs as one continuous scrub across the overture and Act II.
+ *
+ * These mirror the act heights set in app/vision-2040/page.tsx. They weight
+ * the two acts by how much scroll each actually owns, so the 58 seconds play
+ * out at an even rate across both rather than racing through one of them.
+ */
+const OVERTURE_VH = 230;
+const NATION_VH = 340;
+const FILM_SPLIT = OVERTURE_VH / (OVERTURE_VH + NATION_VH);
+
 type FrameSeq = {
   count: number;
   /** e.g. "/vision2040/frames/f%04d.jpg" */
@@ -165,15 +176,21 @@ export default function Stage({ api }: { api: StageApi }) {
 
       // How much of the film is showing right now. The backdrop is held back
       // by exactly this much so the footage is never muddied.
-      const inNation = nation > 0.001 && nation < 0.999;
-      // Frames win Act II when they exist; the video is the fallback.
-      const nationHasPicture = inNation && (hasFrames || hasScrub);
+      // One continuous playhead across the overture and Act II: the presenter
+      // starts on the first frame of the film under the title and arrives at
+      // the last frame as Act II hands over. Every one of the eight shots is
+      // scrolled through, not just the stretch that fits one act.
+      const inFilm = nation < 0.999 && network < 0.02;
+      const filmT = nation > 0.001
+        ? FILM_SPLIT + nation * (1 - FILM_SPLIT)
+        : overture * FILM_SPLIT;
+      const filmFade = inFilm ? 1 - range(nation, 0.94, 1) : 0;
+      const hasPicture = inFilm && (hasFrames || hasScrub);
       const filmIn =
         Math.max(
-          hasFilm ? 1 - range(overture, 0.55, 0.95) : 0,
-          nationHasPicture ? 1 : 0,
+          hasPicture ? filmFade : 0,
           hasFilm ? range(close, 0.12, 0.4) * (1 - range(close, 0.86, 1)) : 0,
-        ) * (overture > 0 || nation > 0 || close > 0 ? 1 : 0);
+        );
 
       // Warmth rises in the dusk acts and cools for the data acts.
       const warmth = clamp01(
@@ -187,8 +204,8 @@ export default function Stage({ api }: { api: StageApi }) {
 
       // ── Act II frame sequence ────────────────────────────────────────
       const seq = frames.current;
-      if (seq && hasFrames && inNation) {
-        const want = Math.round(nation * (seq.count - 1));
+      if (seq && hasFrames && inFilm) {
+        const want = Math.round(filmT * (seq.count - 1));
         // Show the nearest frame that has actually arrived, so an incomplete
         // preload degrades to a slightly stale frame rather than a black one.
         let idx = -1;
@@ -198,9 +215,8 @@ export default function Stage({ api }: { api: StageApi }) {
         }
         if (idx >= 0) {
           const img = seq.images[idx];
-          const fade = range(nation, 0, 0.05) * (1 - range(nation, 0.94, 1));
           ctx.save();
-          ctx.globalAlpha = fade;
+          ctx.globalAlpha = filmFade;
           drawCover(ctx, img, img.naturalWidth, img.naturalHeight, s.w, s.h);
           const sc = ctx.createLinearGradient(0, 0, 0, s.h);
           sc.addColorStop(0, "rgba(3,6,13,0.7)");
@@ -236,10 +252,9 @@ export default function Stage({ api }: { api: StageApi }) {
       // ── Film layers ──────────────────────────────────────────────────
       const play = playRef.current;
       if (play && hasFilm) {
-        const vis = Math.max(
-          1 - range(overture, 0.55, 0.95),
-          range(close, 0.12, 0.4) * (1 - range(close, 0.9, 1)),
-        );
+        // Playback belongs to the close alone. The opening is scrubbed, so it
+        // holds still while the minister talks and only moves on scroll.
+        const vis = range(close, 0.12, 0.4) * (1 - range(close, 0.9, 1));
         play.style.opacity = String(vis);
         // Only spend decode budget when the film is actually on screen.
         if (vis > 0.01 && play.paused) void play.play().catch(() => {});
@@ -248,13 +263,12 @@ export default function Stage({ api }: { api: StageApi }) {
 
       const scrub = scrubRef.current;
       if (scrub && hasScrub && !hasFrames && scrub.duration) {
-        const on = inNation;
-        scrub.style.opacity = on ? String(range(nation, 0, 0.06) * (1 - range(nation, 0.94, 1))) : "0";
-        if (on) {
-          // Scroll drives the playhead directly. This is the scroll-driven
-          // canvas proper: the film advances only as fast as the presenter
-          // talks. The scrub encode is all-keyframe so every seek lands.
-          const target = nation * (scrub.duration - 0.05);
+        scrub.style.opacity = inFilm ? String(filmFade) : "0";
+        if (inFilm) {
+          // Scroll drives the playhead directly across the whole film. The
+          // scrub encode is all-keyframe, so every seek lands on the exact
+          // frame rather than snapping to the nearest keyframe.
+          const target = filmT * (scrub.duration - 0.05);
           if (Math.abs(scrub.currentTime - target) > 0.016) scrub.currentTime = target;
         }
       }

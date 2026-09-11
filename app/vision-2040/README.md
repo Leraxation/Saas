@@ -91,6 +91,26 @@ back to seeking `film-scrub.mp4`, the all-keyframe encode — visually near
 identical, but it leans on the browser's decoder to land each frame. Without
 that either, the canvas scenes carry the act alone.
 
+### The film runs across two acts, not one
+
+The whole 58 seconds is one continuous scrub spanning the overture **and**
+Act II, weighted by the scroll each act owns. The presenter opens on the first
+frame under the title and reaches the last frame as Act II hands over, so every
+one of the eight shots is scrolled through rather than only the stretch that
+fits a single act. The close plays the film normally as a finale.
+
+### Hosting: byte-range requests are required for the video path
+
+Seeking a video needs the server to answer HTTP `Range` requests. `next start`,
+nginx, Vercel and opening the file over `file://` all do. Python's
+`http.server` does **not** — against it the picture silently freezes on frame
+one while everything else works, which is a miserable thing to discover in the
+room.
+
+The frame sequence has no such requirement: frames are plain JPEGs fetched
+whole. If you are unsure what the venue machine will be serving from, run
+`--frames` and remove the doubt.
+
 ### Other options
 
 On a machine with `ffmpeg` and time to spare:
@@ -142,8 +162,8 @@ has already dismissed it.
 
 | | Act | What the canvas is doing |
 |---|---|---|
-| I | Overture | The film plays under the title |
-| II | The Nation | Scroll paints film frames onto the canvas, one per scroll position, behind three beats |
+| I | Overture | The film's first frames, scrubbed — the title holds still until you scroll |
+| II | The Nation | The film scrub continues to its last frame behind three beats |
 | III | The Network | Oman's coastline draws in, airports light in sequence, then the view pulls back and the international routes bloom |
 | IV | The Scale | Figures count up, then the passenger trajectory plots itself |
 | V | The Pillars | Three orbits, one per Vision 2040 axis |
