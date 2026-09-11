@@ -17,8 +17,8 @@ public/scroll-dive/
 ├── site.css            header, booking card, page sections, footer, RTL
 ├── main.js             sequence engine — preloader, renderer, segment timeline
 ├── site.js             nav, booking tabs, validation, filters, preferences
-├── frames-1600/        the full-resolution sequence (14 MB)
-├── frames-960/         the same sequence at reduced width (8 MB)
+├── frames-1600/        the full-resolution sequence (15 MB)
+├── frames-960/         the same sequence at reduced width (8.7 MB)
 ├── og-image.jpg  sitemap.xml  robots.txt        ← last two are generated
 └── vendor/             GSAP 3.12.5 + ScrollTrigger, local fallback for the CDN
 ```
@@ -85,11 +85,11 @@ the page costs. `pickSource()` in `main.js` chooses one at boot:
 
 | Client | Set | Frames | Download |
 | --- | --- | --- | --- |
-| Desktop | `frames-1600` | 439 | 12.4 MB |
-| Phone / tablet (< 900 px) | `frames-960` | 439 | 7.0 MB |
-| `Save-Data`, or a 2G connection | `frames-960`, every 2nd frame | 225 | 3.6 MB |
+| Desktop | `frames-1600` | 497 | 13.5 MB |
+| Phone / tablet (< 900 px) | `frames-960` | 497 | 7.6 MB |
+| `Save-Data`, or a 2G connection | `frames-960`, every 2nd frame | 255 | 3.9 MB |
 
-Four shots and 1200vh is a lot of hero to ship, and this is the number to watch
+Five shots and 1400vh is a lot of hero to ship, and this is the number to watch
 as more footage arrives. The cheapest cuts, in order: drop a shot's frame rate,
 shorten its share of the track, or drop a shot. Nothing else on the page comes
 close to the sequence for weight.
@@ -105,6 +105,14 @@ frames actually requested, not estimated.
 The `<link rel="preload">` pair in the generated `<head>` is media-scoped to the
 same 900 px line. A `Save-Data` client still preloads one frame from the set it
 then does not use — about 35 KB, the one wasteful case.
+
+### Ending on something
+
+The climb-out originally ran its full 10 seconds, by which point the aircraft
+had receded to a speck and the closing call to action sat on empty sky. It is
+now trimmed to the first 6.5 seconds — frames 246–297 of the same extraction,
+so no re-encode — and the sequence ends on the sunset shot instead, which is
+the one place worth spending the extra frame rate.
 
 ## The mobile hero is a band, not a full bleed
 
@@ -154,7 +162,9 @@ segments: [
   { hold: 169,          weight: 1 },   // the same black frame, reused as a beat
   { from: 326, to: 437, weight: 2 },   // the suites
   { hold: 169,          weight: 1 },   // and again
-  { from: 246, to: 325, weight: 2 },   // the climb-out
+  { from: 246, to: 297, weight: 1 },   // the climb-out, trimmed
+  { hold: 169,          weight: 1 },   // one last beat
+  { from: 438, to: 522, weight: 2 },   // the finale, into the sunset
 ],
 ```
 

@@ -22,7 +22,10 @@ const CONFIG = {
     { hold: 169,          weight: 1 },   // the same black frame, reused as a beat
     { from: 326, to: 437, weight: 2 },   // shot three: the suites (16:9, 8 fps)
     { hold: 169,          weight: 1 },   // and again
-    { from: 246, to: 325, weight: 2 },   // shot four: the climb-out (square, 8 fps)
+    { from: 246, to: 297, weight: 1 },   // shot four: the climb-out, trimmed to the
+                                         //   part where the aircraft still reads
+    { hold: 169,          weight: 1 },   // one last beat
+    { from: 438, to: 522, weight: 2 },   // the finale: into the sunset (12 fps)
   ],
 
   /* The same sequence at two widths. Which one loads is decided at boot by
