@@ -160,9 +160,9 @@ segments: [
   { hold: 169,          weight: 1 },   // the black stretch already in the footage
   { from: 170, to: 245, weight: 2 },   // the cabin
   { hold: 169,          weight: 1 },   // the same black frame, reused as a beat
-  { from: 326, to: 437, weight: 2 },   // the suites
-  { hold: 169,          weight: 1 },   // and again
   { from: 246, to: 297, weight: 1 },   // the climb-out, trimmed
+  { hold: 169,          weight: 1 },   // and again
+  { from: 326, to: 437, weight: 2 },   // the suites
   { hold: 169,          weight: 1 },   // one last beat
   { from: 438, to: 522, weight: 2 },   // the finale, into the sunset
 ],
