@@ -156,29 +156,53 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
 
   /* ── Painting ──────────────────────────────────────────────────────── */
 
-  /** object-fit: cover, in canvas terms. */
+  /** Latest scrub progress, handed to the scrim so it can ramp across the page. */
   let lastP = 0;
 
-  function paint(index: number) {
-    if (!ctx || !manifest) return;
-    const img = images[index];
-    if (!img || !img.naturalWidth) return;
-    size();
+  /** object-fit: cover, in canvas terms. */
+  function drawFrame(img: HTMLImageElement, alpha: number) {
+    if (!ctx || !img.naturalWidth) return;
     const w = canvas.width;
     const h = canvas.height;
     const s = Math.max(w / img.naturalWidth, h / img.naturalHeight);
     const dw = img.naturalWidth * s;
     const dh = img.naturalHeight * s;
+    ctx.globalAlpha = alpha;
     ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+    ctx.globalAlpha = 1;
+  }
+
+  /**
+   * Paint frame `i0`, then cross-dissolve `frac` of the way into `i0 + 1`.
+   *
+   * This is what stops the picture stepping. A frame sequence only has so many
+   * frames, and when the scroll it has to cover is long, the gap between two
+   * of them can be tens of pixels — visible as a jump on a slow scroll. Mixing
+   * the two neighbours by the fractional part turns that jump into a dissolve
+   * at no extra download and no extra memory.
+   *
+   * It is not motion-compensated: a fast pan ghosts slightly rather than
+   * resolving into true intermediate motion. For that, cut more frames with
+   * INTERPOLATE= in scripts/cut-frames.sh. For everything short of a fast pan
+   * this is the better trade.
+   */
+  function paint(i0: number, frac: number) {
+    if (!ctx || !manifest) return;
+    const a = images[i0];
+    if (!a || !a.naturalWidth) return;
+    size();
+    drawFrame(a, 1);
+    if (frac > 0.02 && i0 + 1 < manifest.count && loaded[i0 + 1]) {
+      drawFrame(images[i0 + 1], frac);
+    }
     if (scrim) {
       ctx.save();
-      const dpr = w / window.innerWidth;
+      const dpr = canvas.width / window.innerWidth;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       scrim(ctx, window.innerWidth, window.innerHeight, lastP);
       ctx.restore();
     }
-    // Exposed for debugging and tests; written only when it actually changes.
-    if (canvas.dataset.frame !== String(index)) canvas.dataset.frame = String(index);
+    if (canvas.dataset.frame !== String(i0)) canvas.dataset.frame = String(i0);
     if (!firstPainted) {
       firstPainted = true;
       onFirstFrame?.();
@@ -195,12 +219,17 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
    */
   function render(want: number) {
     if (!manifest) return;
-    const idx = Math.max(0, Math.min(manifest.count - 1, Math.round(want)));
-    current = idx;
-    if (loaded[idx]) return paint(idx);
-    for (let d = 1; d < manifest.count; d++) {
-      if (idx - d >= 0 && loaded[idx - d]) return paint(idx - d);
-      if (idx + d < manifest.count && loaded[idx + d]) return paint(idx + d);
+    const max = manifest.count - 1;
+    const clamped = Math.max(0, Math.min(max, want));
+    const base = Math.floor(clamped);
+    const frac = clamped - base;
+    current = base;
+    if (loaded[base]) return paint(base, frac);
+    // Scrubbing ahead of the download: hold the nearest decoded frame rather
+    // than blanking. Reads as a stiff scrub that resolves as the stream lands.
+    for (let d = 1; d <= max; d++) {
+      if (base - d >= 0 && loaded[base - d]) return paint(base - d, 0);
+      if (base + d <= max && loaded[base + d]) return paint(base + d, 0);
     }
   }
 
@@ -218,7 +247,7 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
         decoded++;
         // Repaint if this is the frame we are currently sitting on, or the
         // very first frame, which must appear as soon as it exists.
-        if (i === current || !firstPainted) render(current);
+        if (Math.abs(i - current) <= 1 || !firstPainted) render(current);
         onDone();
       };
       img.onerror = onDone;
