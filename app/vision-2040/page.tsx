@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Stage from "@/components/vision2040/Stage";
+import FilmCanvas from "@/components/vision2040/FilmCanvas";
 import Chrome from "@/components/vision2040/Chrome";
 import { Act, Beat, Counter, Kicker } from "@/components/vision2040/parts";
 import { useStage } from "@/lib/vision2040/useStage";
@@ -26,10 +27,18 @@ export default function Vision2040() {
 
   return (
     <div className="v-root">
+      {/* Fixed full-bleed film canvas; every section below scrolls over it. */}
+      <FilmCanvas triggerId="film-range" />
       <Stage api={api} />
       <Chrome api={api} />
 
       <main className="v-main">
+        {/*
+          The film's scroll range. Its height is the sum of the two acts inside
+          it, and the segment weights in FilmCanvas mirror those same heights —
+          change an act's vh and the weight has to change with it.
+        */}
+        <div id="film-range">
         {/* ── I · OVERTURE ───────────────────────────────────────────── */}
         <Act api={api} id="overture" vh={230}>
           <Beat api={api} act="overture" from={0} to={0.8} className="v-hero" lift={16}>
@@ -76,6 +85,8 @@ export default function Vision2040() {
             </Beat>
           ))}
         </Act>
+
+        </div>{/* /#film-range */}
 
         {/* ── III · THE NETWORK ──────────────────────────────────────── */}
         <Act api={api} id="network" vh={420}>

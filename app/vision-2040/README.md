@@ -63,41 +63,80 @@ The presentation **runs without them** — the canvas carries every act on its o
 and the film layers simply stay dark. With them, the overture, Act II and the
 close become footage.
 
-### Turning the film into canvas frames (the real scroll-driven scrub)
+### Cutting the film to frames
 
 ```bash
-./scripts/fetch-film.sh --frames
+./scripts/cut-frames.sh path/to/film.mp4
+FPS=12 WIDTH=1920 ./scripts/cut-frames.sh path/to/film.mp4
 ```
 
-This cuts `film.mp4` into a numbered JPEG sequence in
-`public/vision2040/frames/` with a `manifest.json`. Act II then paints **frame
-N straight onto the canvas** as you scroll — no video element, no playback
-clock, no decoder seek. The picture advances exactly as far as the presenter
-has scrolled and not one frame further.
+Writes `public/vision2040/frames/f0000.jpg …` plus a `manifest.json`.
 
-Defaults are 4 frames per second of film at 1280px wide — about 230 frames and
-35 MB for the 58-second master. Both are tunable:
+**Why 8 fps.** Scrub frame rate is not playback frame rate — nothing plays, the
+scroll position *is* the playhead. The number that matters is how far the page
+scrolls between one frame and the next:
 
-```bash
-FRAME_FPS=8 FRAME_WIDTH=1600 ./scripts/fetch-film.sh --frames
+```
+scroll_px_per_frame = total_scroll_px / (duration_s * FPS)
 ```
 
-Higher `FRAME_FPS` buys smoother scrubbing at a linear cost in bytes. Because
-scroll speed is set by the presenter rather than a clock, 4–8 fps reads as
-smooth in the room; it is not comparable to playback frame rate.
+Below ~6 px/frame you are buying frames nobody can tell apart; above ~20 the
+picture visibly steps on a fast scroll. The band worth hitting is 8–12.
 
-The sequence is optional and is checked at runtime. Without it Act II falls
-back to seeking `film-scrub.mp4`, the all-keyframe encode — visually near
-identical, but it leans on the browser's decoder to land each frame. Without
-that either, the canvas scenes carry the act alone.
+For this film — 58.04s across 570vh of scroll (230 overture + 340 Act II),
+which is 4230px of travel on a 900px viewport and 5076px on a 1080p projector:
 
-### The film runs across two acts, not one
+| FPS | Frames | px/frame | Notes |
+|----:|-------:|---------:|-------|
+| 4 | 232 | 18.2 | steps on a fast scroll |
+| **8** | **464** | **9.1** | **default — mid-band at both sizes, ~37 MB** |
+| 12 | 696 | 6.1 | ~40% more bytes, no visible gain |
+| 24 | 1393 | 3.0 | three frames for every one the eye gets |
 
-The whole 58 seconds is one continuous scrub spanning the overture **and**
-Act II, weighted by the scroll each act owns. The presenter opens on the first
-frame under the title and reaches the last frame as Act II hands over, so every
-one of the eight shots is scrolled through rather than only the stretch that
-fits a single act. The close plays the film normally as a finale.
+Raise it if a future cut has faster camera moves; lower it if bytes matter more
+than the fling case.
+
+### How the scrub is wired
+
+A fixed, full-bleed canvas (`.v-filmcanvas`) sits behind everything; the
+content sections scroll over it. GSAP ScrollTrigger drives it with `scrub`
+over `#film-range`, the wrapper around the overture and Act II.
+
+**Segments, not a linear map.** `FILM_SEGMENTS` in
+`components/vision2040/FilmCanvas.tsx` models the sequence as weighted
+segments:
+
+```ts
+{ section: "overture", weight: 230, from: 0,   to: 0.4 }
+{ section: "nation",   weight: 340, from: 0.4, to: 1   }
+```
+
+`weight` is the section's height in vh; `from`/`to` are that segment's slice of
+the frame sequence. This is what makes holds (`from === to` parks the picture
+while a passage is read) and cuts (a gap between one segment's `to` and the
+next one's `from`) possible without touching the engine — neither is
+expressible as one linear map.
+
+**The weights and the markup heights are the same numbers written twice** and
+nothing ties them together at compile time, so `createFilmScrub` measures the
+real sections on mount and on every ScrollTrigger refresh and warns in the
+console when they drift. The failure mode is otherwise silent: the film just
+runs at the wrong rate against the text.
+
+**Loading.** Frame 0 is fetched alone so the page opens on a picture, then the
+rest stream in order six at a time. Scrubbing ahead of the download paints the
+nearest decoded frame rather than blanking — a slightly stiff scrub that
+resolves as the stream catches up, instead of a black screen.
+
+**Degradation.** No GSAP → a built-in rAF scrub over the same mapping, so the
+scrub survives (verified: both drivers produce identical frames, 0 / 185 / 463
+at the same scroll positions). No frames → the canvas stays empty and the
+procedural stage behind it carries the acts. `prefers-reduced-motion` → frame 0
+is held and the page scrolls normally; the one-line change to keep scrubbing
+for those users is commented in `filmScrub.ts`.
+
+Inspect `.v-filmcanvas` in devtools: `data-driver` is `gsap`, `native` or
+`calm`, and `data-frame` is the frame currently painted.
 
 ### Hosting: byte-range requests are required for the video path
 
