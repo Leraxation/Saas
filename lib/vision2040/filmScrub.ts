@@ -44,8 +44,12 @@ export type FilmScrubOptions = {
   segments: Segment[];
   /** Seconds of catch-up for the scrub. 0 ties the frame directly to scroll. */
   scrub?: number;
-  /** Painted over every frame; use it to keep type legible. */
-  scrim?: (ctx: CanvasRenderingContext2D, w: number, h: number) => void;
+  /**
+   * Painted over every frame; use it to keep type legible. `p` is the overall
+   * scrub progress, so the scrim can lighten where the footage is the subject
+   * and deepen where charts have to read over it.
+   */
+  scrim?: (ctx: CanvasRenderingContext2D, w: number, h: number, p: number) => void;
   /** Called once the first frame is on screen. */
   onFirstFrame?: () => void;
   /**
@@ -99,6 +103,24 @@ export function progressToFrameT(p: number, segments: Segment[]): number {
   return segments[segments.length - 1].to;
 }
 
+/**
+ * Build a straight-through segment map from weights alone: the film runs from
+ * its first frame to its last across the full set of sections, each getting a
+ * share of the film proportional to its scroll weight.
+ *
+ * Override any returned segment's `from`/`to` afterwards to introduce a hold
+ * (set them equal) or a cut (leave a gap to the next segment's `from`).
+ */
+export function linearSegments(specs: { section: string; weight: number }[]): Segment[] {
+  const total = specs.reduce((a, s) => a + s.weight, 0) || 1;
+  let acc = 0;
+  return specs.map((s) => {
+    const from = acc / total;
+    acc += s.weight;
+    return { section: s.section, weight: s.weight, from, to: acc / total };
+  });
+}
+
 export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
   const { canvas, trigger, manifestUrl, segments, scrub = 0.5, scrim, onFirstFrame } = opts;
   const ctx = canvas.getContext("2d", { alpha: false });
@@ -135,6 +157,8 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
   /* ── Painting ──────────────────────────────────────────────────────── */
 
   /** object-fit: cover, in canvas terms. */
+  let lastP = 0;
+
   function paint(index: number) {
     if (!ctx || !manifest) return;
     const img = images[index];
@@ -150,7 +174,7 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
       ctx.save();
       const dpr = w / window.innerWidth;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      scrim(ctx, window.innerWidth, window.innerHeight);
+      scrim(ctx, window.innerWidth, window.innerHeight, lastP);
       ctx.restore();
     }
     // Exposed for debugging and tests; written only when it actually changes.
@@ -243,6 +267,7 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
 
   function apply(p: number) {
     if (!manifest) return;
+    lastP = p;
     render(progressToFrameT(p, segments) * (manifest.count - 1));
   }
 

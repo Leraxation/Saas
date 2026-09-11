@@ -32,13 +32,12 @@ export default function Vision2040() {
       <Stage api={api} />
       <Chrome api={api} />
 
-      <main className="v-main">
-        {/*
-          The film's scroll range. Its height is the sum of the two acts inside
-          it, and the segment weights in FilmCanvas mirror those same heights —
-          change an act's vh and the weight has to change with it.
-        */}
-        <div id="film-range">
+      {/*
+        The film's scroll range is the whole page: it opens on the first frame
+        and reaches the last as the final act ends. The segment weights in
+        FilmCanvas mirror every act height below — change one, change both.
+      */}
+      <main className="v-main" id="film-range">
         {/* ── I · OVERTURE ───────────────────────────────────────────── */}
         <Act api={api} id="overture" vh={230}>
           <Beat api={api} act="overture" from={0} to={0.8} className="v-hero" lift={16}>
@@ -85,8 +84,6 @@ export default function Vision2040() {
             </Beat>
           ))}
         </Act>
-
-        </div>{/* /#film-range */}
 
         {/* ── III · THE NETWORK ──────────────────────────────────────── */}
         <Act api={api} id="network" vh={420}>

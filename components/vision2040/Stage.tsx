@@ -88,12 +88,10 @@ export default function Stage({ api }: { api: StageApi }) {
       if (!filmCanvas.current) {
         filmCanvas.current = document.querySelector(".v-filmcanvas");
       }
+      // The film now runs behind every act, so the backdrop stands back for
+      // the whole page and the film's own scrim does the darkening.
       const filmPainting = filmCanvas.current?.dataset.ready === "true";
-      const inFilm = nation < 0.999 && network < 0.02;
-      const filmIn = Math.max(
-        filmPainting && inFilm ? 1 - range(nation, 0.94, 1) : 0,
-        hasFilm ? range(close, 0.12, 0.4) * (1 - range(close, 0.86, 1)) : 0,
-      );
+      const filmIn = filmPainting ? 1 : 0;
 
       // Warmth rises in the dusk acts and cools for the data acts.
       const warmth = clamp01(

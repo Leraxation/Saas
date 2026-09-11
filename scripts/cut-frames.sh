@@ -50,6 +50,11 @@ if ! command -v ffmpeg >/dev/null 2>&1; then
 fi
 
 FPS="${FPS:-8}"
+# INTERPOLATE=<fps> synthesises intermediate frames with motion interpolation
+# before cutting. Use it when the film is short relative to the scroll it has
+# to cover and the source simply does not contain enough frames — see the
+# px/frame note above. Costs CPU; adds no real detail, only smoothness.
+INTERPOLATE="${INTERPOLATE:-}"
 WIDTH="${WIDTH:-1600}"
 QUALITY="${QUALITY:-5}"          # ffmpeg -q:v, 2 = best, 31 = worst
 
@@ -74,9 +79,15 @@ rm -rf "$DIR"
 mkdir -p "$DIR"
 
 # -vsync 0 so ffmpeg emits exactly the frames fps= selects, with no duplication.
+if [ -n "$INTERPOLATE" ]; then
+  echo "Motion-interpolating to ${INTERPOLATE} fps first — this is CPU-heavy."
+  VF="minterpolate=fps=$INTERPOLATE:mi_mode=mci:mc_mode=obmc:me_mode=bidir:me=epzs,scale=$WIDTH:-2:flags=lanczos"
+else
+  VF="fps=$FPS,scale=$WIDTH:-2:flags=lanczos"
+fi
+
 ffmpeg -hide_banner -loglevel error -stats -y -i "$SRC" \
-  -vf "fps=$FPS,scale=$WIDTH:-2:flags=lanczos" \
-  -vsync 0 -q:v "$QUALITY" "$DIR/f%04d.jpg"
+  -vf "$VF" -vsync 0 -q:v "$QUALITY" "$DIR/f%04d.jpg"
 
 # ffmpeg numbers from 1; the player indexes from 0. Shift the whole set down
 # via a temporary prefix so no rename ever collides with a file not yet moved.
@@ -93,6 +104,7 @@ SIZE=$(du -sh "$DIR" | cut -f1)
 cat > "$DIR/manifest.json" <<JSON
 {
   "count": $COUNT,
+  "interpolated": ${INTERPOLATE:-null},
   "pattern": "/vision2040/frames/f%04d.jpg",
   "width": $WIDTH,
   "fps": $FPS,

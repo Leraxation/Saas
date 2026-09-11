@@ -73,58 +73,62 @@ FPS=12 WIDTH=1920 ./scripts/cut-frames.sh path/to/film.mp4
 Writes `public/vision2040/frames/f0000.jpg …` plus a `manifest.json`.
 
 **Choosing the frame rate.** Scrub frame rate is not playback frame rate —
-nothing plays, the scroll position *is* the playhead. The number that matters
-is how far the page scrolls between one frame and the next:
+nothing plays, the scroll position *is* the playhead. What matters is how far
+the page scrolls between one frame and the next:
 
 ```
 scroll_px_per_frame = total_scroll_px / (duration_s * FPS)
-total_scroll_px     = (sum_of_segment_weights_vh / 100) * viewport_h - viewport_h
 ```
 
 Below ~6 px/frame you are buying frames nobody can tell apart; above ~20 the
-picture visibly steps on a fast scroll. Aim for **8–12 px/frame**.
+picture visibly steps on a slow scroll. Aim for 8-12.
 
-The consequence is that there is no single correct fps — it depends entirely on
-the ratio of scroll distance to film length. Across this page's 570vh
-(4230px of travel at 900px tall, 5076px at 1080p):
+**The current cut is every source frame: 24 fps, 289 frames, 1440px, `-q:v 2`.**
+The source is 848x478 (a WhatsApp re-encode at 1.4 Mbps), so 24 fps captures
+all of it — there is no finer sampling available. It is upscaled with lanczos
+so the browser is not left doing a bilinear stretch on a projector; that adds
+no detail, only a cleaner scale.
 
-| Film | 8 fps | 12 fps | 20 fps | 24 fps |
-|---|---:|---:|---:|---:|
-| 58s | **9.1 px/f** ✓ | 6.1 | 3.6 | 3.0 |
-| 12s | 44.1 ✗ | 29.4 ✗ | **17.6 px/f** ✓ | 14.6 ✓ |
+**Known limitation.** 12.04s of film spread across the full 2330vh page is
+20,070px of travel at a 900px viewport — **69.7 px/frame**, well above the
+20 px threshold, so a slow scroll will step. The source has no more frames to
+give. The fix is synthesised ones:
 
-A 58-second film wants 8 fps; a 12-second one over the same scroll wants 20–24.
-Run the numbers rather than copying a default.
+```bash
+INTERPOLATE=72 WIDTH=1440 QUALITY=2 ./scripts/cut-frames.sh <film.mp4>
+```
 
-The current cut is **20 fps at 848px** — 241 frames, 14 MB — because the source
-is a 12.04s clip. 848px is the source's own width: the file is
-WhatsApp-compressed at 848×478, so upscaling it in ffmpeg would only add bytes,
-not detail. Full-bleed on a 1080p projector it will look soft; if a
-higher-resolution master exists, re-run the script against that and raise
-`WIDTH`.
+867 frames at 23 px/frame, about 90 seconds of CPU. `INTERPOLATE=96` gives
+1156 frames at 17 px/frame, inside the band, at roughly 140MB on disk.
+Interpolation invents frames — it buys smoothness, never detail.
 
-Note that 241 frames also keeps the set inside the 255-file limit for
-publishing the page as a Claude Artifact.
-
-
+The other lever is a shorter scroll span: give the film segments less weight
+and hold the picture through the data acts (see below).
 
 ### How the scrub is wired
 
 A fixed, full-bleed canvas (`.v-filmcanvas`) sits behind everything; the
 content sections scroll over it. GSAP ScrollTrigger drives it with `scrub`
-over `#film-range`, the wrapper around the overture and Act II.
+over `#film-range`, which is the whole page.
+
+The scrim is progress-aware: light while the film carries the opening, then
+deepening once the map and the charts have to read over the top of it.
 
 **Segments, not a linear map.** `FILM_SEGMENTS` in
-`components/vision2040/FilmCanvas.tsx` models the sequence as weighted
-segments:
+`components/vision2040/FilmCanvas.tsx` covers all seven acts, so the film opens
+on its first frame under the title and reaches its last as the final act ends:
 
 ```ts
-{ section: "overture", weight: 230, from: 0,   to: 0.4 }
-{ section: "nation",   weight: 340, from: 0.4, to: 1   }
+export const FILM_SEGMENTS = linearSegments([
+  { section: "overture", weight: 230 },
+  { section: "nation",   weight: 340 },
+  ...
+]);
 ```
 
-`weight` is the section's height in vh; `from`/`to` are that segment's slice of
-the frame sequence. This is what makes holds (`from === to` parks the picture
+`weight` is the section's height in vh. `linearSegments` derives each segment's
+slice of the sequence from the weights so the arithmetic cannot fall out of
+step; override any segment's `from`/`to` afterwards to hold or cut. This is what makes holds (`from === to` parks the picture
 while a passage is read) and cuts (a gap between one segment's `to` and the
 next one's `from`) possible without touching the engine — neither is
 expressible as one linear map.

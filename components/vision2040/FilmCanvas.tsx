@@ -3,33 +3,39 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { createFilmScrub, type Segment } from "@/lib/vision2040/filmScrub";
+import { createFilmScrub, linearSegments } from "@/lib/vision2040/filmScrub";
 
 /**
  * Segment map for the film.
  *
- * ── KEEP IN SYNC WITH THE ACT HEIGHTS IN app/vision-2040/page.tsx ──────────
- * `weight` is the section's height in vh. These are the same numbers written
- * in two places and nothing enforces it at compile time, so `createFilmScrub`
- * measures the real sections on mount and on every ScrollTrigger refresh, and
- * warns in the console if they diverge. Change one, change the other.
+ * ── WEIGHTS MUST EQUAL THE ACT HEIGHTS IN app/vision-2040/page.tsx ────────
+ * `weight` is each section's height in vh. These are the same numbers written
+ * in two places and nothing ties them together at compile time, so
+ * `createFilmScrub` measures the real sections on mount and on every
+ * ScrollTrigger refresh and warns in the console when they drift. Change an
+ * act's height and change its weight with it.
  *
- * `from`/`to` are each segment's slice of the frame sequence. Because the
- * sequence is modelled as weighted segments rather than one linear map, it can
- * also hold (from === to parks the picture while a passage is read) and cut
- * (one segment's `to` not matching the next one's `from` skips frames) — which
- * is what makes room for more shots later without touching the engine.
- * ──────────────────────────────────────────────────────────────────────────
+ * `linearSegments` derives each segment's slice of the frame sequence from the
+ * weights, so the film runs first frame to last across the whole page and the
+ * arithmetic cannot fall out of step. To park the picture while a passage is
+ * read, set that segment's `from` and `to` equal afterwards; to cut, leave a
+ * gap to the next segment's `from`. That is what the segment model is for —
+ * neither is expressible as one linear map.
+ * ─────────────────────────────────────────────────────────────────────────
  */
-export const FILM_SEGMENTS: Segment[] = [
-  { section: "overture", weight: 230, from: 0, to: 0.4 },
-  { section: "nation", weight: 340, from: 0.4, to: 1 },
-];
+export const FILM_SEGMENTS = linearSegments([
+  { section: "overture", weight: 230 },
+  { section: "nation", weight: 340 },
+  { section: "network", weight: 420 },
+  { section: "scale", weight: 360 },
+  { section: "pillars", weight: 340 },
+  { section: "roadmap", weight: 360 },
+  { section: "close", weight: 280 },
+]);
 
-/**
- * The fixed, full-bleed film canvas. Everything else on the page scrolls over
- * the top of it.
- */
+/** Where the footage stops being the subject and starts being a backdrop. */
+const DATA_ACTS_START = (230 + 340) / 2330;
+
 export default function FilmCanvas({ triggerId }: { triggerId: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
@@ -46,17 +52,21 @@ export default function FilmCanvas({ triggerId }: { triggerId: string }) {
       scrub: 0.5,
       gsap,
       ScrollTrigger,
-      // Gold type over a lit city needs help; the scrim is part of the frame,
-      // not a DOM layer, so it scales with the canvas and never mis-registers.
-      scrim: (ctx, w, h) => {
+      scrim: (ctx, w, h, p) => {
+        // Light while the film carries the opening; deeper once the map and
+        // the charts have to read over the top of it.
+        const deep = Math.min(1, Math.max(0, (p - DATA_ACTS_START) / 0.12));
+        const top = 0.5 + deep * 0.24;
+        const mid = 0.24 + deep * 0.42;
+        const bot = 0.62 + deep * 0.2;
         const v = ctx.createLinearGradient(0, 0, 0, h);
-        v.addColorStop(0, "rgba(3,6,13,0.56)");
-        v.addColorStop(0.42, "rgba(4,10,22,0.28)");
-        v.addColorStop(1, "rgba(3,6,13,0.66)");
+        v.addColorStop(0, `rgba(3,6,13,${top})`);
+        v.addColorStop(0.42, `rgba(4,10,22,${mid})`);
+        v.addColorStop(1, `rgba(3,6,13,${bot})`);
         ctx.fillStyle = v;
         ctx.fillRect(0, 0, w, h);
         const side = ctx.createLinearGradient(0, 0, w * 0.68, 0);
-        side.addColorStop(0, "rgba(3,6,13,0.52)");
+        side.addColorStop(0, `rgba(3,6,13,${0.5 + deep * 0.12})`);
         side.addColorStop(1, "rgba(3,6,13,0)");
         ctx.fillStyle = side;
         ctx.fillRect(0, 0, w, h);
