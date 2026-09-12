@@ -8,12 +8,15 @@ import { Act, Beat, Counter, Kicker } from "@/components/vision2040/parts";
 import { useStage } from "@/lib/vision2040/useStage";
 import {
   ACTS,
+  BOARD,
   CLOSE,
   EVENT,
   FIGURES,
   GROWTH,
   NATION,
   NETWORK,
+  OPERATORS,
+  OUTLOOK,
   PILLARS,
   ROADMAP,
   SCALE,
@@ -32,12 +35,14 @@ export default function Vision2040() {
       <Stage api={api} />
       <Chrome api={api} />
 
-      {/*
-        The film's scroll range is the whole page: it opens on the first frame
-        and reaches the last as the final act ends. The segment weights in
-        FilmCanvas mirror every act height below — change one, change both.
-      */}
-      <main className="v-main" id="film-range">
+      <main className="v-main">
+        {/*
+          The film's scroll range: acts I-IV. It reaches its last frame 64% into
+          Act IV, right as the passenger trajectory begins to draw, and holds
+          there. The segment weights in FilmCanvas mirror these act heights —
+          change one, change both.
+        */}
+        <div id="film-range">
         {/* ── I · OVERTURE ───────────────────────────────────────────── */}
         <Act api={api} id="overture" vh={230}>
           <Beat api={api} act="overture" from={0} to={0.8} className="v-hero" lift={16}>
@@ -145,7 +150,76 @@ export default function Vision2040() {
           </Beat>
         </Act>
 
-        {/* ── V · THE PILLARS ────────────────────────────────────────── */}
+        </div>{/* /#film-range — the film ends here */}
+
+        {/* ── V · THE OPERATORS ──────────────────────────────────────── */}
+        <Act api={api} id="operators" vh={420}>
+          <Beat api={api} act="operators" from={0} to={0.16} className="v-panel v-panel--top">
+            <Kicker>{OPERATORS.kicker}</Kicker>
+            <h2 className="v-h2">{OPERATORS.heading}</h2>
+            <p className="v-lede">{OPERATORS.body}</p>
+          </Beat>
+
+          {OPERATORS.items.map((e, i) => (
+            <Beat
+              key={e.id}
+              api={api}
+              act="operators"
+              from={0.18 + i * 0.205}
+              to={0.385 + i * 0.205}
+              hold={i === OPERATORS.items.length - 1}
+              className="v-operator"
+            >
+              <div className="v-card v-card--operator">
+                <div className="v-operator__head">
+                  <span className="v-operator__role">{e.role}</span>
+                  <span className="v-operator__ar">{e.nameAr}</span>
+                </div>
+                <h3 className="v-operator__name">{e.name}</h3>
+                <p className="v-pillar__claim">{e.claim}</p>
+                <p className="v-body">{e.body}</p>
+                <dl className="v-stats">
+                  {e.stats.map((st) => (
+                    <div key={st.label} title={st.source}>
+                      <dt>{st.label}</dt>
+                      <dd>{st.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </Beat>
+          ))}
+        </Act>
+
+        {/* ── VI · THE SECTOR BOARD ──────────────────────────────────── */}
+        <Act api={api} id="board" vh={300}>
+          <Beat api={api} act="board" from={0} to={0.2} className="v-panel v-panel--top">
+            <Kicker>{BOARD.kicker}</Kicker>
+            <h2 className="v-h2">{BOARD.heading}</h2>
+            <p className="v-lede">{BOARD.body}</p>
+          </Beat>
+
+          <Beat api={api} act="board" from={0.18} to={1} className="v-board" hold>
+            <div className="v-board__grid" role="table" aria-label="Sector board">
+              <div className="v-board__row v-board__row--head" role="row">
+                {BOARD.columns.map((c) => (
+                  <span key={c} role="columnheader">{c}</span>
+                ))}
+              </div>
+              {BOARD.rows.map((r) => (
+                <div key={r.entity} className={`v-board__row v-board__row--${r.tone}`} role="row">
+                  <span className="v-board__entity" role="cell">{r.entity}</span>
+                  <span role="cell">{r.mandate}</span>
+                  <span className="v-board__scale" role="cell">{r.scale}</span>
+                  <span className="v-board__exposure" role="cell">{r.exposure}</span>
+                </div>
+              ))}
+            </div>
+            <p className="v-board__asof">{BOARD.asOf}</p>
+          </Beat>
+        </Act>
+
+        {/* ── VII · THE PILLARS ──────────────────────────────────────── */}
         <Act api={api} id="pillars" vh={340}>
           <Beat api={api} act="pillars" from={0} to={0.2} className="v-panel v-panel--top">
             <Kicker>{PILLARS.kicker}</Kicker>
@@ -209,7 +283,39 @@ export default function Vision2040() {
           ))}
         </Act>
 
-        {/* ── VII · THE CLOSE ────────────────────────────────────────── */}
+        {/* ── IX · OUTLOOK ───────────────────────────────────────────── */}
+        <Act api={api} id="outlook" vh={380}>
+          <Beat api={api} act="outlook" from={0} to={0.16} className="v-panel v-panel--top">
+            <Kicker>{OUTLOOK.kicker}</Kicker>
+            <h2 className="v-h2">{OUTLOOK.heading}</h2>
+            <p className="v-lede">{OUTLOOK.body}</p>
+            <span className="v-tag v-tag--analysis">{OUTLOOK.disclaimer}</span>
+          </Beat>
+
+          {OUTLOOK.insights.map((it, i) => (
+            <Beat
+              key={it.head}
+              api={api}
+              act="outlook"
+              from={0.18 + i * 0.205}
+              to={0.385 + i * 0.205}
+              hold={i === OUTLOOK.insights.length - 1}
+              className="v-insight"
+            >
+              <div className="v-insight__metric">
+                <span className="v-insight__value">{it.metric}</span>
+                <span className="v-insight__label">{it.metricLabel}</span>
+              </div>
+              <div className="v-insight__text">
+                <h3 className="v-h3">{it.head}</h3>
+                <p className="v-body">{it.body}</p>
+              </div>
+            </Beat>
+          ))}
+          <div className="v-mapnote">{OUTLOOK.disclaimer}</div>
+        </Act>
+
+        {/* ── X · THE CLOSE ──────────────────────────────────────────── */}
         <Act api={api} id="close" vh={280}>
           <Beat api={api} act="close" from={0} to={0.28} className="v-panel v-panel--center">
             <Kicker>{CLOSE.kicker}</Kicker>

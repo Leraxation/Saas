@@ -111,13 +111,21 @@ export function progressToFrameT(p: number, segments: Segment[]): number {
  * Override any returned segment's `from`/`to` afterwards to introduce a hold
  * (set them equal) or a cut (leave a gap to the next segment's `from`).
  */
-export function linearSegments(specs: { section: string; weight: number }[]): Segment[] {
-  const total = specs.reduce((a, s) => a + s.weight, 0) || 1;
+export function linearSegments(
+  specs: { section: string; weight: number; hold?: boolean }[],
+): Segment[] {
+  // Holds take scroll but no film, so they are excluded from the denominator:
+  // the sequence still runs first frame to last across the advancing segments.
+  const advancing = specs.filter((s) => !s.hold).reduce((a, s) => a + s.weight, 0) || 1;
   let acc = 0;
   return specs.map((s) => {
-    const from = acc / total;
+    if (s.hold) {
+      const at = acc / advancing;
+      return { section: s.section, weight: s.weight, from: at, to: at };
+    }
+    const from = acc / advancing;
     acc += s.weight;
-    return { section: s.section, weight: s.weight, from, to: acc / total };
+    return { section: s.section, weight: s.weight, from, to: acc / advancing };
   });
 }
 
@@ -273,7 +281,14 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
   function checkWeights() {
     const vh = window.innerHeight;
     if (!vh) return;
+    // A section can carry more than one segment — an advancing stretch and a
+    // hold, say — so compare the SUM of its weights against its height.
+    const bySection = new Map<string, number>();
     for (const seg of segments) {
+      bySection.set(seg.section, (bySection.get(seg.section) ?? 0) + seg.weight);
+    }
+    for (const [section, weight] of bySection) {
+      const seg = { section, weight };
       const el = document.getElementById(seg.section);
       if (!el) {
         console.warn(`[filmScrub] segment "${seg.section}" has no matching element`);
@@ -345,6 +360,14 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
         end: "bottom bottom",
         scrub,
         onUpdate: (self: { progress: number }) => apply(self.progress),
+        // Past its range the film is done; the page marks it so the canvas can
+        // fade out rather than hanging on its last frame behind later acts.
+        onLeave: () => {
+          canvas.dataset.past = "true";
+        },
+        onEnterBack: () => {
+          canvas.dataset.past = "false";
+        },
         onRefresh: () => {
           size();
           checkWeights();

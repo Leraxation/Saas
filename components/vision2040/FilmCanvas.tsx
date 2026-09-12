@@ -27,14 +27,14 @@ export const FILM_SEGMENTS = linearSegments([
   { section: "overture", weight: 230 },
   { section: "nation", weight: 340 },
   { section: "network", weight: 420 },
-  { section: "scale", weight: 360 },
-  { section: "pillars", weight: 340 },
-  { section: "roadmap", weight: 360 },
-  { section: "close", weight: 280 },
+  // The film reaches its last frame 64% into Act IV — exactly where the
+  // passenger trajectory chart begins — and then holds while the chart draws.
+  { section: "scale", weight: 230 },
+  { section: "scale", weight: 130, hold: true },
 ]);
 
-/** Where the footage stops being the subject and starts being a backdrop. */
-const DATA_ACTS_START = (230 + 340) / 2330;
+/** Where the footage stops being the subject and becomes a backdrop. */
+const DATA_ACTS_START = (230 + 340) / 1320;
 
 export default function FilmCanvas({ triggerId }: { triggerId: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -56,9 +56,11 @@ export default function FilmCanvas({ triggerId }: { triggerId: string }) {
         // Light while the film carries the opening; deeper once the map and
         // the charts have to read over the top of it.
         const deep = Math.min(1, Math.max(0, (p - DATA_ACTS_START) / 0.12));
-        const top = 0.5 + deep * 0.24;
-        const mid = 0.24 + deep * 0.42;
-        const bot = 0.62 + deep * 0.2;
+        // Lighter than before throughout — the footage is the point, and the
+        // type carries on its own weight against it.
+        const top = 0.36 + deep * 0.2;
+        const mid = 0.12 + deep * 0.34;
+        const bot = 0.46 + deep * 0.18;
         const v = ctx.createLinearGradient(0, 0, 0, h);
         v.addColorStop(0, `rgba(3,6,13,${top})`);
         v.addColorStop(0.42, `rgba(4,10,22,${mid})`);
@@ -66,7 +68,7 @@ export default function FilmCanvas({ triggerId }: { triggerId: string }) {
         ctx.fillStyle = v;
         ctx.fillRect(0, 0, w, h);
         const side = ctx.createLinearGradient(0, 0, w * 0.68, 0);
-        side.addColorStop(0, `rgba(3,6,13,${0.5 + deep * 0.12})`);
+        side.addColorStop(0, `rgba(3,6,13,${0.36 + deep * 0.12})`);
         side.addColorStop(1, "rgba(3,6,13,0)");
         ctx.fillStyle = side;
         ctx.fillRect(0, 0, w, h);

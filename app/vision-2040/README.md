@@ -9,41 +9,36 @@ Route: **`/vision-2040`**
 
 ## Before the meeting — do these three things
 
-### 1. Replace the illustrative figures
+### 1. Check the figures against their sources
 
-Every number lives in **`lib/vision2040/data.ts`**. Each one is a `Figure` that
-carries a `source` and a `verified` flag:
+Every number now carries a real citation and is marked `verified: true` in
+`lib/vision2040/data.ts`. The headline set:
 
-```ts
-{
-  value: 16.5,
-  suffix: "M",
-  decimals: 1,
-  label: "Passengers handled",
-  source: "ILLUSTRATIVE — replace with the published Oman Airports annual figure.",
-  verified: false,   // ← flip to true once the value is confirmed
-}
-```
+| Figure | Value | Source |
+|---|---|---|
+| Passengers 2025 | 14,939,209 (+2.8%) | NCSI |
+| Traffic H1 2026 | 6.28M, **−9.3%** | NCSI |
+| Flights 2025 | 104,510 (−2.8%) | NCSI |
+| 2040 passenger target | **40M** | National Aviation Strategy 2040 (approved Jan 2026) |
+| 2040 cargo target | ~1M tonnes | National Aviation Strategy 2040 |
+| 2040 GDP share | >3.5% | National Aviation Strategy 2040 |
+| Private investment sought | OMR 1bn+ | National Aviation Strategy 2040 |
 
-The figures shipped here are **illustrative placeholders chosen so the page
-reads correctly out of the box**. They are not official statistics.
+The trajectory chart has two real anchors — 14.94M actual and the 40M target —
+and the line between them is **arithmetic, not a forecast**: the 6.8% compound
+growth the target implies. It is labelled that way on screen, because a
+required path and a prediction are different claims.
 
-Three things stop a placeholder being read out as fact:
+The operator figures in `OPERATORS` and `BOARD` come from company statements
+and press reporting. Press lags filings: confirm each against the company's own
+published numbers before the meeting. Every stat carries its source in a
+`title` attribute — hover it.
 
-- a small **`illustrative`** tag renders beside every unverified figure, always visible;
-- a **pre-flight check** lists every unverified figure the first time the page is opened;
-- **review mode** (press `V`) highlights them in amber with their source line.
+**One item is still unverified:** the exact official wording of the Vision 2040
+axis names in `PILLARS`. The pre-flight check names it on first open.
 
-Set `verified: true` and the tag disappears. Once every figure is verified, the
-pre-flight check says so and clears.
-
-The same applies to:
-
-- **`GROWTH`** — the passenger trajectory chart series.
-- **`PILLARS.source`** — confirm the exact official wording of the Vision 2040
-  axis names against the published document.
-- **`DESTINATIONS`** in `lib/vision2040/geo.ts` — the international route list is
-  illustrative. Replace it with the current published schedule.
+**Act IX is analysis, not policy.** The `OUTLOOK` insights are derived from the
+cited figures and are labelled on screen as such.
 
 ### 2. Fetch the film
 

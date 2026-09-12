@@ -72,6 +72,8 @@ export default function Stage({ api }: { api: StageApi }) {
       const nation = a.nation ?? 0;
       const network = a.network ?? 0;
       const scale = a.scale ?? 0;
+      const operators = a.operators ?? 0;
+      const outlook = a.outlook ?? 0;
       const pillars = a.pillars ?? 0;
       const roadmap = a.roadmap ?? 0;
       const close = a.close ?? 0;
@@ -90,7 +92,10 @@ export default function Stage({ api }: { api: StageApi }) {
       }
       // The film now runs behind every act, so the backdrop stands back for
       // the whole page and the film's own scrim does the darkening.
-      const filmPainting = filmCanvas.current?.dataset.ready === "true";
+      // The film covers acts I-IV only. Past its range it fades out and the
+      // procedural backdrop takes the page back.
+      const ds = filmCanvas.current?.dataset;
+      const filmPainting = ds?.ready === "true" && ds?.past !== "true";
       const filmIn = filmPainting ? 1 : 0;
 
       // Warmth rises in the dusk acts and cools for the data acts.
@@ -106,13 +111,15 @@ export default function Stage({ api }: { api: StageApi }) {
       if (network > 0.001 && scale < 0.02) {
         paintNetwork(ctx, s.w, s.h, s.time, network, s.quality);
       }
-      if (scale > 0.001 && pillars < 0.02) {
+      // Each scene is dropped when the act that follows it takes over, so the
+      // gates below name the NEXT act, not a fixed index.
+      if (scale > 0.001 && operators < 0.02) {
         paintGrowth(ctx, s.w, s.h, s.time, scale);
       }
       if (pillars > 0.001 && roadmap < 0.02) {
         paintPillars(ctx, s.w, s.h, s.time, pillars);
       }
-      if (roadmap > 0.001 && close < 0.02) {
+      if (roadmap > 0.001 && outlook < 0.02) {
         paintRoadmap(ctx, s.w, s.h, s.time, roadmap);
       }
       if (close > 0.001) {
