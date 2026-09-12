@@ -83,8 +83,7 @@ scroll_px_per_frame = total_scroll_px / (duration_s * FPS)
 Below ~6 px/frame you are buying frames nobody can tell apart; above ~20 the
 picture visibly steps on a slow scroll. Aim for 8-12.
 
-**The current cut is motion-interpolated to 72 fps: 862 frames, 1440px, `-q:v 2`.**
-The underlying sampling is every source frame the file has —
+**The current cut is 24 fps: 289 frames, 1440px, `-q:v 2`, 40 MB** — every frame the source has.
 The source is 848x478 (a WhatsApp re-encode at 1.4 Mbps), so 24 fps captures
 all of it — there is no finer sampling available. It is upscaled with lanczos
 so the browser is not left doing a bilinear stretch on a projector; that adds
@@ -102,25 +101,27 @@ mechanisms address it:
    of resolving into true intermediate motion; for anything short of that it is
    the better trade.
 
-2. **Motion interpolation**, applied to the shipped cut. The current frames are
-   `INTERPOLATE=72`: 862 frames at 23.3 px/frame, 115 MB.
+2. **Motion interpolation**, available but not shipped. `INTERPOLATE=72`
+   gives 862 frames at 23.3 px/frame and 115 MB:
 
    ```bash
    INTERPOLATE=72 WIDTH=1440 QUALITY=2 ./scripts/cut-frames.sh <film.mp4>
    ```
 
-   Roughly 90 seconds of CPU. `INTERPOLATE=96` gives 1156 frames at 17
-   px/frame. Interpolation invents frames: it buys smoothness, never detail.
+   About 90 seconds of CPU. It is not the default because blending already
+   carries this footage, and 115 MB is a lot to move for the one case it
+   improves: somebody flinging the scrollbar. Interpolation invents frames —
+   smoothness, never detail.
 
-If 115 MB is too heavy for where you are hosting, drop `INTERPOLATE` and cut at
-`FPS=24` instead — 289 frames, 40 MB. With blending on, that is still smooth
-for this footage; the interpolated set mainly helps if someone flings the
-scrollbar.
+**Blending is measured, not assumed.** Stepping across one frame interval in
+fifths, the canvas produced five distinct renders on a single base frame,
+moving monotonically — the picture changes *between* frames, which is the
+dissolve doing its job. Without it, all five would be identical.
 
-Sizing note: 862 frames at 1440x812 is ~4 GB of bitmap if a browser held every
-frame decoded at once. It does not — decoding is lazy and evicted — and a
-21-stop sweep of the whole page completed in 5.5s with the JS heap flat at
-~6 MB. But it is the reason not to raise the count without measuring.
+Sizing note: 289 frames at 1440x812 is ~1.35 GB of bitmap if a browser held
+every frame decoded at once (the 72 fps set is ~4 GB). It does not — decoding
+is lazy and evicted — but it is the reason not to raise the count without
+measuring.
 
 ### How the scrub is wired
 
