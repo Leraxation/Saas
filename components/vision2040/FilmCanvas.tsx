@@ -25,7 +25,13 @@ import { createFilmScrub, linearSegments } from "@/lib/vision2040/filmScrub";
  */
 export const FILM_SEGMENTS = linearSegments([
   { section: "overture", weight: 230 },
-  { section: "nation", weight: 340 },
+  // The film finishes inside Act II rather than exactly on its boundary, and
+  // the last frame then holds for the rest of the act. Running it to the
+  // boundary meant the closing frames were only reached as the canvas was
+  // already fading — the end of the film was never actually seen. The hold
+  // also gives the damped scrub time to settle on the final frame.
+  { section: "nation", weight: 260 },
+  { section: "nation", weight: 80, hold: true },
 ]);
 
 export default function FilmCanvas({ triggerId }: { triggerId: string }) {
