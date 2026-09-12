@@ -37,10 +37,10 @@ export default function Vision2040() {
 
       <main className="v-main">
         {/*
-          The film's scroll range: acts I-IV. It reaches its last frame 64% into
-          Act IV, right as the passenger trajectory begins to draw, and holds
-          there. The segment weights in FilmCanvas mirror these act heights —
-          change one, change both.
+          The film's scroll range: acts I-II. Its last frame lands exactly as
+          Act III opens on "Eleven governorates, one network", and the canvas
+          then fades. The segment weights in FilmCanvas mirror these two act
+          heights — change one, change both.
         */}
         <div id="film-range">
         {/* ── I · OVERTURE ───────────────────────────────────────────── */}
@@ -50,13 +50,6 @@ export default function Vision2040() {
             <h1 className="v-hero__title">{TITLES.vision}</h1>
             <div className="v-hero__rule" aria-hidden="true" />
             <p className="v-hero__stand">{TITLES.standfirst}</p>
-            <p className="v-hero__deck">{TITLES.deck}</p>
-            <div className="v-hero__meta">
-              <span>{EVENT.venue}</span>
-              <span className="v-dot" aria-hidden="true" />
-              <span>{EVENT.dateLine}</span>
-            </div>
-            <p className="v-hero__host">{EVENT.hostLine}</p>
           </Beat>
 
           <Beat api={api} act="overture" from={0} to={0.34} className="v-scrollcue" lift={0}>
@@ -89,6 +82,8 @@ export default function Vision2040() {
             </Beat>
           ))}
         </Act>
+
+        </div>{/* /#film-range — the film ends as Act III opens */}
 
         {/* ── III · THE NETWORK ──────────────────────────────────────── */}
         <Act api={api} id="network" vh={420}>
@@ -149,8 +144,6 @@ export default function Vision2040() {
             <p className="v-figure__source">{GROWTH.source}</p>
           </Beat>
         </Act>
-
-        </div>{/* /#film-range — the film ends here */}
 
         {/* ── V · THE OPERATORS ──────────────────────────────────────── */}
         <Act api={api} id="operators" vh={420}>

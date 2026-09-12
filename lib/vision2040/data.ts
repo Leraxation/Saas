@@ -52,16 +52,12 @@ export const EVENT = {
   venue: "Muscat, Sultanate of Oman",
   venueAr: "مسقط، سلطنة عُمان",
   convening: "Aviation Sector Convening",
-  hostLine: "Presented to the Chairman of Oman Air and the national aviation sector",
 };
 
 export const TITLES = {
   vision: "VISION 2040",
   visionAr: "رؤية عُمان ٢٠٤٠",
   standfirst: "Aviation as national infrastructure",
-  deck:
-    "How the Sultanate's aviation sector carries Oman Vision 2040 — connecting the " +
-    "governorates, opening the economy, and moving a nation into its next century.",
 };
 
 /* ─────────────────────────────────────────────────────────────────────────

@@ -26,15 +26,7 @@ import { createFilmScrub, linearSegments } from "@/lib/vision2040/filmScrub";
 export const FILM_SEGMENTS = linearSegments([
   { section: "overture", weight: 230 },
   { section: "nation", weight: 340 },
-  { section: "network", weight: 420 },
-  // The film reaches its last frame 60% into Act IV — exactly where the
-  // passenger trajectory chart begins — and then holds while the chart draws.
-  { section: "scale", weight: 216 },
-  { section: "scale", weight: 144, hold: true },
 ]);
-
-/** Where the footage stops being the subject and becomes a backdrop. */
-const DATA_ACTS_START = (230 + 340) / 1306;
 
 export default function FilmCanvas({ triggerId }: { triggerId: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -52,23 +44,18 @@ export default function FilmCanvas({ triggerId }: { triggerId: string }) {
       scrub: 0.5,
       gsap,
       ScrollTrigger,
-      scrim: (ctx, w, h, p) => {
-        // Light while the film carries the opening; deeper once the map and
-        // the charts have to read over the top of it.
-        const deep = Math.min(1, Math.max(0, (p - DATA_ACTS_START) / 0.12));
-        // Lighter than before throughout — the footage is the point, and the
-        // type carries on its own weight against it.
-        const top = 0.36 + deep * 0.2;
-        const mid = 0.12 + deep * 0.34;
-        const bot = 0.46 + deep * 0.18;
+      // The film only covers the opening two acts now, where it is the subject
+      // rather than a backdrop, so the scrim is one light setting throughout —
+      // just enough for gold type to hold over a lit city.
+      scrim: (ctx, w, h) => {
         const v = ctx.createLinearGradient(0, 0, 0, h);
-        v.addColorStop(0, `rgba(3,6,13,${top})`);
-        v.addColorStop(0.42, `rgba(4,10,22,${mid})`);
-        v.addColorStop(1, `rgba(3,6,13,${bot})`);
+        v.addColorStop(0, "rgba(3,6,13,0.36)");
+        v.addColorStop(0.42, "rgba(4,10,22,0.12)");
+        v.addColorStop(1, "rgba(3,6,13,0.46)");
         ctx.fillStyle = v;
         ctx.fillRect(0, 0, w, h);
         const side = ctx.createLinearGradient(0, 0, w * 0.68, 0);
-        side.addColorStop(0, `rgba(3,6,13,${0.36 + deep * 0.12})`);
+        side.addColorStop(0, "rgba(3,6,13,0.36)");
         side.addColorStop(1, "rgba(3,6,13,0)");
         ctx.fillStyle = side;
         ctx.fillRect(0, 0, w, h);
