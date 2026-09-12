@@ -27,14 +27,14 @@ export const FILM_SEGMENTS = linearSegments([
   { section: "overture", weight: 230 },
   { section: "nation", weight: 340 },
   { section: "network", weight: 420 },
-  // The film reaches its last frame 64% into Act IV — exactly where the
+  // The film reaches its last frame 60% into Act IV — exactly where the
   // passenger trajectory chart begins — and then holds while the chart draws.
-  { section: "scale", weight: 230 },
-  { section: "scale", weight: 130, hold: true },
+  { section: "scale", weight: 216 },
+  { section: "scale", weight: 144, hold: true },
 ]);
 
 /** Where the footage stops being the subject and becomes a backdrop. */
-const DATA_ACTS_START = (230 + 340) / 1320;
+const DATA_ACTS_START = (230 + 340) / 1306;
 
 export default function FilmCanvas({ triggerId }: { triggerId: string }) {
   const ref = useRef<HTMLCanvasElement>(null);

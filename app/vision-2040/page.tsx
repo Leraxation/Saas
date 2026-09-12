@@ -134,13 +134,13 @@ export default function Vision2040() {
             <p className="v-lede">{SCALE.body}</p>
           </Beat>
 
-          <Beat api={api} act="scale" from={0.22} to={0.6} className="v-figures">
+          <Beat api={api} act="scale" from={0.22} to={0.62} className="v-figures">
             {FIGURES.map((f) => (
               <Counter key={f.label} api={api} act="scale" figure={f} from={0.26} to={0.52} />
             ))}
           </Beat>
 
-          <Beat api={api} act="scale" from={0.64} to={1} className="v-panel v-panel--chart" hold>
+          <Beat api={api} act="scale" from={0.6} to={1} className="v-panel v-panel--chart" hold>
             <h3 className="v-h3">
               {GROWTH.title}
               {!GROWTH.verified && <span className="v-tag">illustrative</span>}

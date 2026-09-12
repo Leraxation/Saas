@@ -337,8 +337,8 @@ export function paintGrowth(
   // Held to the back half of the act so it never sits under the figures,
   // and never faded out at the end so the frame stays alive through the
   // hand-off into the next act.
-  const grow = easeInOut(range(p, 0.66, 0.96));
-  const fade = range(p, 0.6, 0.72);
+  const grow = easeInOut(range(p, 0.64, 0.96));
+  const fade = range(p, 0.58, 0.7);
 
   ctx.save();
   ctx.globalAlpha = fade;
