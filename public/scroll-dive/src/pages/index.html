@@ -1,0 +1,569 @@
+<!-- ================================================================
+     HERO — scroll track. Content panels ride over the fixed canvas.
+     Track height is 700vh, split 3 : 2 : 2 to match CONFIG.segments.
+     ================================================================ -->
+<main id="main">
+<div class="track" id="track">
+
+  <section class="panel panel--hero">
+    <div class="panel__content">
+      <p class="eyebrow" data-reveal>Muscat · non-stop</p>
+      <h1 class="display" data-reveal>Above the<br />golden hour</h1>
+      <p class="lede" data-reveal>
+        Fly the Sultanate’s airline to more than 40 destinations across the Gulf,
+        Europe, Africa and Asia.
+      </p>
+      <div class="hint" data-reveal>
+        <span class="hint__mouse"></span>
+        <span>Scroll to fly</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel panel--right">
+    <div class="panel__content">
+      <p class="eyebrow" data-reveal>The fleet</p>
+      <h2 data-reveal>Wide-body comfort</h2>
+      <p data-reveal>
+        The Boeing 787 Dreamliner flies higher cabin humidity and lower cabin
+        altitude, so you land feeling closer to how you took off.
+      </p>
+      <ul class="facts" data-reveal>
+        <li><strong>40+</strong><span>destinations</span></li>
+        <li><strong>4</strong><span>continents</span></li>
+        <li><strong>1</strong><span>hub, Muscat</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="panel panel--left">
+    <div class="panel__content">
+      <p class="eyebrow" data-reveal>Engineering</p>
+      <h2 data-reveal>All the way in</h2>
+      <p data-reveal>
+        Quieter engines, a lighter airframe and a cabin designed around rest.
+        Every detail is tuned for the long sectors out of Muscat.
+      </p>
+    </div>
+  </section>
+
+  <!-- The gap: the footage fades to black here and the timeline holds it. -->
+  <div class="spacer" aria-hidden="true"></div>
+
+  <section class="panel panel--right">
+    <div class="panel__content">
+      <p class="eyebrow" data-reveal>On board</p>
+      <h2 data-reveal>Arrive rested</h2>
+      <p data-reveal>
+        Lie-flat seats, Omani hospitality and a cabin finished in the colours of
+        the country you are flying to.
+      </p>
+    </div>
+  </section>
+
+  <section class="panel panel--center">
+    <div class="panel__content">
+      <p class="eyebrow" data-reveal>Sindbad</p>
+      <h2 data-reveal>Every mile counts</h2>
+      <p data-reveal>
+        Earn and spend miles across the network and with partner airlines
+        worldwide.
+      </p>
+      <a class="btn btn--gold" href="sindbad.html">Explore Sindbad</a>
+    </div>
+  </section>
+
+  <!-- ---------- Shot three: the climb-out, one panel ----------
+       Trimmed to the stretch where the aircraft still fills the frame; the
+       original tail receded to a speck and left the copy sitting on empty sky. -->
+
+  <div class="spacer" aria-hidden="true"></div>
+
+  <section class="panel panel--left">
+    <div class="panel__content">
+      <p class="eyebrow" data-reveal>Departure</p>
+      <h2 data-reveal>Somewhere to be</h2>
+      <p data-reveal>
+        Out of Muscat and into the climb. Forty destinations, four continents,
+        one aircraft at a time.
+      </p>
+    </div>
+  </section>
+
+  <!-- ---------- Shot four: the suites, two panels ---------- -->
+
+  <div class="spacer" aria-hidden="true"></div>
+
+  <section class="panel panel--left">
+    <div class="panel__content">
+      <p class="eyebrow" data-reveal>Business Class</p>
+      <h2 data-reveal>A room of your own</h2>
+      <p data-reveal>
+        Private suites with direct aisle access, a seat that lies properly flat,
+        and lighting tuned to the hour you land in.
+      </p>
+      <a class="btn btn--gold" href="experience.html">See the cabin</a>
+    </div>
+  </section>
+
+  <section class="panel panel--right">
+    <div class="panel__content">
+      <p class="eyebrow" data-reveal>Rest</p>
+      <h2 data-reveal>Overnight, done properly</h2>
+      <p data-reveal>
+        Turn-down on request, a full-length bed and a cabin kept quiet from
+        Muscat to wherever the morning is.
+      </p>
+    </div>
+  </section>
+
+  <!-- ---------- The finale: into the sunset, two panels ---------- -->
+
+  <div class="spacer" aria-hidden="true"></div>
+
+  <section class="panel panel--left">
+    <div class="panel__content">
+      <p class="eyebrow" data-reveal>Golden hour</p>
+      <h2 data-reveal>The long way west</h2>
+      <p data-reveal>
+        Eight hours of daylight chased across four time zones, and the sun still
+        setting when you arrive.
+      </p>
+    </div>
+  </section>
+
+  <section class="panel panel--center">
+    <div class="panel__content">
+      <p class="eyebrow" data-reveal>Your turn</p>
+      <h2 data-reveal>Where are you going?</h2>
+      <p data-reveal>
+        Pick a date, pick a city. The rest is ours to carry.
+      </p>
+      <a class="btn btn--gold" href="#booking">Search flights</a>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<!-- ================================================================
+     BOOKING — four tabs, mirroring the current site's entry points
+     ================================================================ -->
+<section class="booking" id="booking" aria-labelledby="booking-h">
+  <div class="shell">
+    <h2 class="sr-only" id="booking-h">Book, manage and check in</h2>
+
+    <div class="card">
+      <div class="tabs" role="tablist" aria-label="Booking options">
+        <button role="tab" id="tab-book"   aria-controls="pane-book"   aria-selected="true"  class="tab is-active">Book a flight</button>
+        <button role="tab" id="tab-manage" aria-controls="pane-manage" aria-selected="false" class="tab">Manage booking</button>
+        <button role="tab" id="tab-checkin"aria-controls="pane-checkin"aria-selected="false" class="tab">Check-in</button>
+        <button role="tab" id="tab-status" aria-controls="pane-status" aria-selected="false" class="tab">Flight status</button>
+      </div>
+
+      <!-- ---- Book ---- -->
+      <form class="pane is-active" id="pane-book" role="tabpanel" aria-labelledby="tab-book" novalidate>
+        <div class="triptype" role="radiogroup" aria-label="Trip type">
+          <label><input type="radio" name="trip" value="return" checked /> <span>Return</span></label>
+          <label><input type="radio" name="trip" value="oneway" /> <span>One way</span></label>
+          <label><input type="radio" name="trip" value="multi" /> <span>Multi-city</span></label>
+        </div>
+
+        <!-- Multi-city legs. Built by site.js when that trip type is chosen. -->
+        <div class="legs" id="legs" hidden></div>
+
+        <div class="grid" id="simple-grid">
+          <div class="field">
+            <label for="from">From</label>
+            <input id="from" name="from" list="airports" placeholder="Muscat (MCT)" autocomplete="off" required />
+            <p class="err" data-err-for="from"></p>
+          </div>
+
+          <button type="button" class="swap" id="swap" aria-label="Swap origin and destination">⇄</button>
+
+          <div class="field">
+            <label for="to">To</label>
+            <input id="to" name="to" list="airports" placeholder="Where to?" autocomplete="off" required />
+            <p class="err" data-err-for="to"></p>
+          </div>
+
+          <div class="field">
+            <label for="depart">Departing</label>
+            <input id="depart" name="depart" type="date" required />
+            <p class="err" data-err-for="depart"></p>
+          </div>
+
+          <div class="field" id="return-field">
+            <label for="ret">Returning</label>
+            <input id="ret" name="ret" type="date" />
+            <p class="err" data-err-for="ret"></p>
+          </div>
+
+          <!-- Passengers: a stepper popover rather than a fixed list of
+               combinations. Counts post as pax-adults / pax-children / pax-infants. -->
+          <div class="field field--pax">
+            <label id="pax-label" for="pax">Passengers</label>
+            <button type="button" class="paxbtn" id="pax" aria-haspopup="dialog"
+                    aria-expanded="false" aria-controls="pax-pop" aria-labelledby="pax-label pax">
+              <span id="pax-summary">1 adult</span>
+            </button>
+
+            <div class="paxpop" id="pax-pop" role="dialog" aria-label="Choose passengers" hidden>
+              <div class="paxrow">
+                <div><b>Adults</b><span>12 years and over</span></div>
+                <div class="stepper">
+                  <button type="button" data-step="adults" data-dir="-1" aria-label="One fewer adult">−</button>
+                  <output id="out-adults" aria-live="polite">1</output>
+                  <button type="button" data-step="adults" data-dir="1" aria-label="One more adult">+</button>
+                </div>
+              </div>
+              <div class="paxrow">
+                <div><b>Children</b><span>2 to 11 years</span></div>
+                <div class="stepper">
+                  <button type="button" data-step="children" data-dir="-1" aria-label="One fewer child">−</button>
+                  <output id="out-children" aria-live="polite">0</output>
+                  <button type="button" data-step="children" data-dir="1" aria-label="One more child">+</button>
+                </div>
+              </div>
+              <div class="paxrow">
+                <div><b>Infants</b><span>Under 2, on a lap</span></div>
+                <div class="stepper">
+                  <button type="button" data-step="infants" data-dir="-1" aria-label="One fewer infant">−</button>
+                  <output id="out-infants" aria-live="polite">0</output>
+                  <button type="button" data-step="infants" data-dir="1" aria-label="One more infant">+</button>
+                </div>
+              </div>
+              <p class="paxnote" id="pax-note" role="status" aria-live="polite"></p>
+              <button type="button" class="btn btn--gold paxdone" id="pax-done">Done</button>
+            </div>
+
+            <input type="hidden" name="pax-adults" id="in-adults" value="1" />
+            <input type="hidden" name="pax-children" id="in-children" value="0" />
+            <input type="hidden" name="pax-infants" id="in-infants" value="0" />
+          </div>
+
+          <div class="field">
+            <label for="cabin">Cabin</label>
+            <select id="cabin" name="cabin">
+              <option>Economy</option><option>Business</option><option>First</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="promo">Promo code <span class="opt">optional</span></label>
+            <input id="promo" name="promo" placeholder="Add a code" />
+          </div>
+        </div>
+
+        <div class="pane__foot">
+          <label class="check"><input type="checkbox" id="flexible" /> <span>My dates are flexible</span></label>
+          <button class="btn btn--gold btn--lg" type="submit">Search flights</button>
+        </div>
+        <p class="formnote" role="status" aria-live="polite" data-note></p>
+      </form>
+
+      <!-- ---- Manage ---- -->
+      <form class="pane" id="pane-manage" role="tabpanel" aria-labelledby="tab-manage" hidden novalidate>
+        <div class="grid grid--two">
+          <div class="field">
+            <label for="pnr">Booking reference or e-ticket</label>
+            <input id="pnr" name="pnr" placeholder="6-character PNR" required />
+            <p class="err" data-err-for="pnr"></p>
+          </div>
+          <div class="field">
+            <label for="surname">Last name</label>
+            <input id="surname" name="surname" placeholder="As shown in your passport" required />
+            <p class="err" data-err-for="surname"></p>
+          </div>
+        </div>
+        <div class="pane__foot">
+          <p class="muted">Change dates, add bags, choose seats or request a refund.</p>
+          <button class="btn btn--gold btn--lg" type="submit">Retrieve booking</button>
+        </div>
+        <p class="formnote" role="status" aria-live="polite" data-note></p>
+      </form>
+
+      <!-- ---- Check-in ---- -->
+      <form class="pane" id="pane-checkin" role="tabpanel" aria-labelledby="tab-checkin" hidden novalidate>
+        <div class="grid grid--two">
+          <div class="field">
+            <label for="ci-pnr">Booking reference or e-ticket</label>
+            <input id="ci-pnr" name="ci-pnr" placeholder="6-character PNR" required />
+            <p class="err" data-err-for="ci-pnr"></p>
+          </div>
+          <div class="field">
+            <label for="ci-surname">Last name</label>
+            <input id="ci-surname" name="ci-surname" placeholder="As shown in your passport" required />
+            <p class="err" data-err-for="ci-surname"></p>
+          </div>
+        </div>
+        <div class="pane__foot">
+          <p class="muted">Check-in opens 48 hours before departure and closes 90 minutes before.</p>
+          <button class="btn btn--gold btn--lg" type="submit">Check in</button>
+        </div>
+        <p class="formnote" role="status" aria-live="polite" data-note></p>
+      </form>
+
+      <!-- ---- Flight status ---- -->
+      <form class="pane" id="pane-status" role="tabpanel" aria-labelledby="tab-status" hidden novalidate>
+        <div class="grid grid--two">
+          <div class="field">
+            <label for="fs-no">Flight number</label>
+            <input id="fs-no" name="fs-no" placeholder="WY 101" required />
+            <p class="err" data-err-for="fs-no"></p>
+          </div>
+          <div class="field">
+            <label for="fs-date">Date</label>
+            <input id="fs-date" name="fs-date" type="date" required />
+            <p class="err" data-err-for="fs-date"></p>
+          </div>
+        </div>
+        <div class="pane__foot">
+          <p class="muted">Live departures and arrivals for the last 24 and next 48 hours.</p>
+          <button class="btn btn--gold btn--lg" type="submit">Check status</button>
+        </div>
+        <p class="formnote" role="status" aria-live="polite" data-note></p>
+      </form>
+    </div>
+
+    <datalist id="airports">
+      <option value="Muscat (MCT)"></option><option value="Salalah (SLL)"></option>
+      <option value="Dubai (DXB)"></option><option value="Doha (DOH)"></option>
+      <option value="Kuwait (KWI)"></option><option value="Jeddah (JED)"></option>
+      <option value="Cairo (CAI)"></option><option value="London Heathrow (LHR)"></option>
+      <option value="Paris CDG (CDG)"></option><option value="Frankfurt (FRA)"></option>
+      <option value="Milan (MXP)"></option><option value="Istanbul (IST)"></option>
+      <option value="Delhi (DEL)"></option><option value="Mumbai (BOM)"></option>
+      <option value="Karachi (KHI)"></option><option value="Dhaka (DAC)"></option>
+      <option value="Bangkok (BKK)"></option><option value="Kuala Lumpur (KUL)"></option>
+      <option value="Singapore (SIN)"></option><option value="Zanzibar (ZNZ)"></option>
+      <option value="Nairobi (NBO)"></option>
+    </datalist>
+  </div>
+</section>
+
+<!-- ================================================================
+     OFFERS
+     ================================================================ -->
+<section class="section" id="offers" aria-labelledby="offers-h">
+  <div class="shell">
+    <header class="section__head">
+      <div>
+        <p class="kicker">Offers</p>
+        <h2 id="offers-h">Fares worth planning around</h2>
+      </div>
+      <a class="link" href="offers.html">All offers</a>
+    </header>
+
+    <!-- PLACEHOLDER FARES — replace from the fares feed before launch. -->
+    <div class="cards">
+      <article class="card2">
+        <div class="card2__media" data-tint="a"></div>
+        <div class="card2__body">
+          <p class="kicker">Europe</p>
+          <h3>London Heathrow</h3>
+          <p class="muted">Daily from Muscat · 787 Dreamliner</p>
+          <p class="price">from <b>OMR 245</b> return</p>
+        </div>
+      </article>
+      <article class="card2">
+        <div class="card2__media" data-tint="b"></div>
+        <div class="card2__body">
+          <p class="kicker">Asia</p>
+          <h3>Bangkok</h3>
+          <p class="muted">Five weekly · overnight eastbound</p>
+          <p class="price">from <b>OMR 180</b> return</p>
+        </div>
+      </article>
+      <article class="card2">
+        <div class="card2__media" data-tint="c"></div>
+        <div class="card2__body">
+          <p class="kicker">Africa</p>
+          <h3>Zanzibar</h3>
+          <p class="muted">Three weekly · seasonal</p>
+          <p class="price">from <b>OMR 165</b> return</p>
+        </div>
+      </article>
+      <article class="card2">
+        <div class="card2__media" data-tint="d"></div>
+        <div class="card2__body">
+          <p class="kicker">Gulf</p>
+          <h3>Dubai</h3>
+          <p class="muted">Up to six daily · 50 minutes</p>
+          <p class="price">from <b>OMR 55</b> return</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     DESTINATIONS — filterable network
+     ================================================================ -->
+<section class="section section--alt" id="destinations" aria-labelledby="dest-h">
+  <div class="shell">
+    <header class="section__head">
+      <div>
+        <p class="kicker">Where we fly</p>
+        <h2 id="dest-h">The network from Muscat</h2>
+      </div>
+      <div class="filters" role="group" aria-label="Filter destinations by region">
+        <button class="pill is-active" data-region="all">All</button>
+        <button class="pill" data-region="gulf">Gulf</button>
+        <button class="pill" data-region="asia">Asia</button>
+        <button class="pill" data-region="europe">Europe</button>
+        <button class="pill" data-region="africa">Africa</button>
+      </div>
+    </header>
+
+    <label class="search">
+      <span class="sr-only">Search destinations</span>
+      <input type="search" id="dest-search" placeholder="Search a city or airport code" />
+    </label>
+
+    <ul class="dests" id="dests">
+      <li data-region="gulf"><b>Dubai</b><span>DXB · 50 min</span></li>
+      <li data-region="gulf"><b>Doha</b><span>DOH · 1 h 20</span></li>
+      <li data-region="gulf"><b>Kuwait</b><span>KWI · 2 h 05</span></li>
+      <li data-region="gulf"><b>Jeddah</b><span>JED · 3 h 05</span></li>
+      <li data-region="gulf"><b>Salalah</b><span>SLL · 1 h 40</span></li>
+      <li data-region="asia"><b>Delhi</b><span>DEL · 3 h 20</span></li>
+      <li data-region="asia"><b>Mumbai</b><span>BOM · 2 h 45</span></li>
+      <li data-region="asia"><b>Karachi</b><span>KHI · 1 h 55</span></li>
+      <li data-region="asia"><b>Dhaka</b><span>DAC · 5 h 10</span></li>
+      <li data-region="asia"><b>Bangkok</b><span>BKK · 6 h 10</span></li>
+      <li data-region="asia"><b>Kuala Lumpur</b><span>KUL · 7 h 05</span></li>
+      <li data-region="asia"><b>Singapore</b><span>SIN · 7 h 20</span></li>
+      <li data-region="europe"><b>London</b><span>LHR · 8 h 05</span></li>
+      <li data-region="europe"><b>Paris</b><span>CDG · 7 h 30</span></li>
+      <li data-region="europe"><b>Frankfurt</b><span>FRA · 7 h 15</span></li>
+      <li data-region="europe"><b>Milan</b><span>MXP · 7 h 00</span></li>
+      <li data-region="europe"><b>Istanbul</b><span>IST · 5 h 05</span></li>
+      <li data-region="africa"><b>Cairo</b><span>CAI · 4 h 30</span></li>
+      <li data-region="africa"><b>Zanzibar</b><span>ZNZ · 5 h 15</span></li>
+      <li data-region="africa"><b>Nairobi</b><span>NBO · 5 h 00</span></li>
+    </ul>
+    <p class="muted" id="dest-empty" hidden>No destinations match that search.</p>
+    <!-- PLACEHOLDER NETWORK — replace with the published timetable. -->
+  </div>
+</section>
+
+<!-- ================================================================
+     EXPERIENCE — cabins and services
+     ================================================================ -->
+<section class="section" id="experience" aria-labelledby="exp-h">
+  <div class="shell">
+    <header class="section__head">
+      <div>
+        <p class="kicker">On board</p>
+        <h2 id="exp-h">Choose how you travel</h2>
+      </div>
+    </header>
+
+    <div class="cards cards--3">
+      <article class="cabin">
+        <h3>Economy Class</h3>
+        <p class="muted">Generous pitch, full meal service and seat-back entertainment on every wide-body sector.</p>
+        <ul class="ticks"><li>30 kg checked baggage</li><li>On-demand entertainment</li><li>Regional and international menus</li></ul>
+        <a class="link" href="experience.html">Explore Economy</a>
+      </article>
+      <article class="cabin cabin--feature">
+        <h3>Business Class</h3>
+        <p class="muted">Lie-flat seats with direct aisle access, lounge entry and priority everything.</p>
+        <ul class="ticks"><li>Lie-flat bed</li><li>Lounge access at Muscat</li><li>Chef-designed dining on request</li></ul>
+        <a class="link" href="experience.html">Explore Business</a>
+      </article>
+      <article class="cabin">
+        <h3>First Class</h3>
+        <p class="muted">Private suites, Tashreef Services on the ground and a dedicated cabin crew ratio.</p>
+        <ul class="ticks"><li>Private suite</li><li>Tashreef Services</li><li>Chauffeur transfers</li></ul>
+        <a class="link" href="experience.html">Explore First</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     SINDBAD
+     ================================================================ -->
+<section class="section section--gold" id="sindbad" aria-labelledby="sin-h">
+  <div class="shell split">
+    <div>
+      <p class="kicker">Sindbad</p>
+      <h2 id="sin-h">The frequent flyer programme of Oman Air</h2>
+      <p>
+        Earn miles on every Oman Air flight and with partner airlines and hotels.
+        Spend them on award seats, upgrades, extra baggage and lounge access.
+      </p>
+      <div class="btnrow">
+        <a class="btn btn--gold" href="sindbad.html">Join Sindbad</a>
+        <a class="btn btn--ghost" href="sindbad.html">Sign in</a>
+      </div>
+    </div>
+    <ul class="tiers">
+      <li><b>Blue</b><span>Entry tier — start earning from your first flight</span></li>
+      <li><b>Silver</b><span>Priority check-in and extra baggage</span></li>
+      <li><b>Gold</b><span>Lounge access and guaranteed Economy seats</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================================================================
+     SERVICES + HOLIDAYS + CARGO
+     ================================================================ -->
+<section class="section" id="services" aria-labelledby="svc-h">
+  <div class="shell">
+    <header class="section__head">
+      <div>
+        <p class="kicker">Everything else</p>
+        <h2 id="svc-h">Plan the whole journey</h2>
+      </div>
+    </header>
+    <ul class="tiles">
+      <li id="holidays"><b>Holidays</b><span>Flight, hotel and transfers in one booking</span></li>
+      <li><b>Car rental</b><span>Collect at Muscat or any destination</span></li>
+      <li><b>Rail &amp; Fly</b><span>Onward rail travel across Europe</span></li>
+      <li><b>Visa services</b><span>Check requirements for Oman and beyond</span></li>
+      <li><b>Travel insurance</b><span>Cover for the whole itinerary</span></li>
+      <li id="cargo"><b>Oman Air Cargo</b><span>Freight across the network</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================================================================
+     APP
+     ================================================================ -->
+<section class="section section--alt" id="app" aria-labelledby="app-h">
+  <div class="shell split">
+    <div>
+      <p class="kicker">Mobile</p>
+      <h2 id="app-h">The Oman Air app</h2>
+      <p>Boarding passes, live flight status, seat changes and Sindbad balance — offline-ready in your pocket.</p>
+      <div class="btnrow">
+        <a class="btn btn--ghost" href="#app">App Store</a>
+        <a class="btn btn--ghost" href="#app">Google Play</a>
+      </div>
+    </div>
+    <div class="phone" aria-hidden="true"><div class="phone__screen"></div></div>
+  </div>
+</section>
+
+<!-- ================================================================
+     HELP
+     ================================================================ -->
+<section class="section" id="help" aria-labelledby="help-h">
+  <div class="shell">
+    <header class="section__head">
+      <div>
+        <p class="kicker">Help &amp; contact</p>
+        <h2 id="help-h">We are here for the whole trip</h2>
+      </div>
+    </header>
+    <ul class="tiles tiles--4">
+      <li><b>Contact us</b><span>Call centre, WhatsApp and worldwide offices</span></li>
+      <li><b>FAQs</b><span>Booking, baggage, refunds and travel documents</span></li>
+      <li><b>Special assistance</b><span>Mobility, medical and travelling with children</span></li>
+      <li><b>Feedback</b><span>Compliments, claims and complaints</span></li>
+    </ul>
+  </div>
+</section>
