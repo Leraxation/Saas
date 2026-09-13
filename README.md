@@ -1,6 +1,6 @@
 # Outlook Dashboard
 
-A personal productivity dashboard that shows your Outlook **inbox**, **calendar events** (next 7 days), and **To-Do tasks** in one place.
+A personal productivity dashboard that shows your Outlook **inbox**, **calendar events** (next 7 days), and **To-Do tasks** in one place — plus a **People OS** command centre and a full **Leadership Assessment** platform.
 
 ![Dashboard preview](dashboard-preview.png)
 
@@ -17,6 +17,81 @@ The app automatically picks a data source based on which environment variables a
 | 3 | **Demo** | Nothing set | Sample data |
 
 No login screen in any mode — the dashboard opens directly.
+
+## Leadership Assessment (`/assessments`)
+
+A full leadership assessment platform: participants complete three self-administered
+modules, nominated raters give 360-degree feedback, and the platform scores everything
+into a benchmarked report with a development plan and coaching support.
+
+Open **`/assessments`** and add your first leader — the platform starts empty, with no
+sample or placeholder participants.
+
+### What it covers
+
+### Structure
+
+The section navigation runs in this order:
+
+**Dashboard** — `/assessments`
+Cohort view: competency heatmap, talent grid, values alignment, participant list.
+
+**Assessment modules** — `/assessments/<id>`
+| # | Module | Route | What it is |
+|---|---|---|---|
+| 1 | Leadership Competencies | `/run/competency` | 32 self-rated items across the eight-competency model |
+| 2 | Behavioral Assessment | `/run/behavioral` | 30 psychometric items across 6 traits, reported on the 1-10 sten scale with overuse/underuse risks |
+| 3 | 360-Degree Feedback | `/feedback` | Rater administration plus the aggregated observer view; raters answer the *same* competency items, which is what makes the gap analysis work |
+| 4 | Cognitive Assessment | `/run/cognitive` | 15-minute timed battery — numerical, verbal & critical, abstract, adaptive problem solving; scored server-side |
+| 5 | Organizational Alignment Assessment | `/run/alignment` | 20 items measuring how closely day-to-day behaviour tracks each organisational value |
+
+**Benchmarking** — `/assessments/<id>/benchmarking`
+Percentiles, norm differences and bands per competency, plus the cognitive benchmark and how to read them.
+
+**Development Plans** — `/assessments/<id>/plan`
+Focus areas, strengths to build from, and 70-20-10 actions with a measure and a horizon each. The narrative can optionally be written by Claude.
+
+**Coaching & Support** — `/assessments/<id>/coaching`
+A coaching agent grounded strictly in the report's evidence, report-driven session prompts, and the coaching log.
+
+**Full Assessment Report** — `/assessments/<id>/report`
+Every section above on one page, rendered from the same components.
+
+Raters get their own page at **`/feedback/<token>`** — no navigation, single submission, anonymised in the report.
+Add a leader at **`/assessments/new`**; their leadership level picks the norm group.
+
+### API
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/assessments` | GET / POST | Cohort summaries and analytics / create a participant |
+| `/api/assessments/[id]` | GET / DELETE | Full scored report / remove a participant |
+| `/api/assessments/[id]/modules/[module]` | GET / POST | Fetch items for a self-completed module (cognitive answers stripped) / submit responses |
+| `/api/assessments/[id]/raters` | POST / DELETE | Invite raters (returns their links) / remove an un-submitted rater |
+| `/api/assessments/[id]/plan` | POST | Generate the development plan (`?ai=1` for a Claude-written narrative) |
+| `/api/assessments/[id]/coach` | POST | Coaching conversation grounded in the report |
+| `/api/assessments/[id]/notes` | POST | Add a coaching-log note |
+| `/api/feedback/[token]` | GET / POST | The rater's form / their one submission |
+
+### Scoring and storage notes
+
+- Organisational alignment is **measured directly** once module 5 is complete; until then it is inferred
+  from the competencies that carry each value, and the report says which basis it used.
+- Reports are **scored from the raw responses on every load** — nothing is stored pre-computed,
+  so changing a norm table or an item key re-scores existing assessments.
+- Correct answers for the cognitive battery never leave the server; the client receives items
+  with `answer` and `rationale` stripped.
+- 360 groups with fewer than two responses are **suppressed** in the by-relationship breakdown
+  (their ratings still count towards the pooled observer score), and written comments are
+  reported by relationship only, never attributed.
+- Assessments persist to Upstash Redis when `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`
+  are set. Without them the platform runs on an in-memory store that is lost on restart, and says
+  so in the UI — set the two variables before collecting anything you need to keep.
+- `ANTHROPIC_API_KEY` enables the AI-written plan narrative and the coaching agent. Without it,
+  the plan is still fully generated and the coaching panel shows report-driven session prompts.
+- **The shipped norms in `lib/assessments/benchmarks.ts` are a documented reference set, not a
+  validated norm group.** Replace them with your own before using percentiles in a selection
+  decision.
 
 ## Bonus: DJ Mixer (`/mixer`)
 
@@ -126,13 +201,26 @@ Run each flow manually once (**Test** button) — your real data appears on the 
 app/
   page.tsx                    → redirects to /dashboard
   dashboard/                  → main dashboard (layout + page)
+  assessments/                → leadership assessment platform (cohort, participant, runner, report)
+  feedback/[token]/           → standalone 360 rater form
   api/outlook/                → read endpoints used by the UI
   api/webhooks/               → Power Automate push endpoints
+  api/assessments/            → assessment CRUD, modules, raters, plan, coaching
+  api/feedback/[token]/       → 360 rater form + submission
 components/                   → EmailsList, CalendarWidget, TasksList, Sidebar, Header
+  assessments/                → charts, runners, report, plan and coaching panels
 lib/
   graph.ts                    → data-source router (Graph / Redis / demo)
   token.ts                    → refresh-token → access-token exchange
   redis.ts                    → Upstash client
   mock-data.ts                → demo data
+  assessments/
+    framework.ts              → competency, trait, cognitive and values model
+    instruments.ts            → item banks for every module and the 360 form
+    scoring.ts                → all scoring: competencies, traits, cognition, gaps, readiness
+    benchmarks.ts             → norm tables, percentiles and reporting bands
+    development.ts            → 70-20-10 action library and plan generation
+    analytics.ts              → cohort heatmap, talent grid, values roll-up
+    store.ts                  → Redis-backed persistence with an in-memory fallback
 get_token.py                  → one-time device-flow script (Option A)
 ```
