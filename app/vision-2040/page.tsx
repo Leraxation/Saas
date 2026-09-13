@@ -2,7 +2,10 @@
 
 import { useMemo } from "react";
 import Stage from "@/components/vision2040/Stage";
-import FilmCanvas from "@/components/vision2040/FilmCanvas";
+import FilmCanvas, {
+  FILM_TWO_SEGMENTS,
+  closingScrim,
+} from "@/components/vision2040/FilmCanvas";
 import Chrome from "@/components/vision2040/Chrome";
 import { Act, Beat, Counter, Kicker } from "@/components/vision2040/parts";
 import { useStage } from "@/lib/vision2040/useStage";
@@ -13,6 +16,7 @@ import {
   EVENT,
   FIGURES,
   GROWTH,
+  HORIZON,
   NATION,
   NETWORK,
   OPERATORS,
@@ -30,8 +34,22 @@ export default function Vision2040() {
 
   return (
     <div className="v-root">
-      {/* Fixed full-bleed film canvas; every section below scrolls over it. */}
+      {/*
+        Two fixed full-bleed film canvases; every section below scrolls over
+        them. Each one is tied to its own stretch of the page and stands down
+        outside it, so only ever one of them is painting. The opening film runs
+        acts I-II; the 58-second closing film runs acts X-XI.
+      */}
       <FilmCanvas triggerId="film-range" />
+      <FilmCanvas
+        triggerId="film-range-2"
+        manifestUrl="/vision2040/frames-2/manifest.json"
+        segments={FILM_TWO_SEGMENTS}
+        scrim={closingScrim}
+        // 464 frames. Held back until its acts are within a few screens so it
+        // never competes with the opening act for connections.
+        deferStream
+      />
       <Stage api={api} />
       <Chrome api={api} />
 
@@ -308,7 +326,41 @@ export default function Vision2040() {
           <div className="v-mapnote">{OUTLOOK.disclaimer}</div>
         </Act>
 
-        {/* ── X · THE CLOSE ──────────────────────────────────────────── */}
+        {/*
+          The closing film's scroll range: acts X-XI. Act X is the film's own
+          act and gives it all of its advancing scroll; the film then runs the
+          first 100vh of Act XI and holds its last frame under the asks and the
+          sign-off. The segment weights in FilmCanvas (FILM_TWO_SEGMENTS) mirror
+          these two act heights — change one, change both.
+        */}
+        <div id="film-range-2">
+        {/* ── X · THE HORIZON ────────────────────────────────────────── */}
+        <Act api={api} id="horizon" vh={700}>
+          <Beat api={api} act="horizon" from={0} to={0.14} className="v-panel v-panel--center">
+            <span className="v-horizon__ar">{HORIZON.kickerAr}</span>
+            <Kicker>{HORIZON.kicker}</Kicker>
+            <h2 className="v-h2">{HORIZON.heading}</h2>
+          </Beat>
+
+          {HORIZON.lines.map((ln, i) => (
+            <Beat
+              key={ln.lead}
+              api={api}
+              act="horizon"
+              // Spaced wide on purpose: between one line leaving and the next
+              // arriving there is nothing on screen but the film.
+              from={0.2 + i * 0.26}
+              to={0.4 + i * 0.26}
+              hold={i === HORIZON.lines.length - 1}
+              className="v-horizonline"
+            >
+              <p className="v-horizonline__lead">{ln.lead}</p>
+              <p className="v-horizonline__body">{ln.body}</p>
+            </Beat>
+          ))}
+        </Act>
+
+        {/* ── XI · THE CLOSE ─────────────────────────────────────────── */}
         <Act api={api} id="close" vh={280}>
           <Beat api={api} act="close" from={0} to={0.28} className="v-panel v-panel--center">
             <Kicker>{CLOSE.kicker}</Kicker>
@@ -338,6 +390,7 @@ export default function Vision2040() {
             </p>
           </Beat>
         </Act>
+        </div>{/* /#film-range-2 — the closing film holds under the ask */}
       </main>
     </div>
   );

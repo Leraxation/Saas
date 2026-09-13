@@ -74,7 +74,12 @@ export const ACTS: Act[] = [
   { id: "pillars", rail: "The Pillars", numeral: "VII" },
   { id: "roadmap", rail: "The Roadmap", numeral: "VIII" },
   { id: "outlook", rail: "Outlook", numeral: "IX" },
-  { id: "close", rail: "The Ask", numeral: "X" },
+  // Act X is the closing film's own act. It carries almost no data on purpose:
+  // after nine acts of argument the room should be looking at the country, not
+  // at another chart. The 58-second film runs underneath it and holds its last
+  // frame through the ask.
+  { id: "horizon", rail: "The Horizon", numeral: "X" },
+  { id: "close", rail: "The Ask", numeral: "XI" },
 ];
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -534,7 +539,7 @@ export const ROADMAP = {
    ───────────────────────────────────────────────────────────────────────── */
 
 export const CLOSE = {
-  kicker: "Act X — The Ask",
+  kicker: "Act XI — The Ask",
   heading: "One sector. One plan. One horizon.",
   body:
     "Vision 2040 does not ask aviation to grow. It asks aviation to carry — the " +
@@ -559,6 +564,40 @@ export const CLOSE = {
   ],
   signoff: "Oman Vision 2040 — Aviation",
   signoffAr: "رؤية عُمان ٢٠٤٠ — الطيران",
+};
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ACT X — THE HORIZON
+   The closing film's act. Four lines across 700vh: the text is spaced so the
+   film is what fills the screen between them.
+   ───────────────────────────────────────────────────────────────────────── */
+
+export const HORIZON = {
+  kicker: "Act X — The Horizon",
+  kickerAr: "الأفق",
+  heading: "Everything above resolves to one picture",
+  lines: [
+    {
+      lead: "A country easier to reach,",
+      body:
+        "and easier to leave from, than it has ever been. That is what forty million " +
+        "passengers looks like from the ground — not a number on a chart, but a " +
+        "morning flight from Salalah that somebody can actually afford to take.",
+    },
+    {
+      lead: "Fifteen years is four fleet cycles,",
+      body:
+        "two terminal expansions and one generation of Omani pilots, engineers and " +
+        "controllers who are in school today. The decisions that put them in the seat " +
+        "are taken in rooms like this one, and they are taken early or not at all.",
+    },
+    {
+      lead: "2040 is not a destination.",
+      body:
+        "It is a schedule. Aviation is the one sector in this economy that already " +
+        "knows what it means to keep one.",
+    },
+  ],
 };
 
 /* ─────────────────────────────────────────────────────────────────────────

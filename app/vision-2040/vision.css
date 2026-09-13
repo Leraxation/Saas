@@ -109,6 +109,7 @@
 .v-hero,
 .v-operator,
 .v-board,
+.v-horizonline,
 .v-insight,
 .v-scrollcue {
   position: absolute;
@@ -230,7 +231,8 @@
 .v-signoff,
 .v-hero,
 .v-operator,
-.v-board {
+.v-board,
+.v-horizonline {
   --beat-y: 0px;
   inset: 0;
   display: flex;
@@ -1223,4 +1225,57 @@
   .v-board__row { padding-block: 1.1rem; }
   .v-insight { flex-direction: column; align-items: flex-start; }
   .v-insight__metric { text-align: left; }
+}
+
+
+/* ── Act X · The Horizon ────────────────────────────────────────────────
+   Three lines across 700vh over the closing film. Everything here is set
+   to stay out of the picture's way: centred, generous, no panel ground.
+   .v-horizonline is registered in BOTH shared placement lists above — a
+   beat class missing from those stacks at the top of the pinned frame
+   instead of centring in it.
+   ─────────────────────────────────────────────────────────────────────── */
+
+.v-horizon__ar {
+  display: block;
+  font-family: var(--arabic);
+  font-size: clamp(1.05rem, 2vw, 1.55rem);
+  color: var(--cyan-hi);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.9rem;
+  direction: rtl;
+}
+
+.v-horizonline {
+  align-items: center;
+  text-align: center;
+}
+
+.v-horizonline > * {
+  max-width: min(46ch, 100%);
+}
+
+.v-horizonline__lead {
+  font-family: var(--display);
+  font-size: clamp(1.9rem, 5.2vw, 3.6rem);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  color: var(--paper);
+  margin: 0 0 1.15rem;
+  text-wrap: balance;
+  text-shadow: 0 1px 2px rgba(3, 6, 13, 0.8), 0 2px 34px rgba(3, 6, 13, 0.9);
+}
+
+.v-horizonline__body {
+  font-size: clamp(0.98rem, 1.5vw, 1.15rem);
+  line-height: 1.62;
+  /* A shade brighter than --paper-2: this one reads over moving footage. */
+  color: rgba(255, 255, 255, 0.84);
+  margin: 0;
+  text-wrap: pretty;
+  text-shadow: 0 1px 2px rgba(3, 6, 13, 0.85), 0 1px 24px rgba(3, 6, 13, 0.9);
+}
+
+@media (max-width: 720px) {
+  .v-horizonline { text-align: left; align-items: flex-start; }
 }

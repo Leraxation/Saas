@@ -53,6 +53,18 @@ export type FilmScrubOptions = {
   /** Called once the first frame is on screen. */
   onFirstFrame?: () => void;
   /**
+   * Gate on the rest of the stream.
+   *
+   * Frame 0 is always fetched immediately — every canvas needs something to
+   * paint — but frames 1..N wait for this to resolve. With two films on one
+   * page the second one's 464 frames would otherwise race the first one's 289
+   * for the same connections and the opening act would be the thing that
+   * suffers. The second canvas hands in a promise that resolves once the first
+   * film has finished decoding, or once its own range comes within a couple of
+   * screens, whichever happens first.
+   */
+  holdStream?: () => Promise<void>;
+  /**
    * GSAP and ScrollTrigger. Pass them in when they are bundled (the app), or
    * leave them out and they are picked up from the globals (a CDN script tag).
    * Either way, missing them is not fatal — see `start`.
@@ -130,7 +142,8 @@ export function linearSegments(
 }
 
 export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
-  const { canvas, trigger, manifestUrl, segments, scrub = 0.5, scrim, onFirstFrame } = opts;
+  const { canvas, trigger, manifestUrl, segments, scrub = 0.5, scrim, onFirstFrame, holdStream } =
+    opts;
   const ctx = canvas.getContext("2d", { alpha: false });
 
   const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -144,6 +157,7 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
   let disposed = false;
   let raf = 0;
   let st: { kill: () => void } | null = null;
+  const cleanups: (() => void)[] = [];
 
   /* ── Canvas sizing ─────────────────────────────────────────────────── */
 
@@ -263,16 +277,27 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
       images[i] = img;
     };
 
-    // Frame 0 alone first: it is what the page opens on, so it must not queue
-    // behind anything. The rest stream in order afterwards.
+    // Frame 0 alone first: it is what this canvas opens on, so it must not
+    // queue behind anything. The rest stream in order afterwards — but only
+    // once `holdStream` lets them, so a second film on the same page cannot
+    // starve the first one's opening act of connections.
     fetchOne(0, () => {
-      let next = 1;
-      const CONCURRENCY = 6;
-      const pump = () => {
-        if (disposed || next >= m.count) return;
-        fetchOne(next++, pump);
+      const streamRest = () => {
+        let next = 1;
+        const CONCURRENCY = 6;
+        const pump = () => {
+          if (disposed || next >= m.count) return;
+          fetchOne(next++, pump);
+        };
+        for (let c = 0; c < CONCURRENCY; c++) pump();
       };
-      for (let c = 0; c < CONCURRENCY; c++) pump();
+      if (holdStream) {
+        holdStream().then(() => {
+          if (!disposed) streamRest();
+        });
+      } else {
+        streamRest();
+      }
     });
   }
 
@@ -307,6 +332,60 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
     }
   }
 
+  /* ── Range ─────────────────────────────────────────────────────────── */
+
+  /**
+   * Whether this canvas's own stretch of the page is on screen.
+   *
+   * With one film this only mattered at the end — the canvas stood down rather
+   * than hanging on its last frame behind later acts. With two films it
+   * matters at both ends, and for both of them: each canvas is fixed and
+   * full-bleed, so a canvas outside its range must be out of the way or it
+   * simply covers the other one. `data-past` is the flag the stylesheet fades
+   * on, and Stage reads it to decide whether to hold its backdrop back.
+   */
+  function setInRange(inRange: boolean) {
+    const next = inRange ? "false" : "true";
+    if (canvas.dataset.past !== next) canvas.dataset.past = next;
+  }
+
+  /**
+   * The same question answered from geometry, using the same bounds the
+   * ScrollTrigger below uses — start "top top", end "bottom bottom".
+   *
+   * This, rather than ScrollTrigger's own enter/leave callbacks, is what
+   * actually decides visibility, for two reasons found the hard way:
+   *
+   *   • A long instant jump — a Home/End key, a hash link, a presenter
+   *     skipping acts — can land past a trigger without the toggle for it
+   *     ever firing, leaving the opening film painting over the closing one.
+   *   • At the very last scroll position of the page the closing film's
+   *     trigger reaches its end, so a leave-driven flag fades the picture out
+   *     on exactly the frame the sign-off sits on.
+   *
+   * Geometry has neither failure. A pixel of slack absorbs sub-pixel layout.
+   */
+  function inRangeNow() {
+    const r = trigger.getBoundingClientRect();
+    return r.top <= 1 && r.bottom >= window.innerHeight - 1;
+  }
+
+  /** rAF-throttled geometry check, bound to scroll for every driver. */
+  function watchRange() {
+    let pending = false;
+    const onScroll = () => {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(() => {
+        pending = false;
+        if (!disposed) setInRange(inRangeNow());
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    cleanups.push(() => window.removeEventListener("scroll", onScroll));
+    onScroll();
+  }
+
   /* ── Driving ───────────────────────────────────────────────────────── */
 
   function apply(p: number) {
@@ -323,6 +402,7 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
       const top = trigger.offsetTop;
       const span = Math.max(1, trigger.offsetHeight - window.innerHeight);
       const raw = clamp01((window.scrollY - top) / span);
+      setInRange(inRangeNow());
       if (smoothed < 0) smoothed = raw;
       // Match ScrollTrigger's scrub feel; snap directly under reduced motion.
       smoothed = calm.matches ? raw : smoothed + (raw - smoothed) * 0.16;
@@ -344,6 +424,10 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
     if (calm.matches) {
       canvas.dataset.driver = "calm";
       render(0);
+      // Still needed even with nothing moving: two fixed canvases both holding
+      // a still would stack, and only the one whose acts are on screen should
+      // be visible.
+      watchRange();
       return;
     }
 
@@ -360,21 +444,16 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
         end: "bottom bottom",
         scrub,
         onUpdate: (self: { progress: number }) => apply(self.progress),
-        // Past its range the film is done; the page marks it so the canvas can
-        // fade out rather than hanging on its last frame behind later acts.
-        onLeave: () => {
-          canvas.dataset.past = "true";
-        },
-        onEnterBack: () => {
-          canvas.dataset.past = "false";
-        },
         onRefresh: () => {
           size();
           checkWeights();
+          setInRange(inRangeNow());
           render(current);
         },
       });
       apply(0);
+      // Visibility is geometry's job, not ScrollTrigger's — see inRangeNow.
+      watchRange();
     } else {
       // GSAP did not load. Frame 0 is already on screen and the page scrolls;
       // this keeps the scrub working too rather than settling for a still.
@@ -387,8 +466,12 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
   /* ── Boot ──────────────────────────────────────────────────────────── */
 
   size();
+  // Before any driver has had a say: a canvas whose acts are nowhere near the
+  // viewport must not paint over one whose acts are.
+  setInRange(inRangeNow());
   const onResize = () => {
     size();
+    setInRange(inRangeNow());
     render(current);
   };
   window.addEventListener("resize", onResize);
@@ -412,6 +495,7 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
       disposed = true;
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
+      cleanups.forEach((fn) => fn());
       st?.kill();
       images.forEach((i) => {
         if (i) i.src = "";

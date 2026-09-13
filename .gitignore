@@ -22,5 +22,6 @@ npm-debug.log*
 public/vision2040/*.mp4
 public/vision2040/*.jpg
 
-# Frame sequence is generated locally, never committed
+# Frame sequences are generated locally, never committed — both films
 public/vision2040/frames/
+public/vision2040/frames-2/

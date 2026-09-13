@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { StageApi } from "@/lib/vision2040/useStage";
 import { clamp01, range } from "@/lib/vision2040/useStage";
 import {
@@ -15,29 +15,25 @@ import {
   type Mote,
 } from "@/lib/vision2040/scenes";
 
-const FILM = "/vision2040/film.mp4";
-const POSTER = "/vision2040/poster.jpg";
 /**
- * The fixed stage behind the whole page.
+ * The fixed stage behind the page's procedural scenes.
  *
- * Three layers, back to front:
- *   1. Film   — the cinematic master, played in the overture and the close,
- *               and scrubbed frame-by-frame by scroll through Act II.
- *   2. Canvas — every procedural scene. Transparent where the film shows.
- *   3. Finish — vignette and grain, painted onto the canvas last.
+ * Two layers, back to front:
+ *   1. Canvas — every procedural scene. Transparent where a film shows.
+ *   2. Finish — vignette and grain, painted onto the canvas last.
  *
- * The film is optional. If the assets are absent the canvas simply goes
- * opaque and the presentation is unchanged in structure — nothing breaks
- * on a machine that has not run `scripts/fetch-film.sh`.
+ * Both films are scroll-scrubbed frame sequences owned by FilmCanvas, on
+ * their own canvases below this one. There is deliberately no <video> here
+ * any more: nothing on this page plays against a clock. Stage only reads
+ * whether a film is currently painting, so it can hold its backdrop back
+ * rather than muddying the footage with a gradient drawn on top of it.
  */
 export default function Stage({ api }: { api: StageApi }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const playRef = useRef<HTMLVideoElement>(null);
   const motes = useRef<Mote[]>([]);
-  const [hasFilm, setHasFilm] = useState(false);
   // The film is owned by FilmCanvas/filmScrub now. Stage only needs to know
   // whether it is painting, so it can hold its own backdrop back.
-  const filmCanvas = useRef<HTMLElement | null>(null);
+  const filmCanvases = useRef<HTMLElement[] | null>(null);
 
   if (motes.current.length === 0) motes.current = makeMotes(320);
 
@@ -87,15 +83,20 @@ export default function Stage({ api }: { api: StageApi }) {
       // FilmCanvas marks itself ready once its first frame is painted. While
       // it is showing, Stage holds its own backdrop back so the footage is
       // never muddied by a gradient drawn on top of it.
-      if (!filmCanvas.current) {
-        filmCanvas.current = document.querySelector(".v-filmcanvas");
+      // There are two of these — the opening film and the closing film — and
+      // either one painting is reason enough for the backdrop to stand back.
+      if (!filmCanvases.current?.length) {
+        filmCanvases.current = Array.from(
+          document.querySelectorAll<HTMLElement>(".v-filmcanvas"),
+        );
       }
       // The film now runs behind every act, so the backdrop stands back for
       // the whole page and the film's own scrim does the darkening.
       // The film covers acts I-IV only. Past its range it fades out and the
       // procedural backdrop takes the page back.
-      const ds = filmCanvas.current?.dataset;
-      const filmPainting = ds?.ready === "true" && ds?.past !== "true";
+      const filmPainting = !!filmCanvases.current?.some(
+        (c) => c.dataset.ready === "true" && c.dataset.past !== "true",
+      );
       const filmIn = filmPainting ? 1 : 0;
 
       // Warmth rises in the dusk acts and cools for the data acts.
@@ -122,43 +123,20 @@ export default function Stage({ api }: { api: StageApi }) {
       if (roadmap > 0.001 && outlook < 0.02) {
         paintRoadmap(ctx, s.w, s.h, s.time, roadmap);
       }
-      if (close > 0.001) {
+      // The closing film now runs underneath Act XI, so the light-burst scene
+      // steps aside for it and only paints on a machine with no frames.
+      if (close > 0.001 && !filmPainting) {
         paintClose(ctx, s.w, s.h, s.time, close, s.quality);
       }
 
       paintFinish(ctx, s.w, s.h, s.quality);
-
-      // ── Film layers ──────────────────────────────────────────────────
-      const play = playRef.current;
-      if (play && hasFilm) {
-        // Playback belongs to the close alone. The opening is scrubbed, so it
-        // holds still while the minister talks and only moves on scroll.
-        const vis = range(close, 0.12, 0.4) * (1 - range(close, 0.9, 1));
-        play.style.opacity = String(vis);
-        // Only spend decode budget when the film is actually on screen.
-        if (vis > 0.01 && play.paused) void play.play().catch(() => {});
-        else if (vis <= 0.01 && !play.paused) play.pause();
-      }
-
     });
 
     return unsubscribe;
-  }, [api, hasFilm]);
+  }, [api]);
 
   return (
     <div className="v-stage" aria-hidden="true">
-      <video
-        ref={playRef}
-        className="v-film"
-        src={FILM}
-        poster={POSTER}
-        muted
-        loop
-        playsInline
-        preload="auto"
-        onLoadedData={() => setHasFilm(true)}
-        onError={() => setHasFilm(false)}
-      />
       <canvas ref={canvasRef} className="v-canvas" />
     </div>
   );
