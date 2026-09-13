@@ -2,23 +2,32 @@
 #
 # Install the closing film's frame sequence from a pre-cut zip.
 #
-#   ./scripts/install-frames-2.sh path/to/vision2040-film2-frames-464.zip
+#   ./scripts/install-frames-2.sh frames.zip
+#   ./scripts/install-frames-2.sh part1.zip part2.zip part3.zip part4.zip
 #
 # Use this instead of cut-frames.sh when the frames were cut somewhere else —
-# on a machine that can reach the film's CDN, say. The zip holds the same 464
+# on a machine that can reach the film's CDN, say. The zips hold the same 464
 # WebP stills cut-frames.sh would produce at FPS=8 WIDTH=1440 FORMAT=webp, so
 # the result is byte-identical in everything the page cares about.
+#
+# Several zips are accepted because a single 26MB archive is more than some
+# transports will carry; the set is split into four independently valid zips of
+# 116 frames each. Order on the command line does not matter — the frames are
+# sorted by filename before being renumbered — but all of them must be present,
+# and the script says so if the count comes up short.
 #
 # ffmpeg numbers image sequences from 1 and the player indexes from 0, so the
 # frames arrive as f0001..f0464 and are shifted down to f0000..f0463 here.
 
 set -euo pipefail
 
-SRC="${1:-}"
-if [ -z "$SRC" ] || [ ! -s "$SRC" ]; then
-  echo "usage: ./scripts/install-frames-2.sh <frames.zip>" >&2
+if [ "$#" -eq 0 ]; then
+  echo "usage: ./scripts/install-frames-2.sh <frames.zip> [more.zip ...]" >&2
   exit 1
 fi
+for z in "$@"; do
+  [ -s "$z" ] || { echo "!! $z is missing or empty" >&2; exit 1; }
+done
 command -v unzip >/dev/null 2>&1 || { echo "!! unzip not found" >&2; exit 1; }
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -29,11 +38,26 @@ DURATION="${DURATION:-58.000}"
 
 rm -rf "$DIR"
 mkdir -p "$DIR"
-unzip -q -j "$SRC" '*.webp' -d "$DIR"
+# -j flattens any directory structure; -n never overwrites, so a frame that
+# appears in two zips is taken once rather than silently clobbered.
+for z in "$@"; do
+  unzip -q -n -j "$z" '*.webp' -d "$DIR"
+  echo "  + $(basename "$z")"
+done
 
 COUNT=$(find "$DIR" -name '*.webp' | wc -l | tr -d ' ')
 if [ "$COUNT" -eq 0 ]; then
-  echo "!! no .webp frames in $SRC" >&2
+  echo "!! no .webp frames in any of those zips" >&2
+  exit 1
+fi
+
+# A short count means a missing part, and a short sequence would run the film
+# fast and end early rather than fail loudly — so fail loudly here instead.
+EXPECT="${EXPECT:-464}"
+if [ "$COUNT" -ne "$EXPECT" ]; then
+  echo "!! got $COUNT frames, expected $EXPECT." >&2
+  echo "   The set is split into four zips of 116; pass all of them, or set" >&2
+  echo "   EXPECT=$COUNT to install this many deliberately." >&2
   exit 1
 fi
 
