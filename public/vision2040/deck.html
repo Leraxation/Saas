@@ -1,0 +1,3036 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oman Vision 2040 Aviation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=Amiri:wght@400;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+html, body { margin: 0; background: #04070f; }
+body { overflow-x: hidden; }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Oman Vision 2040 — Aviation briefing
+   A single dark stage. Type does the talking; the canvas does the moving.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.v-root {
+  --ink: #04070f;
+  --ink-2: #070d1a;
+  --gold: #d8b678;
+  --gold-hi: #f0dcae;
+  --gold-dim: rgba(216, 182, 120, 0.55);
+  --cyan: #4fd6ff;
+  --cyan-hi: #a0ecff;
+  --paper: rgba(255, 255, 255, 0.92);
+  --paper-2: rgba(255, 255, 255, 0.62);
+  --paper-3: rgba(255, 255, 255, 0.38);
+  --hair: rgba(216, 182, 120, 0.22);
+
+  --display: var(--font-display), "Trajan Pro", Georgia, serif;
+  --serif: var(--font-serif), Georgia, "Times New Roman", serif;
+  --ui: var(--font-ui), Inter, system-ui, -apple-system, sans-serif;
+  --arabic: var(--font-arabic), "Noto Naskh Arabic", serif;
+
+  --gutter: clamp(1.25rem, 5vw, 5.5rem);
+
+  position: relative;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Stage ──────────────────────────────────────────────────────────────── */
+
+/* The film canvas sits behind everything, fixed and full-bleed. It fades in
+   only once its first frame is painted, so a machine with no frame sequence
+   shows the procedural stage instead of a black rectangle. */
+.v-filmcanvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+
+.v-filmcanvas[data-ready="true"] { opacity: 1; }
+/* Past the film's scroll range it stands down rather than hanging on its
+   last frame behind the acts that follow. */
+.v-filmcanvas[data-past="true"] { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .v-filmcanvas { transition: none; }
+}
+
+.v-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  /* Transparent: .v-root carries the ground so the film shows through. */
+  background: transparent;
+}
+
+.v-film {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  will-change: opacity;
+}
+
+.v-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.v-main {
+  position: relative;
+  z-index: 10;
+}
+
+/* ── Acts ───────────────────────────────────────────────────────────────── */
+
+.v-act {
+  position: relative;
+}
+
+.v-act__pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+}
+
+/* Panels are absolutely placed so several beats can share one pinned frame. */
+.v-panel,
+.v-figures,
+.v-pillar,
+.v-phase,
+.v-asks,
+.v-signoff,
+.v-hero,
+.v-operator,
+.v-board,
+.v-horizonline,
+.v-insight,
+.v-scrollcue {
+  position: absolute;
+  will-change: opacity, transform;
+}
+
+/* ── Type scale ─────────────────────────────────────────────────────────── */
+
+.v-kicker {
+  display: block;
+  font-family: var(--ui);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 1.15rem;
+}
+
+.v-h2 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 4.4vw, 3.7rem);
+  line-height: 1.08;
+  letter-spacing: 0.005em;
+  color: var(--gold-hi);
+  margin: 0 0 1.15rem;
+  text-wrap: balance;
+}
+
+.v-h3 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(1.15rem, 2.1vw, 1.7rem);
+  line-height: 1.18;
+  color: var(--gold-hi);
+  margin: 0 0 0.7rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.v-lede {
+  font-family: var(--serif);
+  font-size: clamp(1.05rem, 1.6vw, 1.42rem);
+  line-height: 1.62;
+  color: var(--paper-2);
+  margin: 0;
+  max-width: 46ch;
+  text-wrap: pretty;
+}
+
+.v-body {
+  font-family: var(--serif);
+  font-size: clamp(0.98rem, 1.25vw, 1.15rem);
+  line-height: 1.68;
+  color: var(--paper-2);
+  margin: 0;
+  max-width: 42ch;
+}
+
+.v-body--tight {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  max-width: 34ch;
+}
+
+.v-list {
+  list-style: none;
+  margin: 1.1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+  max-width: 44ch;
+}
+
+.v-list li {
+  position: relative;
+  padding-left: 1.5rem;
+  font-family: var(--serif);
+  font-size: clamp(0.94rem, 1.15vw, 1.06rem);
+  line-height: 1.56;
+  color: var(--paper-2);
+}
+
+.v-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 0.6rem;
+  height: 1px;
+  background: var(--gold);
+  opacity: 0.75;
+}
+
+.v-panel__index {
+  display: block;
+  font-family: var(--ui);
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  margin-bottom: 0.85rem;
+}
+
+/* ── Panel placements ───────────────────────────────────────────────────
+   Every beat composes its own arrival offset from --beat-y, which the Beat
+   component writes each frame. Positioning therefore survives the animation
+   instead of being overwritten by an inline transform.
+   ─────────────────────────────────────────────────────────────────────── */
+
+.v-panel,
+.v-figures,
+.v-pillar,
+.v-phase,
+.v-asks,
+.v-signoff,
+.v-hero,
+.v-operator,
+.v-board,
+.v-horizonline {
+  --beat-y: 0px;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transform: translate3d(0, var(--beat-y), 0);
+  padding: clamp(4.5rem, 11vh, 7rem) var(--gutter) clamp(4.5rem, 11vh, 7rem);
+}
+
+/* Children are held to a readable measure without fighting inset: 0. */
+.v-panel > *,
+.v-pillar > * { max-width: min(52ch, 100%); }
+
+/* The board needs the full measure; the operator card sets its own. */
+.v-board > * { max-width: 100%; }
+
+.v-panel--center,
+.v-hero,
+.v-phase,
+.v-signoff { align-items: center; text-align: center; }
+
+.v-panel--center > * { margin-inline: auto; }
+
+.v-panel--top { justify-content: flex-start; align-items: flex-start; }
+.v-panel--left { align-items: flex-start; }
+
+.v-panel--right { align-items: flex-end; text-align: right; }
+.v-panel--right .v-h3 { justify-content: flex-end; }
+
+/* Small framed cards sit in a corner rather than filling the frame. */
+.v-panel--corner {
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding-bottom: clamp(6.5rem, 17vh, 10.5rem);
+}
+
+/* The chart caption sits above the plot: the axis owns the lower third. */
+.v-panel--chart {
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.v-panel--corner__inner,
+.v-panel--corner > *,
+.v-panel--chart > * { max-width: min(38ch, 100%); }
+
+.v-panel--corner .v-card {
+  padding: 1.35rem 1.5rem;
+  border: 1px solid var(--hair);
+  background: rgba(4, 8, 18, 0.52);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* ── I · Hero ───────────────────────────────────────────────────────────── */
+
+.v-hero > * { max-width: min(62rem, 100%); margin-inline: auto; }
+
+.v-hero__ar {
+  display: block;
+  font-family: var(--arabic);
+  font-size: clamp(1rem, 1.9vw, 1.5rem);
+  color: var(--gold);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.9rem;
+  direction: rtl;
+}
+
+.v-hero__title {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 8.4vw, 7rem);
+  line-height: 0.96;
+  letter-spacing: 0.07em;
+  margin: 0;
+  color: var(--gold-hi);
+  text-shadow: 0 0 70px rgba(216, 182, 120, 0.32);
+}
+
+.v-hero__rule {
+  display: block;
+  width: min(22rem, 60%);
+  height: 1px;
+  margin: clamp(1rem, 2.6vh, 1.8rem) auto;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--gold) 22%,
+    var(--gold-hi) 50%,
+    var(--gold) 78%,
+    transparent
+  );
+  opacity: 0.8;
+}
+
+.v-hero__stand {
+  font-family: var(--display);
+  font-size: clamp(0.9rem, 1.6vw, 1.25rem);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--paper);
+  margin: 0 0 1rem;
+}
+
+.v-hero__deck {
+  font-family: var(--serif);
+  font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+  line-height: 1.58;
+  color: var(--paper-2);
+  max-width: 52ch;
+  margin: 0 auto 1.4rem;
+  text-wrap: pretty;
+}
+
+.v-hero__meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.v-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.7;
+  flex: none;
+}
+
+.v-hero__host {
+  margin: 0.9rem 0 0;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  color: var(--paper-3);
+}
+
+.v-scrollcue {
+  --beat-y: 0px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(1.6rem, 5vh, 3rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.64rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--paper-3);
+  transform: translate3d(0, var(--beat-y), 0);
+}
+
+.v-scrollcue__line {
+  width: 1px;
+  height: 2.6rem;
+  background: linear-gradient(180deg, transparent, var(--gold));
+  animation: v-drift 2.6s ease-in-out infinite;
+}
+
+@keyframes v-drift {
+  0%, 100% { opacity: 0.25; transform: scaleY(0.55); transform-origin: top; }
+  50%      { opacity: 1;    transform: scaleY(1);    transform-origin: top; }
+}
+
+/* ── III · Airport chips ────────────────────────────────────────────────── */
+
+.v-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.5rem;
+}
+
+.v-chips li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid rgba(79, 214, 255, 0.22);
+  font-size: 0.72rem;
+  color: var(--paper-2);
+}
+
+.v-chips li b {
+  font-family: var(--ui);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  color: var(--cyan-hi);
+}
+
+.v-chips li.is-hub {
+  border-color: var(--hair);
+  background: rgba(216, 182, 120, 0.07);
+}
+
+.v-chips li.is-hub b { color: var(--gold-hi); }
+
+.v-mapnote {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: clamp(1.1rem, 3.5vh, 2rem);
+  font-size: 0.64rem;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.26);
+  max-width: 70ch;
+}
+
+/* ── IV · Figures ───────────────────────────────────────────────────────── */
+
+.v-figures {
+  display: grid;
+  flex-direction: unset;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: center;
+  gap: clamp(1.5rem, 4vh, 3rem) clamp(1.5rem, 3vw, 3.25rem);
+}
+
+.v-figures__inner { display: contents; }
+
+.v-figure__value {
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 5vw, 3.9rem);
+  line-height: 1;
+  color: var(--gold-hi);
+  display: flex;
+  align-items: baseline;
+  gap: 0.1em;
+  font-variant-numeric: tabular-nums;
+}
+
+.v-figure__affix {
+  font-size: 0.46em;
+  color: var(--gold);
+  letter-spacing: 0.02em;
+}
+
+.v-figure__label {
+  margin-top: 0.7rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.07em;
+  color: var(--paper);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.v-figure__note {
+  margin-top: 0.3rem;
+  font-family: var(--serif);
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--paper-3);
+  max-width: 26ch;
+}
+
+.v-figure__source {
+  margin-top: 0.45rem;
+  font-size: 0.62rem;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.2);
+  max-width: 30ch;
+}
+
+/* The tag that keeps an unverified number honest. */
+.v-tag {
+  font-family: var(--ui);
+  font-size: 0.56rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid var(--gold-dim);
+  padding: 0.14rem 0.42rem;
+  white-space: nowrap;
+  opacity: 0.72;
+}
+
+:root[data-review="on"] .v-tag {
+  color: #ffcf6b;
+  border-color: #ffcf6b;
+  background: rgba(255, 207, 107, 0.12);
+  opacity: 1;
+}
+
+:root[data-review="on"] .v-figure__source {
+  color: rgba(255, 207, 107, 0.8);
+}
+
+/* ── V · Pillars ────────────────────────────────────────────────────────── */
+
+.v-pillar .v-card {
+  padding: 1.6rem 1.75rem;
+  border-left: 1px solid var(--hair);
+  background: rgba(4, 8, 18, 0.5);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.v-pillar--0 { align-items: flex-start; }
+.v-pillar--1 { align-items: center; }
+.v-pillar--2 { align-items: flex-end; }
+.v-pillar--2 .v-card { border-left: 0; border-right: 1px solid var(--hair); }
+
+.v-pillar__ar {
+  display: block;
+  font-family: var(--arabic);
+  font-size: 1.05rem;
+  color: var(--gold);
+  direction: rtl;
+  margin-bottom: 0.5rem;
+}
+
+.v-pillar__claim {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.02rem;
+  line-height: 1.5;
+  color: var(--cyan-hi);
+  margin: 0 0 0.4rem;
+}
+
+/* ── VI · Roadmap ───────────────────────────────────────────────────────── */
+
+.v-phase { padding-bottom: clamp(9rem, 26vh, 16rem); }
+.v-phase > * { max-width: min(52rem, 100%); margin-inline: auto; }
+
+.v-phase__span {
+  display: block;
+  font-family: var(--ui);
+  font-size: 0.7rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 0.9rem;
+}
+
+.v-phase__title {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(2rem, 5.5vw, 4.2rem);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: var(--gold-hi);
+  margin: 0 0 0.8rem;
+}
+
+.v-phase__lede {
+  font-family: var(--serif);
+  font-size: clamp(1rem, 1.5vw, 1.3rem);
+  color: var(--paper-2);
+  margin: 0 0 1.2rem;
+}
+
+.v-phase .v-list {
+  margin-inline: auto;
+  text-align: left;
+}
+
+/* ── VII · Close ────────────────────────────────────────────────────────── */
+
+.v-asks {
+  display: grid;
+  flex-direction: unset;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: center;
+  gap: clamp(1.75rem, 4vw, 3.5rem);
+}
+
+.v-ask__num {
+  display: block;
+  font-family: var(--display);
+  font-size: 1.5rem;
+  color: var(--gold);
+  opacity: 0.55;
+  margin-bottom: 0.6rem;
+}
+
+
+
+.v-signoff__rule {
+  width: min(18rem, 50%);
+  height: 1px;
+  margin: 0 auto 1.4rem;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.v-signoff__ar {
+  font-family: var(--arabic);
+  font-size: clamp(1.5rem, 4vw, 2.8rem);
+  color: var(--gold-hi);
+  margin: 0 0 0.6rem;
+  direction: rtl;
+}
+
+.v-signoff__en {
+  font-family: var(--display);
+  font-size: clamp(1rem, 2.2vw, 1.6rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--paper);
+  margin: 0 0 1.6rem;
+}
+
+.v-signoff__meta {
+  margin: 0.3rem 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper-3);
+}
+
+/* ── Chrome ─────────────────────────────────────────────────────────────── */
+
+.v-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 2px;
+  z-index: 60;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.v-progress__bar {
+  height: 100%;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  background: linear-gradient(90deg, var(--cyan), var(--gold-hi));
+  box-shadow: 0 0 12px rgba(216, 182, 120, 0.55);
+}
+
+.v-masthead {
+  position: fixed;
+  top: clamp(1.1rem, 3vh, 1.9rem);
+  left: var(--gutter);
+  z-index: 55;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  pointer-events: none;
+}
+
+.v-masthead__mark {
+  font-family: var(--arabic);
+  font-size: 0.95rem;
+  color: var(--gold);
+  direction: rtl;
+}
+
+.v-masthead__rule {
+  width: 2.2rem;
+  height: 1px;
+  background: var(--gold-dim);
+}
+
+.v-masthead__meta {
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--paper-3);
+}
+
+.v-rail {
+  position: fixed;
+  right: clamp(0.9rem, 2.5vw, 2rem);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 55;
+}
+
+.v-rail ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.v-rail button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.42rem 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: var(--paper-3);
+  font-family: var(--ui);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: color 0.35s ease;
+}
+
+.v-rail__num {
+  font-family: var(--display);
+  font-size: 0.7rem;
+  opacity: 0.5;
+  min-width: 1.6rem;
+  text-align: right;
+}
+
+.v-rail__name {
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.v-rail__tick {
+  width: 1.5rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.32;
+  transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease;
+}
+
+.v-rail button:hover,
+.v-rail button:focus-visible { color: var(--paper); }
+
+.v-rail button:hover .v-rail__name,
+.v-rail button:focus-visible .v-rail__name,
+.v-rail button.is-active .v-rail__name {
+  opacity: 1;
+  transform: none;
+}
+
+.v-rail button.is-active {
+  color: var(--gold-hi);
+}
+
+.v-rail button.is-active .v-rail__tick {
+  width: 2.75rem;
+  opacity: 1;
+  box-shadow: 0 0 10px rgba(216, 182, 120, 0.7);
+}
+
+.v-rail button.is-active .v-rail__num { opacity: 1; }
+
+.v-presenter {
+  position: fixed;
+  left: var(--gutter);
+  bottom: clamp(1.1rem, 3vh, 1.9rem);
+  z-index: 58;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 0.8rem 1.2rem;
+  border: 1px solid var(--hair);
+  background: rgba(4, 8, 18, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.v-presenter__numeral {
+  font-family: var(--display);
+  font-size: 2.1rem;
+  line-height: 1;
+  color: var(--gold-hi);
+}
+
+.v-presenter__act {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--paper);
+}
+
+.v-presenter__clock {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.05rem;
+  color: var(--cyan-hi);
+  letter-spacing: 0.06em;
+}
+
+.v-presenter__count {
+  font-size: 0.7rem;
+  color: var(--paper-3);
+  letter-spacing: 0.1em;
+  padding-left: 1.1rem;
+  border-left: 1px solid var(--hair);
+}
+
+.v-reviewflag {
+  position: fixed;
+  top: clamp(1.1rem, 3vh, 1.9rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 58;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.64rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ffcf6b;
+  border: 1px solid rgba(255, 207, 107, 0.5);
+  background: rgba(40, 28, 6, 0.75);
+}
+
+.v-help-btn {
+  position: fixed;
+  right: clamp(0.9rem, 2.5vw, 2rem);
+  bottom: clamp(1.1rem, 3vh, 1.9rem);
+  z-index: 58;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  border: 1px solid var(--hair);
+  background: rgba(4, 8, 18, 0.7);
+  color: var(--gold);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+.v-help-btn:hover { border-color: var(--gold); color: var(--gold-hi); }
+
+/* ── Modals ─────────────────────────────────────────────────────────────── */
+
+.v-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: var(--gutter);
+  background: rgba(2, 4, 10, 0.86);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: v-fade 0.4s ease both;
+}
+
+@keyframes v-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.v-modal__panel {
+  width: min(34rem, 100%);
+  max-height: 84vh;
+  overflow-y: auto;
+  padding: clamp(1.6rem, 4vw, 2.6rem);
+  border: 1px solid var(--hair);
+  background: linear-gradient(180deg, rgba(10, 16, 30, 0.97), rgba(4, 7, 15, 0.97));
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.7);
+}
+
+.v-modal__panel--wide { width: min(44rem, 100%); }
+
+.v-modal h2 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  color: var(--gold-hi);
+  margin: 0 0 1.1rem;
+}
+
+.v-modal__lede {
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: var(--paper-2);
+  margin: 0 0 1.4rem;
+}
+
+.v-modal__note {
+  margin: 1.3rem 0 0;
+  font-size: 0.7rem;
+  line-height: 1.55;
+  color: var(--paper-3);
+}
+
+.v-modal code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.86em;
+  color: var(--cyan-hi);
+  background: rgba(79, 214, 255, 0.1);
+  padding: 0.1em 0.35em;
+}
+
+.v-keys {
+  margin: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.v-keys > div {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr;
+  gap: 1rem;
+  align-items: baseline;
+}
+
+.v-keys dt {
+  font-family: var(--ui);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.v-keys dd {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--paper-2);
+}
+
+.v-preflight__list {
+  list-style: none;
+  margin: 0 0 1.6rem;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.v-preflight__list li {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem 0.95rem;
+  border-left: 2px solid #ffcf6b;
+  background: rgba(255, 207, 107, 0.07);
+}
+
+.v-preflight__label {
+  font-size: 0.86rem;
+  color: var(--paper);
+  letter-spacing: 0.03em;
+}
+
+.v-preflight__source {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: rgba(255, 207, 107, 0.82);
+}
+
+.v-modal__actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.v-btn {
+  font-family: var(--ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.7rem 1.4rem;
+  border: 1px solid var(--gold-dim);
+  background: none;
+  color: var(--gold-hi);
+  cursor: pointer;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.v-btn:hover { background: rgba(216, 182, 120, 0.12); border-color: var(--gold); }
+
+.v-btn--primary {
+  background: rgba(216, 182, 120, 0.14);
+  border-color: var(--gold);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Narrow screens ─────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .v-rail { display: none; }
+
+  .v-panel--right,
+  .v-pillar--1,
+  .v-pillar--2 { align-items: flex-start; text-align: left; }
+
+  .v-panel--right .v-h3 { justify-content: flex-start; }
+  .v-pillar--2 .v-card { border-right: 0; border-left: 1px solid var(--hair); }
+
+  .v-figures,
+  .v-asks { gap: 1.4rem 1.1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .v-figure__value { font-size: clamp(1.6rem, 9vw, 2.4rem); }
+  .v-figure__note, .v-figure__source { display: none; }
+
+  .v-masthead__meta { display: none; }
+  .v-presenter { left: var(--gutter); right: var(--gutter); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v-scrollcue__line { animation: none; }
+  .v-modal { animation: none; }
+  * { scroll-behavior: auto !important; }
+}
+
+
+/* ── V · Operators ──────────────────────────────────────────────────────── */
+
+.v-operator { align-items: flex-start; }
+
+.v-card--operator {
+  padding: 1.6rem 1.8rem;
+  border-left: 1px solid var(--hair);
+  background: rgba(4, 8, 18, 0.62);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  max-width: min(46ch, 100%);
+}
+
+.v-operator__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.v-operator__role {
+  font-size: 0.64rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.v-operator__ar {
+  font-family: var(--arabic);
+  font-size: 1rem;
+  color: var(--gold);
+  direction: rtl;
+}
+
+.v-operator__name {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(1.6rem, 3.4vw, 2.5rem);
+  line-height: 1.05;
+  color: var(--gold-hi);
+  margin: 0 0 0.5rem;
+}
+
+.v-stats {
+  margin: 1.2rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1.2rem;
+  border-top: 1px solid var(--hair);
+  padding-top: 1.1rem;
+}
+
+.v-stats dt {
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--paper-3);
+  margin-bottom: 0.2rem;
+}
+
+.v-stats dd {
+  margin: 0;
+  font-family: var(--ui);
+  font-size: 0.86rem;
+  line-height: 1.35;
+  color: var(--paper);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── VI · The board ─────────────────────────────────────────────────────── */
+
+.v-board { align-items: center; }
+
+.v-board__grid {
+  width: min(72rem, 100%);
+  margin-inline: auto;
+  border: 1px solid var(--hair);
+  background: rgba(4, 8, 18, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.v-board__row {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1.3fr 2fr;
+  gap: 1rem;
+  padding: 0.95rem 1.3rem;
+  border-bottom: 1px solid rgba(216, 182, 120, 0.12);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: var(--paper-2);
+}
+
+.v-board__row:last-child { border-bottom: 0; }
+
+.v-board__row--head {
+  font-family: var(--ui);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(216, 182, 120, 0.06);
+}
+
+.v-board__entity {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  color: var(--gold-hi);
+}
+
+.v-board__row--cyan .v-board__entity { color: var(--cyan-hi); }
+
+.v-board__scale {
+  font-variant-numeric: tabular-nums;
+  color: var(--paper);
+}
+
+.v-board__exposure { color: var(--paper-2); }
+
+.v-board__asof {
+  margin: 0.9rem auto 0;
+  width: min(72rem, 100%);
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
+  color: var(--paper-3);
+}
+
+/* ── IX · Outlook ───────────────────────────────────────────────────────── */
+
+.v-insight {
+  --beat-y: 0px;
+  inset: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  transform: translate3d(0, var(--beat-y), 0);
+  padding: clamp(4.5rem, 11vh, 7rem) var(--gutter);
+}
+
+.v-insight__metric {
+  flex: none;
+  text-align: right;
+  min-width: min(11rem, 34vw);
+}
+
+.v-insight__value {
+  display: block;
+  font-family: var(--display);
+  font-size: clamp(2.6rem, 7vw, 5rem);
+  line-height: 1;
+  color: var(--gold-hi);
+  font-variant-numeric: tabular-nums;
+}
+
+.v-insight__label {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.64rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.v-insight__text { max-width: min(44ch, 100%); }
+
+.v-tag--analysis {
+  display: inline-block;
+  margin-top: 1.1rem;
+  color: var(--cyan-hi);
+  border-color: rgba(79, 214, 255, 0.45);
+  opacity: 1;
+}
+
+@media (max-width: 900px) {
+  .v-stats { grid-template-columns: 1fr; }
+  .v-board__grid { overflow-x: auto; }
+  .v-board__row { grid-template-columns: 1fr; gap: 0.3rem; }
+  .v-board__row--head { display: none; }
+  .v-board__row { padding-block: 1.1rem; }
+  .v-insight { flex-direction: column; align-items: flex-start; }
+  .v-insight__metric { text-align: left; }
+}
+
+/* Fonts come straight from Google Fonts here rather than next/font. */
+.v-root {
+  --font-display: "Cinzel";
+  --font-serif: "Cormorant Garamond";
+  --font-ui: "Inter";
+  --font-arabic: "Amiri";
+}
+.v-root :focus-visible, .v-help-btn:focus-visible, .v-btn:focus-visible {
+  outline: 2px solid #f0dcae;
+  outline-offset: 3px;
+}
+
+/* ── Act X · The Horizon ────────────────────────────────────────────────
+   Three lines across 700vh over the closing film. Everything here stays out
+   of the picture's way: centred, generous, no panel ground. .v-horizonline
+   is registered in BOTH shared placement lists above — a beat class missing
+   from those stacks at the top of the pinned frame instead of centring.
+   ─────────────────────────────────────────────────────────────────────── */
+.v-horizon__ar {
+  display: block;
+  font-family: var(--arabic);
+  font-size: clamp(1.05rem, 2vw, 1.55rem);
+  color: var(--cyan-hi);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.9rem;
+  direction: rtl;
+}
+.v-horizonline { align-items: center; text-align: center; }
+.v-horizonline > * { max-width: min(46ch, 100%); }
+.v-horizonline__lead {
+  font-family: var(--display);
+  font-size: clamp(1.9rem, 5.2vw, 3.6rem);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  color: var(--paper);
+  margin: 0 0 1.15rem;
+  text-wrap: balance;
+  text-shadow: 0 1px 2px rgba(3, 6, 13, 0.8), 0 2px 34px rgba(3, 6, 13, 0.9);
+}
+.v-horizonline__body {
+  font-size: clamp(0.98rem, 1.5vw, 1.15rem);
+  line-height: 1.62;
+  /* A shade brighter than --paper-2: this one reads over moving footage. */
+  color: rgba(255, 255, 255, 0.84);
+  margin: 0;
+  text-wrap: pretty;
+  text-shadow: 0 1px 2px rgba(3, 6, 13, 0.85), 0 1px 24px rgba(3, 6, 13, 0.9);
+}
+@media (max-width: 720px) {
+  .v-horizonline { text-align: left; align-items: flex-start; }
+}
+</style>
+
+<div class="v-root">
+  <!-- Two fixed full-bleed film canvases; every section scrolls over them.
+       Each is tied to its own stretch of the page and stands down outside it,
+       so only ever one of them is painting. The opening film runs acts I-II;
+       the 58-second closing film runs acts X-XI. -->
+  <canvas class="v-filmcanvas" id="filmcanvas-1" aria-hidden="true"></canvas>
+  <canvas class="v-filmcanvas" id="filmcanvas-2" aria-hidden="true"></canvas>
+  <div class="v-stage" aria-hidden="true"><canvas class="v-canvas"></canvas></div>
+
+  <div class="v-progress" aria-hidden="true"><div class="v-progress__bar"></div></div>
+
+  <header class="v-masthead">
+    <span class="v-masthead__mark">رؤية عُمان ٢٠٤٠</span>
+    <span class="v-masthead__rule" aria-hidden="true"></span>
+    <span class="v-masthead__meta">Aviation Sector Convening · 23 September 2026</span>
+  </header>
+
+  <nav class="v-rail" aria-label="Presentation sections"><ol></ol></nav>
+
+  <button type="button" class="v-help-btn" aria-label="Show keyboard shortcuts">?</button>
+
+  <main class="v-main">
+    <!-- The film covers acts I-II. Its last frame lands exactly as Act III
+         opens on "Eleven governorates, one network", and the canvas then
+         fades. The segment weights in the init script mirror these two
+         act heights — change one, change both. -->
+    <div id="film-range">
+
+    <!-- I · OVERTURE -->
+    <section class="v-act" id="overture" style="height:230vh"><div class="v-act__pin">
+      <div class="v-hero" data-beat="overture" data-from="0" data-to="0.8" data-lift="16">
+        <span class="v-hero__ar">رؤية عُمان ٢٠٤٠</span>
+        <h1 class="v-hero__title">VISION 2040</h1>
+        <div class="v-hero__rule" aria-hidden="true"></div>
+        <p class="v-hero__stand">Aviation as national infrastructure</p>
+      </div>
+      <div class="v-scrollcue" data-beat="overture" data-from="0" data-to="0.34" data-lift="0">
+        <span class="v-scrollcue__line" aria-hidden="true"></span><span>Scroll, or press space</span>
+      </div>
+    </div></section>
+
+    <!-- II · THE NATION -->
+    <section class="v-act" id="nation" style="height:340vh"><div class="v-act__pin">
+      <div class="v-panel v-panel--center" data-beat="nation" data-from="0" data-to="0.28">
+        <span class="v-kicker">Act II — The Nation</span>
+        <h2 class="v-h2">A country shaped like a route map</h2>
+        <p class="v-lede">Oman runs three thousand kilometres of coastline from Musandam to Dhofar, separated by mountain, desert and sea. No other mode of transport binds those distances in a single hour. Aviation is not a sector of the Omani economy — it is the connective tissue that makes one economy out of eleven governorates.</p>
+      </div>
+      <div class="v-panel v-panel--left" data-beat="nation" data-from="0.3" data-to="0.535">
+        <span class="v-panel__index">01</span><h3 class="v-h3">Geography is the mandate</h3>
+        <p class="v-body">Musandam to Salalah is further than London to Rome. Domestic aviation is the only service that makes the Sultanate a single labour market, a single health system, and a single tourism proposition.</p>
+      </div>
+      <div class="v-panel v-panel--right" data-beat="nation" data-from="0.535" data-to="0.77">
+        <span class="v-panel__index">02</span><h3 class="v-h3">Position is the opportunity</h3>
+        <p class="v-body">Oman sits on the Indian Ocean side of the Gulf, outside the Strait of Hormuz, on the natural line between Europe, East Africa and South and Southeast Asia. That position is an asset that has to be flown to be realised.</p>
+      </div>
+      <div class="v-panel v-panel--left" data-beat="nation" data-from="0.77" data-to="1" data-hold="1">
+        <span class="v-panel__index">03</span><h3 class="v-h3">The sector is the multiplier</h3>
+        <p class="v-body">Every aviation decision compounds into tourism, logistics, manufacturing, education and employment. The aviation plan is therefore a diversification plan wearing a different name.</p>
+      </div>
+    </div></section>
+
+    </div><!-- /#film-range — the film ends as Act III opens -->
+
+    <!-- III · THE NETWORK -->
+    <section class="v-act" id="network" style="height:420vh"><div class="v-act__pin">
+      <div class="v-panel v-panel--top" data-beat="network" data-from="0" data-to="0.26">
+        <span class="v-kicker">Act III — The Network</span>
+        <h2 class="v-h2">Eleven governorates, one network</h2>
+        <p class="v-lede">The domestic constellation first: airports that turn a two-day drive into a ninety-minute sector. Then the international reach that carries Omani exports, Omani visitors and Omani talent outward.</p>
+      </div>
+      <div class="v-panel v-panel--corner" data-beat="network" data-from="0.28" data-to="0.6">
+        <div class="v-card"><span class="v-panel__index">Domestic airports</span>
+          <ul class="v-chips">
+            <li class="is-hub"><b>MCT</b><span>Muscat</span></li><li class="is-hub"><b>SLL</b><span>Salalah</span></li>
+            <li><b>DQM</b><span>Duqm</span></li><li><b>OHS</b><span>Sohar</span></li><li><b>KHS</b><span>Khasab</span></li>
+            <li><b>MSH</b><span>Masirah</span></li><li><b>SUW</b><span>Suwaiq</span></li><li><b>AOM</b><span>Adam</span></li><li><b>OMM</b><span>Marmul</span></li>
+          </ul></div>
+      </div>
+      <div class="v-panel v-panel--corner" data-beat="network" data-from="0.62" data-to="1" data-hold="1">
+        <div class="v-card"><span class="v-panel__index">International reach</span>
+          <p class="v-body v-body--tight">35 points across the Gulf, the Levant, Europe, East Africa, South Asia and Southeast Asia — every one of them a trade route before it is a timetable.</p></div>
+      </div>
+      <div class="v-mapnote">Stylised network diagram. Outline is illustrative, not a cartographic boundary. Route set is illustrative — confirm against the current published schedule.</div>
+    </div></section>
+
+    <!-- IV · THE SCALE — the film ends where the trajectory begins -->
+    <section class="v-act" id="scale" style="height:360vh"><div class="v-act__pin">
+      <div class="v-panel v-panel--top" data-beat="scale" data-from="0" data-to="0.2">
+        <span class="v-kicker">Act IV — The Scale</span>
+        <h2 class="v-h2">What the sector carries</h2>
+        <p class="v-lede">Where the sector actually stands in September 2026, and what the National Aviation Strategy 2040 — approved this January — asks of it. Both halves matter: the target is only meaningful against the baseline.</p>
+      </div>
+
+      <div class="v-figures" data-beat="scale" data-from="0.22" data-to="0.62">
+        <div class="v-figure">
+          <div class="v-figure__value"><span data-count="14.94" data-dec="2">0.00</span><span class="v-figure__affix">M</span></div>
+          <div class="v-figure__label">Passengers, 2025</div>
+          <div class="v-figure__note">All Omani airports, full year — up 2.8% on 2024</div>
+          <div class="v-figure__source">NCSI, via Muscat Daily, 14 Feb 2026 (14,939,209 vs 14,537,674).</div>
+        </div>
+        <div class="v-figure">
+          <div class="v-figure__value"><span data-count="-9.3" data-dec="1">0.0</span><span class="v-figure__affix">%</span></div>
+          <div class="v-figure__label">Traffic, H1 2026</div>
+          <div class="v-figure__note">6.28M against 6.92M in H1 2025 — the trend the plan has to reverse</div>
+          <div class="v-figure__source">NCSI, H1 2026 bulletin.</div>
+        </div>
+        <div class="v-figure">
+          <div class="v-figure__value"><span data-count="40" data-dec="0">0</span><span class="v-figure__affix">M</span></div>
+          <div class="v-figure__label">Passenger target, 2040</div>
+          <div class="v-figure__note">National Aviation Strategy 2040, approved January 2026</div>
+          <div class="v-figure__source">National Aviation Strategy 2040, CAA Oman.</div>
+        </div>
+        <div class="v-figure">
+          <div class="v-figure__value"><span data-count="1" data-dec="0">0</span><span class="v-figure__affix">M t</span></div>
+          <div class="v-figure__label">Air cargo target, 2040</div>
+          <div class="v-figure__note">Roughly one million tonnes a year</div>
+          <div class="v-figure__source">National Aviation Strategy 2040, CAA Oman.</div>
+        </div>
+        <div class="v-figure">
+          <div class="v-figure__value"><span data-count="3.5" data-dec="1">0.0</span><span class="v-figure__affix">%</span></div>
+          <div class="v-figure__label">GDP contribution target</div>
+          <div class="v-figure__note">Aviation's share of national GDP by 2040</div>
+          <div class="v-figure__source">National Aviation Strategy 2040, CAA Oman.</div>
+        </div>
+        <div class="v-figure">
+          <div class="v-figure__value"><span class="v-figure__affix">OMR </span><span data-count="1" data-dec="0">0</span><span class="v-figure__affix">bn+</span></div>
+          <div class="v-figure__label">Private investment sought</div>
+          <div class="v-figure__note">Cumulative, to 2040 — about USD 2.6bn</div>
+          <div class="v-figure__source">National Aviation Strategy 2040, CAA Oman.</div>
+        </div>
+      </div>
+
+      <div class="v-panel v-panel--chart" data-beat="scale" data-from="0.6" data-to="1" data-hold="1">
+        <h3 class="v-h3">What 40 million by 2040 requires</h3>
+        <p class="v-body v-body--tight">million passengers · required trajectory at 6.8% CAGR</p>
+        <p class="v-figure__source">Anchors: NCSI 2025 actual (14.94M) and National Aviation Strategy 2040 target (40M). Intermediate years are the implied compound path, not a forecast.</p>
+      </div>
+    </div></section>
+
+    <!-- V · THE OPERATORS -->
+    <section class="v-act" id="operators" style="height:420vh"><div class="v-act__pin">
+      <div class="v-panel v-panel--top" data-beat="operators" data-from="0" data-to="0.16">
+        <span class="v-kicker">Act V — The Operators</span>
+        <h2 class="v-h2">One sector, four mandates</h2>
+        <p class="v-lede">Vision 2040 is delivered by named institutions, not by a sector in the abstract. Each has a distinct job, and the plan only works if the four are sequenced against one calendar.</p>
+      </div>
+
+      <div class="v-operator" data-beat="operators" data-from="0.18" data-to="0.385">
+        <div class="v-card v-card--operator">
+          <div class="v-operator__head"><span class="v-operator__role">The national carrier</span><span class="v-operator__ar">الطيران العُماني</span></div>
+          <h3 class="v-operator__name">Oman Air</h3>
+          <p class="v-pillar__claim">The country's reach, and its reputation in the air.</p>
+          <p class="v-body">Restructured hard: the A330s retired, the network trimmed, thin routes cut. It joined oneworld on 30 June 2025 as the alliance's fifteenth member — which buys Oman reach it could never fly on its own metal.</p>
+          <dl class="v-stats">
+            <div title="Press reporting, 2025; three 787s leased out."><dt>Fleet</dt><dd>22 B737 · 11 B787</dd></div>
+            <div title="Oman Air / oneworld, 2025."><dt>Network</dt><dd>~42 points, 22 countries</dd></div>
+            <div title="Joined 30 June 2025."><dt>Alliance</dt><dd>oneworld, 15th member</dd></div>
+            <div title="Announced for summer 2026."><dt>London Heathrow</dt><dd>to 14x weekly</dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="v-operator" data-beat="operators" data-from="0.385" data-to="0.59">
+        <div class="v-card v-card--operator">
+          <div class="v-operator__head"><span class="v-operator__role">The infrastructure</span><span class="v-operator__ar">المطارات العُمانية</span></div>
+          <h3 class="v-operator__name">Oman Airports</h3>
+          <p class="v-pillar__claim">Every passenger in the country passes through their estate.</p>
+          <p class="v-body">Muscat, Salalah, Sohar, Duqm and the regional fields. Its numbers are the sector's numbers: 14.94 million passengers in 2025, and the 9.3% fall in the first half of 2026 that the strategy now has to answer.</p>
+          <dl class="v-stats">
+            <div title="NCSI (14,939,209), +2.8% on 2024."><dt>Passengers 2025</dt><dd>14.94M</dd></div>
+            <div title="NCSI; domestic up 12%."><dt>Muscat 2025</dt><dd>11.84M intl · 1.32M dom</dd></div>
+            <div title="NCSI; domestic up 17.7%."><dt>Salalah 2025</dt><dd>0.68M intl · 1.02M dom</dd></div>
+            <div title="NCSI, −2.8% on 2024."><dt>Flights 2025</dt><dd>104,510</dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="v-operator" data-beat="operators" data-from="0.59" data-to="0.795">
+        <div class="v-card v-card--operator">
+          <div class="v-operator__head"><span class="v-operator__role">Ground handling</span><span class="v-operator__ar">ترانسُم</span></div>
+          <h3 class="v-operator__name">TRANSOM</h3>
+          <p class="v-pillar__claim">The half-hour that decides whether the schedule holds.</p>
+          <p class="v-body">The national ground handler, and an Oman Airports subsidiary since the 2021 reorganisation that dissolved Oman Aviation Group. Turnaround time is where on-time performance is won or lost, and where a 40-million passenger airport system either scales or seizes.</p>
+          <dl class="v-stats">
+            <div title="TRANSOM Handling."><dt>Scope</dt><dd>Passenger · freight · general aviation</dd></div>
+            <div title="TRANSOM Handling."><dt>Coverage</dt><dd>All Omani airports served</dd></div>
+            <div title="Since the 2021 OAG dissolution."><dt>Ownership</dt><dd>Oman Airports subsidiary</dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="v-operator" data-beat="operators" data-from="0.795" data-to="1" data-hold="1">
+        <div class="v-card v-card--operator">
+          <div class="v-operator__head"><span class="v-operator__role">Low cost</span><span class="v-operator__ar">طيران السلام</span></div>
+          <h3 class="v-operator__name">SalamAir</h3>
+          <p class="v-pillar__claim">The volume engine, and the domestic network's backbone.</p>
+          <p class="v-body">Founded in 2016 and now the fastest-growing part of the system. It carried 3.4 million passengers in 2025 across more than 22,000 flights, and its domestic services are much of why internal traffic grew while international traffic did not.</p>
+          <dl class="v-stats">
+            <div title="SalamAir, 2025; 22,000+ flights."><dt>Passengers 2025</dt><dd>3.4M</dd></div>
+            <div title="SalamAir, 2025."><dt>Fleet</dt><dd>15 A320/A321neo</dd></div>
+            <div title="SalamAir; includes four domestic routes."><dt>Network</dt><dd>40+ points, 15+ countries</dd></div>
+            <div title="Announced leasing programme."><dt>Fleet plan</dt><dd>25 aircraft by 2028</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div></section>
+
+    <!-- VI · THE SECTOR BOARD -->
+    <section class="v-act" id="board" style="height:300vh"><div class="v-act__pin">
+      <div class="v-panel v-panel--top" data-beat="board" data-from="0" data-to="0.2">
+        <span class="v-kicker">Act VI — The Sector Board</span>
+        <h2 class="v-h2">The whole system, on one screen</h2>
+        <p class="v-lede">Four institutions, one set of numbers. This is the shared baseline the briefing asks for — published once, read the same way by everyone in the room.</p>
+      </div>
+      <div class="v-board" data-beat="board" data-from="0.18" data-to="1" data-hold="1">
+        <div class="v-board__grid" role="table" aria-label="Sector board">
+          <div class="v-board__row v-board__row--head" role="row">
+            <span role="columnheader">Entity</span><span role="columnheader">Mandate</span><span role="columnheader">Scale</span><span role="columnheader">2040 exposure</span>
+          </div>
+          <div class="v-board__row v-board__row--gold" role="row">
+            <span class="v-board__entity" role="cell">Oman Air</span><span role="cell">National carrier</span>
+            <span class="v-board__scale" role="cell">33 aircraft · ~42 points</span>
+            <span class="v-board__exposure" role="cell">Carries the connectivity target; oneworld reach is the lever</span>
+          </div>
+          <div class="v-board__row v-board__row--cyan" role="row">
+            <span class="v-board__entity" role="cell">Oman Airports</span><span role="cell">Airports &amp; terminals</span>
+            <span class="v-board__scale" role="cell">14.94M pax · 104,510 flights</span>
+            <span class="v-board__exposure" role="cell">Owns the 40M capacity question outright</span>
+          </div>
+          <div class="v-board__row v-board__row--cyan" role="row">
+            <span class="v-board__entity" role="cell">TRANSOM</span><span role="cell">Ground handling</span>
+            <span class="v-board__scale" role="cell">All Omani airports</span>
+            <span class="v-board__exposure" role="cell">Turnaround is the constraint no terminal expansion fixes</span>
+          </div>
+          <div class="v-board__row v-board__row--gold" role="row">
+            <span class="v-board__entity" role="cell">SalamAir</span><span role="cell">Low-cost &amp; domestic</span>
+            <span class="v-board__scale" role="cell">3.4M pax · 15 aircraft → 25 by 2028</span>
+            <span class="v-board__exposure" role="cell">The only operator currently growing domestic volume</span>
+          </div>
+        </div>
+        <p class="v-board__asof">Latest published figures as at September 2026</p>
+      </div>
+    </div></section>
+
+    <!-- VII · THE PILLARS -->
+    <section class="v-act" id="pillars" style="height:340vh"><div class="v-act__pin">
+      <div class="v-panel v-panel--top" data-beat="pillars" data-from="0" data-to="0.2">
+        <span class="v-kicker">Act VII — The Pillars</span>
+        <h2 class="v-h2">Where aviation carries the Vision</h2>
+        <p class="v-lede">Oman Vision 2040 is organised around national priorities grouped into three axes. Aviation is one of the few sectors that touches all three at once.</p>
+      </div>
+      <div class="v-pillar v-pillar--0" data-beat="pillars" data-from="0.22" data-to="0.48">
+        <div class="v-card"><span class="v-pillar__ar">الإنسان والمجتمع</span><h3 class="v-h3">People and Society</h3>
+          <p class="v-pillar__claim">Aviation moves people, not just passengers.</p>
+          <ul class="v-list"><li>Domestic connectivity puts specialist healthcare within a single flight of every governorate.</li><li>Omani pilots, engineers and controllers trained to international standard — a national skills asset.</li><li>Cultural access: the Sultanate's heritage made reachable for Omanis and visitors alike.</li></ul></div>
+      </div>
+      <div class="v-pillar v-pillar--1" data-beat="pillars" data-from="0.48" data-to="0.74">
+        <div class="v-card"><span class="v-pillar__ar">الاقتصاد والتنمية</span><h3 class="v-h3">Economy and Development</h3>
+          <p class="v-pillar__claim">Every route is an economic instrument.</p>
+          <ul class="v-list"><li>Diversification: tourism, logistics and air cargo as non-hydrocarbon revenue.</li><li>Governorate development: Duqm, Salalah and Sohar connected to global supply chains.</li><li>Private sector and investment: aviation as the front door for foreign direct investment.</li></ul></div>
+      </div>
+      <div class="v-pillar v-pillar--2" data-beat="pillars" data-from="0.74" data-to="1" data-hold="1">
+        <div class="v-card"><span class="v-pillar__ar">الحوكمة والأداء المؤسسي</span><h3 class="v-h3">Governance and Institutional Performance</h3>
+          <p class="v-pillar__claim">A sector run to international standard.</p>
+          <ul class="v-list"><li>Safety and regulatory oversight held at or above global benchmarks.</li><li>Transparent performance reporting across the national aviation system.</li><li>Coordinated planning between the regulator, the airports and the national carrier.</li></ul></div>
+      </div>
+      <div class="v-mapnote">Axis names follow the published Oman Vision 2040 framework — confirm exact official wording.</div>
+    </div></section>
+
+    <!-- VIII · THE ROADMAP -->
+    <section class="v-act" id="roadmap" style="height:360vh"><div class="v-act__pin">
+      <div class="v-panel v-panel--top" data-beat="roadmap" data-from="0" data-to="0.16">
+        <span class="v-kicker">Act VIII — The Roadmap</span>
+        <h2 class="v-h2">2026 to 2040, in four movements</h2>
+        <p class="v-lede">Fourteen years is three fleet cycles and one generation of Omani professionals. The sequencing matters more than the ambition.</p>
+      </div>
+      <div class="v-phase" data-beat="roadmap" data-from="0.18" data-to="0.385">
+        <span class="v-phase__span">2026 — 2028</span><h3 class="v-phase__title">Consolidate</h3>
+        <p class="v-phase__lede">Put the fundamentals beyond question.</p>
+        <ul class="v-list"><li>Reverse the 2026 decline before anything else is promised.</li><li>Operational reliability — on-time performance as a national reputation asset.</li><li>Baseline the data. Every figure in this briefing, published and audited.</li></ul>
+      </div>
+      <div class="v-phase" data-beat="roadmap" data-from="0.385" data-to="0.59">
+        <span class="v-phase__span">2029 — 2032</span><h3 class="v-phase__title">Connect</h3>
+        <p class="v-phase__lede">Make the map match the ambition.</p>
+        <ul class="v-list"><li>Domestic frequency lifted to make same-day return travel routine.</li><li>oneworld interline reach worked hard, in place of unsupported thin routes.</li><li>Cargo corridors aligned to Duqm and Sohar industrial output.</li></ul>
+      </div>
+      <div class="v-phase" data-beat="roadmap" data-from="0.59" data-to="0.795">
+        <span class="v-phase__span">2033 — 2036</span><h3 class="v-phase__title">Compete</h3>
+        <p class="v-phase__lede">Win traffic on merit, not on subsidy.</p>
+        <ul class="v-list"><li>Fleet renewal on fuel-burn economics, not prestige.</li><li>Muscat positioned as a genuine transfer proposition on its own geography.</li><li>Omanisation of technical and command grades at scale.</li></ul>
+      </div>
+      <div class="v-phase" data-beat="roadmap" data-from="0.795" data-to="1" data-hold="1">
+        <span class="v-phase__span">2037 — 2040</span><h3 class="v-phase__title">Compound</h3>
+        <p class="v-phase__lede">Aviation as a permanent national advantage.</p>
+        <ul class="v-list"><li>Sustainable aviation fuel capability aligned to national energy strategy.</li><li>The sector self-funding its own growth.</li><li>A network that makes the Sultanate unavoidable on the Indian Ocean rim.</li></ul>
+      </div>
+    </div></section>
+
+    <!-- IX · OUTLOOK -->
+    <section class="v-act" id="outlook" style="height:380vh"><div class="v-act__pin">
+      <div class="v-panel v-panel--top" data-beat="outlook" data-from="0" data-to="0.16">
+        <span class="v-kicker">Act IX — Outlook</span>
+        <h2 class="v-h2">What the numbers imply</h2>
+        <p class="v-lede">The following is analysis, not published policy, and it is labelled that way on screen. It is derived from the figures in this briefing and from the strategy's own targets.</p>
+        <span class="v-tag v-tag--analysis">Analysis — derived from the cited figures, not official forecast</span>
+      </div>
+      <div class="v-insight" data-beat="outlook" data-from="0.18" data-to="0.385">
+        <div class="v-insight__metric"><span class="v-insight__value">6.8%</span><span class="v-insight__label">required CAGR</span></div>
+        <div class="v-insight__text"><h3 class="v-h3">The gap is 6.8% a year, every year, for fifteen years</h3>
+          <p class="v-body">14.94M in 2025 to 40M in 2040 is a 2.7× increase, which compounds to 6.8% annually. No Omani year on record has sustained that. The target is therefore a capacity and demand-creation programme, not a growth forecast.</p></div>
+      </div>
+      <div class="v-insight" data-beat="outlook" data-from="0.385" data-to="0.59">
+        <div class="v-insight__metric"><span class="v-insight__value">−9.3%</span><span class="v-insight__label">H1 2026 vs H1 2025</span></div>
+        <div class="v-insight__text"><h3 class="v-h3">The first year of the plan is running backwards</h3>
+          <p class="v-body">The strategy was approved in January 2026. Traffic in the first half of that year fell 9.3%, and international flights fell 10.7%. The gap to the required path widens every month this continues — the compounding works against the target as readily as for it.</p></div>
+      </div>
+      <div class="v-insight" data-beat="outlook" data-from="0.59" data-to="0.795">
+        <div class="v-insight__metric"><span class="v-insight__value">+17.7%</span><span class="v-insight__label">Salalah domestic, 2025</span></div>
+        <div class="v-insight__text"><h3 class="v-h3">Domestic is the only line growing</h3>
+          <p class="v-body">In 2025 domestic passengers rose 12% at Muscat and 17.7% at Salalah while international was broadly flat. The growth in the system is internal connectivity — which is SalamAir's network, and which is also the part Vision 2040 values for reasons beyond revenue.</p></div>
+      </div>
+      <div class="v-insight" data-beat="outlook" data-from="0.795" data-to="1" data-hold="1">
+        <div class="v-insight__metric"><span class="v-insight__value">1M t</span><span class="v-insight__label">2040 cargo target</span></div>
+        <div class="v-insight__text"><h3 class="v-h3">One million tonnes of cargo is the harder target</h3>
+          <p class="v-body">Passenger growth follows tourism and diaspora demand. Cargo follows industrial output — Duqm, Sohar, and the logistics strategy's own 2040 ambitions. Air cargo at that scale is won on belly capacity and freighter economics, both of which are fleet decisions taken years ahead.</p></div>
+      </div>
+      <div class="v-mapnote">Analysis — derived from the cited figures, not official forecast</div>
+    </div></section>
+
+    <!-- The closing film's scroll range: acts X-XI. Act X is the film's own
+         act and gives it all of its advancing scroll; the film then runs the
+         first 100vh of Act XI and holds its last frame under the asks and the
+         sign-off. The segment weights in the init script mirror these two act
+         heights — change one, change both. -->
+    <div id="film-range-2">
+
+    <!-- X · THE HORIZON -->
+    <section class="v-act" id="horizon" style="height:700vh"><div class="v-act__pin">
+      <div class="v-panel v-panel--center" data-beat="horizon" data-from="0" data-to="0.14">
+        <span class="v-horizon__ar">الأفق</span>
+        <span class="v-kicker">Act X — The Horizon</span>
+        <h2 class="v-h2">Everything above resolves to one picture</h2>
+      </div>
+      <!-- Spaced wide on purpose: between one line leaving and the next
+           arriving there is nothing on screen but the film. -->
+      <div class="v-horizonline" data-beat="horizon" data-from="0.2" data-to="0.4">
+        <p class="v-horizonline__lead">A country easier to reach,</p>
+        <p class="v-horizonline__body">and easier to leave from, than it has ever been. That is what forty million passengers looks like from the ground — not a number on a chart, but a morning flight from Salalah that somebody can actually afford to take.</p>
+      </div>
+      <div class="v-horizonline" data-beat="horizon" data-from="0.46" data-to="0.66">
+        <p class="v-horizonline__lead">Fifteen years is four fleet cycles,</p>
+        <p class="v-horizonline__body">two terminal expansions and one generation of Omani pilots, engineers and controllers who are in school today. The decisions that put them in the seat are taken in rooms like this one, and they are taken early or not at all.</p>
+      </div>
+      <div class="v-horizonline" data-beat="horizon" data-from="0.72" data-to="0.92" data-hold="1">
+        <p class="v-horizonline__lead">2040 is not a destination.</p>
+        <p class="v-horizonline__body">It is a schedule. Aviation is the one sector in this economy that already knows what it means to keep one.</p>
+      </div>
+    </div></section>
+
+    <!-- XI · THE ASK -->
+    <section class="v-act" id="close" style="height:280vh"><div class="v-act__pin">
+      <div class="v-panel v-panel--center" data-beat="close" data-from="0" data-to="0.28">
+        <span class="v-kicker">Act XI — The Ask</span>
+        <h2 class="v-h2">One sector. One plan. One horizon.</h2>
+        <p class="v-lede">Vision 2040 does not ask aviation to grow. It asks aviation to carry — the governorates, the diversification, and the generation that will run this sector long after this meeting.</p>
+      </div>
+      <div class="v-asks" data-beat="close" data-from="0.3" data-to="0.7">
+        <div class="v-ask"><span class="v-ask__num">01</span><h3 class="v-h3">A single national aviation plan</h3><p class="v-body">Regulator, airports, handler and carriers planning against one set of targets, reviewed on one calendar.</p></div>
+        <div class="v-ask"><span class="v-ask__num">02</span><h3 class="v-h3">One published set of numbers</h3><p class="v-body">A shared, audited data baseline so that every meeting after this one starts from the same page.</p></div>
+        <div class="v-ask"><span class="v-ask__num">03</span><h3 class="v-h3">A fourteen-year mandate</h3><p class="v-body">Decisions sequenced to 2040, not to the next financial year. The routes that matter take longer than a budget cycle.</p></div>
+      </div>
+      <div class="v-signoff" data-beat="close" data-from="0.72" data-to="1" data-hold="1">
+        <div class="v-signoff__rule" aria-hidden="true"></div>
+        <p class="v-signoff__ar">رؤية عُمان ٢٠٤٠ — الطيران</p>
+        <p class="v-signoff__en">Oman Vision 2040 — Aviation</p>
+        <p class="v-signoff__meta">مسقط، سلطنة عُمان · ٢٣ سبتمبر ٢٠٢٦</p>
+        <p class="v-signoff__meta">Muscat, Sultanate of Oman · 23 September 2026</p>
+      </div>
+    </div></section>
+    </div><!-- /#film-range-2 — the closing film holds under the ask -->
+  </main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ── Content that the chrome needs to build itself ──────────────────── */
+
+  var ACTS = [
+    { id: "overture",  rail: "Overture",      numeral: "I" },
+    { id: "nation",    rail: "The Nation",    numeral: "II" },
+    { id: "network",   rail: "The Network",   numeral: "III" },
+    { id: "scale",     rail: "The Scale",     numeral: "IV" },
+    { id: "operators", rail: "The Operators", numeral: "V" },
+    { id: "board",     rail: "The Board",     numeral: "VI" },
+    { id: "pillars",   rail: "The Pillars",   numeral: "VII" },
+    { id: "roadmap",   rail: "The Roadmap",   numeral: "VIII" },
+    { id: "outlook",   rail: "Outlook",       numeral: "IX" },
+    // Act X is the closing film's own act. It carries almost no data on
+    // purpose: after nine acts of argument the room should be looking at the
+    // country, not at another chart.
+    { id: "horizon",   rail: "The Horizon",   numeral: "X" },
+    { id: "close",     rail: "The Ask",       numeral: "XI" }
+  ];
+
+  var GROWTH = {
+    series: [
+      { year: 2025, value: 14.9 }, { year: 2027, value: 17.0 },
+      { year: 2029, value: 19.4 }, { year: 2031, value: 22.2 },
+      { year: 2033, value: 25.3 }, { year: 2035, value: 28.8 },
+      { year: 2037, value: 32.8 }, { year: 2040, value: 40.0 }
+    ]
+  };
+
+
+  /* Everything still awaiting an official source. Drives the pre-flight check. */
+  /* Everything else now carries a published source and is marked verified in
+     lib/vision2040/data.ts. This is what is left. */
+  var UNVERIFIED = [
+    ["Vision 2040 axis wording", "Axis names follow the published Oman Vision 2040 framework — confirm exact official wording."]
+  ];
+
+  /* ── Geography ───────────────────────────────────────────────────────
+     The outline is a STYLISED silhouette for visual effect. It is not a
+     cartographic or legal boundary, and the caption on screen says so.   */
+
+  var OMAN_MAINLAND = [
+    [56.47,24.75],[56.71,24.34],[57.05,24.12],[57.45,23.9],[57.89,23.7],
+    [58.25,23.63],[58.59,23.61],[58.92,23.26],[59.2,22.9],[59.53,22.57],
+    [59.8,22.52],[59.6,21.78],[59.35,21.3],[58.95,20.9],[58.8,20.65],
+    [58.3,20.25],[57.95,19.95],[57.7,19.66],[57.83,18.99],[57.55,18.4],
+    [57.3,17.42],[56.5,17.15],[55.6,17.05],[54.7,16.99],[54.09,17.02],
+    [53.98,16.94],[53.25,16.7],[52.6,16.68],[52.0,16.65],[52.0,18.2],
+    [52.4,19.0],[53.6,19.6],[55.0,20.0],[55.2,21.2],[55.2,22.0],
+    [55.67,22.0],[55.2,22.7],[55.5,23.4],[55.79,24.02],[56.03,24.07],
+    [55.8,24.24],[56.06,24.74],[56.47,24.75]
+  ];
+
+  var OMAN_MUSANDAM = [
+    [56.16,26.06],[56.24,26.18],[56.28,26.39],[56.4,26.32],
+    [56.45,26.1],[56.6,25.95],[56.35,25.8],[56.14,25.86],[56.16,26.06]
+  ];
+
+  var AIRPORTS = [
+    { code:"MCT", lonlat:[58.284,23.593], tier:"hub" },
+    { code:"SLL", lonlat:[54.091,17.039], tier:"hub" },
+    { code:"DQM", lonlat:[57.634,19.502], tier:"regional" },
+    { code:"OHS", lonlat:[56.626,24.386], tier:"regional" },
+    { code:"KHS", lonlat:[56.241,26.171], tier:"regional" },
+    { code:"MSH", lonlat:[58.89,20.675],  tier:"regional" },
+    { code:"SUW", lonlat:[57.19,23.66],   tier:"regional" },
+    { code:"AOM", lonlat:[57.53,22.38],   tier:"regional" },
+    { code:"OMM", lonlat:[55.18,18.13],   tier:"regional" }
+  ];
+
+  var HUB = [58.284, 23.593];
+
+  /* Illustrative reach, not a schedule. */
+  var DESTINATIONS = [
+    [55.36,25.25],[51.53,25.28],[47.98,29.38],[46.72,24.71],[39.19,21.49],
+    [50.59,26.23],[31.24,30.04],[35.93,31.95],[28.98,41.01],[-0.13,51.51],
+    [8.68,50.11],[2.35,48.86],[9.19,45.46],[8.54,47.38],[37.62,55.76],
+    [36.82,-1.29],[39.2,-6.16],[39.28,-6.79],[67.01,24.86],[74.34,31.55],
+    [73.09,33.68],[77.21,28.61],[72.88,19.08],[77.59,12.97],[80.27,13.08],
+    [76.27,9.93],[79.86,6.93],[73.51,4.18],[90.41,23.81],[85.32,27.72],
+    [100.5,13.76],[101.69,3.14],[103.82,1.35],[106.85,-6.21],[120.98,14.6]
+  ];
+
+  var VIEW_OMAN   = { lon0: 51.2, lon1: 60.8, lat0: 16.0, lat1: 27.0 };
+  var VIEW_REGION = { lon0: -14,  lon1: 132,  lat0: -14,  lat1: 60 };
+
+  /* ── Maths ───────────────────────────────────────────────────────────── */
+
+  function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+  function range(x, a, b) { return clamp01((x - a) / ((b - a) || 1)); }
+  function easeOut(x) { return 1 - Math.pow(1 - x, 3); }
+  function easeInOut(x) { return x < 0.5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3) / 2; }
+  function easeOutBack(x) { var c = 1.70158; return 1 + (c+1)*Math.pow(x-1,3) + c*Math.pow(x-1,2); }
+
+  function lerpViewport(a, b, t) {
+    function m(x, y) { return x + (y - x) * t; }
+    return { lon0:m(a.lon0,b.lon0), lon1:m(a.lon1,b.lon1), lat0:m(a.lat0,b.lat0), lat1:m(a.lat1,b.lat1) };
+  }
+
+  function makeProjector(v, w, h) {
+    var lonSpan = v.lon1 - v.lon0;
+    var latSpan = (v.lat1 - v.lat0) * 1.15;
+    var scale = Math.min(w / lonSpan, h / latSpan);
+    var cx = (v.lon0 + v.lon1) / 2, cy = (v.lat0 + v.lat1) / 2;
+    return function (p) {
+      return [w/2 + (p[0]-cx)*scale, h/2 - (p[1]-cy)*scale*1.15];
+    };
+  }
+
+  /* Quadratic arc bowed away from the hub, so routes read as flight paths. */
+  function arcPoint(a, b, t, bow) {
+    var mx = (a[0]+b[0])/2, my = (a[1]+b[1])/2;
+    var dx = b[0]-a[0], dy = b[1]-a[1];
+    var len = Math.hypot(dx, dy) || 1;
+    var nx = -dy/len, ny = dx/len;
+    var lift = Math.min(len * bow, 260);
+    var s = Math.sign(ny || -1) * -1;
+    var cxp = mx + nx*lift*s, cyp = my + ny*lift*s;
+    var u = 1 - t;
+    return [u*u*a[0] + 2*u*t*cxp + t*t*b[0], u*u*a[1] + 2*u*t*cyp + t*t*b[1]];
+  }
+
+  /* ── Palette ─────────────────────────────────────────────────────────── */
+
+  var GOLD = "216, 182, 120", GOLD_HI = "240, 220, 174";
+  var CYAN = "79, 214, 255",  CYAN_HI = "160, 236, 255";
+  var BUDGET = { high: 260, medium: 150, low: 70 };
+
+  var motes = [];
+  for (var mi = 0; mi < 320; mi++) {
+    motes.push({
+      x: Math.random(), y: Math.random(),
+      z: 0.25 + Math.random()*0.75,
+      r: 0.4 + Math.random()*1.7,
+      s: 0.2 + Math.random()*0.9
+    });
+  }
+
+  /* ── Scenes ──────────────────────────────────────────────────────────── */
+
+  function paintBackdrop(ctx, w, h, t, warmth, quality) {
+    var g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, "#03060d");
+    g.addColorStop(0.45, "#061020");
+    g.addColorStop(0.78, "rgba(" + Math.round(10+warmth*32) + "," + Math.round(20+warmth*24) + "," + Math.round(42+warmth*6) + ",1)");
+    g.addColorStop(1, "rgba(" + Math.round(16+warmth*70) + "," + Math.round(24+warmth*42) + "," + Math.round(44-warmth*4) + ",1)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+
+    if (warmth > 0.01) {
+      var hg = ctx.createRadialGradient(w*0.62, h*1.02, 0, w*0.62, h*1.02, h*0.85);
+      hg.addColorStop(0, "rgba(232,158,72," + (0.2*warmth) + ")");
+      hg.addColorStop(0.5, "rgba(190,110,60," + (0.07*warmth) + ")");
+      hg.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = hg;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    var n = BUDGET[quality];
+    for (var i = 0; i < n; i++) {
+      var m = motes[i];
+      if (!m) break;
+      var drift = (t * m.s * 0.012) % 1.2;
+      var x = ((m.x + drift) % 1.2) * w - w*0.1;
+      var y = (m.y + Math.sin(t*0.18*m.s + i) * 0.012) * h;
+      ctx.fillStyle = "rgba(" + CYAN_HI + "," + (0.05 + m.z*0.22) + ")";
+      ctx.beginPath();
+      ctx.arc(x, y, m.r*m.z, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  function paintFinish(ctx, w, h, quality) {
+    var v = ctx.createRadialGradient(w/2, h/2, Math.min(w,h)*0.3, w/2, h/2, Math.max(w,h)*0.78);
+    v.addColorStop(0, "rgba(0,0,0,0)");
+    v.addColorStop(1, "rgba(0,0,0,0.62)");
+    ctx.fillStyle = v;
+    ctx.fillRect(0, 0, w, h);
+    if (quality === "low") return;
+    ctx.save();
+    ctx.globalAlpha = 0.035;
+    ctx.fillStyle = "#ffffff";
+    for (var i = 0; i < 220; i++) ctx.fillRect(Math.random()*w, Math.random()*h, 1, 1);
+    ctx.restore();
+  }
+
+  function strokePath(ctx, pts, proj, reveal) {
+    var n = Math.floor(pts.length * clamp01(reveal));
+    if (n < 2) return;
+    ctx.beginPath();
+    for (var i = 0; i < n; i++) {
+      var p = proj(pts[i]);
+      if (i === 0) ctx.moveTo(p[0], p[1]); else ctx.lineTo(p[0], p[1]);
+    }
+    ctx.stroke();
+  }
+
+  function fillPath(ctx, pts, proj) {
+    ctx.beginPath();
+    for (var i = 0; i < pts.length; i++) {
+      var p = proj(pts[i]);
+      if (i === 0) ctx.moveTo(p[0], p[1]); else ctx.lineTo(p[0], p[1]);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  /* Act III: coastline draws, airports light in sequence, links knit,
+     then the view pulls back and the international arcs bloom. */
+  function paintNetwork(ctx, w, h, t, p, quality) {
+    var zoom = easeInOut(range(p, 0.55, 0.92));
+    var view = lerpViewport(VIEW_OMAN, VIEW_REGION, zoom);
+    var proj = makeProjector(view, w*0.82, h*0.82);
+    var draw = range(p, 0, 0.22);
+    var landAlpha = range(p, 0.06, 0.3) * (1 - zoom*0.45);
+
+    ctx.save();
+    ctx.fillStyle = "rgba(" + CYAN + "," + (0.05*landAlpha) + ")";
+    fillPath(ctx, OMAN_MAINLAND, proj);
+    fillPath(ctx, OMAN_MUSANDAM, proj);
+    ctx.lineWidth = Math.max(1, 1.6 * (1 - zoom*0.4));
+    ctx.strokeStyle = "rgba(" + CYAN_HI + "," + (0.5 + 0.3*Math.sin(t*0.7)) + ")";
+    ctx.shadowColor = "rgba(" + CYAN + ",0.8)";
+    ctx.shadowBlur = quality === "low" ? 0 : 14;
+    strokePath(ctx, OMAN_MAINLAND, proj, draw);
+    if (draw > 0.85) strokePath(ctx, OMAN_MUSANDAM, proj, range(p, 0.16, 0.24));
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    var hub = proj(HUB);
+
+    var knit = range(p, 0.38, 0.66);
+    if (knit > 0) {
+      ctx.save();
+      ctx.lineWidth = 1;
+      for (var i = 0; i < AIRPORTS.length; i++) {
+        var a = AIRPORTS[i];
+        if (a.code === "MCT") continue;
+        var seq = clamp01((knit - (i/AIRPORTS.length)*0.45) * 2.4);
+        if (seq <= 0) continue;
+        var b = proj(a.lonlat);
+        ctx.strokeStyle = "rgba(" + CYAN + "," + (0.3*seq*(1-zoom*0.6)) + ")";
+        ctx.beginPath();
+        var steps = 24;
+        for (var s = 0; s <= steps*seq; s++) {
+          var q = arcPoint(hub, b, s/steps, 0.13);
+          if (s === 0) ctx.moveTo(q[0], q[1]); else ctx.lineTo(q[0], q[1]);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    var light = range(p, 0.18, 0.5);
+    for (var j = 0; j < AIRPORTS.length; j++) {
+      var ap = AIRPORTS[j];
+      var order = ap.tier === "hub" ? j*0.3 : 1.2 + j*0.55;
+      var sq = clamp01((light*AIRPORTS.length - order) * 1.1);
+      if (sq <= 0) continue;
+      var pt = proj(ap.lonlat);
+      var base = ap.tier === "hub" ? 4.6 : 2.8;
+      var r = base * easeOutBack(sq) * (1 - zoom*0.5);
+      var beat = 0.55 + 0.45*Math.sin(t*1.6 + j*1.3);
+      ctx.save();
+      ctx.fillStyle = "rgba(" + GOLD_HI + "," + (0.9*sq) + ")";
+      ctx.shadowColor = "rgba(" + GOLD + ",0.95)";
+      ctx.shadowBlur = quality === "low" ? 0 : 18*sq;
+      ctx.beginPath();
+      ctx.arc(pt[0], pt[1], Math.max(0.6, r), 0, Math.PI*2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      if (ap.tier === "hub" && zoom < 0.7) {
+        ctx.strokeStyle = "rgba(" + GOLD + "," + (0.34*sq*beat*(1-zoom)) + ")";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(pt[0], pt[1], r + 7 + beat*5, 0, Math.PI*2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    var bloom = range(p, 0.6, 1);
+    if (bloom > 0) {
+      var count = quality === "low" ? 16 : quality === "medium" ? 26 : DESTINATIONS.length;
+      ctx.save();
+      ctx.lineWidth = 1;
+      for (var k = 0; k < count; k++) {
+        var seq2 = clamp01((bloom*count - k*0.62) * 0.7);
+        if (seq2 <= 0) continue;
+        var d = proj(DESTINATIONS[k]);
+        var grow = easeOut(seq2);
+        ctx.strokeStyle = "rgba(" + CYAN + "," + (0.3*seq2) + ")";
+        ctx.beginPath();
+        var st = quality === "low" ? 18 : 34;
+        for (var u = 0; u <= st*grow; u++) {
+          var pp = arcPoint(hub, d, u/st, 0.2);
+          if (u === 0) ctx.moveTo(pp[0], pp[1]); else ctx.lineTo(pp[0], pp[1]);
+        }
+        ctx.stroke();
+        if (grow > 0.98 && quality !== "low") {
+          var ph = (t*0.24 + k*0.14) % 1;
+          var mp = arcPoint(hub, d, ph, 0.2);
+          ctx.fillStyle = "rgba(" + CYAN_HI + "," + (0.9*(1 - Math.abs(ph-0.5)*1.1)) + ")";
+          ctx.beginPath();
+          ctx.arc(mp[0], mp[1], 1.9, 0, Math.PI*2);
+          ctx.fill();
+        }
+        if (grow > 0.9) {
+          ctx.fillStyle = "rgba(" + CYAN_HI + "," + (0.75*seq2) + ")";
+          ctx.beginPath();
+          ctx.arc(d[0], d[1], 1.9, 0, Math.PI*2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+    }
+
+    if (light > 0) {
+      var hb = 0.6 + 0.4*Math.sin(t*1.9);
+      ctx.save();
+      var hg2 = ctx.createRadialGradient(hub[0], hub[1], 0, hub[0], hub[1], 46 + hb*14);
+      hg2.addColorStop(0, "rgba(" + GOLD_HI + "," + (0.3*light) + ")");
+      hg2.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = hg2;
+      ctx.fillRect(hub[0]-70, hub[1]-70, 140, 140);
+      ctx.restore();
+    }
+  }
+
+  /* Act IV: the trajectory plots itself across the back half of the act. */
+  function paintGrowth(ctx, w, h, t, p) {
+    var s = GROWTH.series;
+    var padX = Math.min(w*0.14, 190);
+    var x0 = padX, x1 = w - padX;
+    var y0 = h - h*0.22, y1 = h*0.3;
+    var max = Math.max.apply(null, s.map(function (d) { return d.value; })) * 1.12 || 1;
+    function px(i) { return x0 + (x1-x0)*i/(s.length-1); }
+    function py(v) { return y0 - (y0-y1)*v/max; }
+
+    var grow = easeInOut(range(p, 0.64, 0.96));
+    var fade = range(p, 0.58, 0.7);
+    if (fade <= 0) return;
+
+    ctx.save();
+    ctx.globalAlpha = fade;
+
+    ctx.strokeStyle = "rgba(" + GOLD + ",0.28)";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    for (var g = 1; g <= 3; g++) {
+      var gy = y0 - (y0-y1)*g/4;
+      ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+    }
+
+    var samples = [];
+    var total = (s.length-1) * grow;
+    for (var i = 0; i <= Math.floor(total); i++) samples.push([px(i), py(s[i].value)]);
+    var frac = total - Math.floor(total);
+    if (frac > 0 && Math.floor(total) < s.length-1) {
+      var a = s[Math.floor(total)], b = s[Math.floor(total)+1];
+      samples.push([px(Math.floor(total)+frac), py(a.value + (b.value-a.value)*frac)]);
+    }
+
+    if (samples.length > 1) {
+      var area = ctx.createLinearGradient(0, y1, 0, y0);
+      area.addColorStop(0, "rgba(" + CYAN + ",0.3)");
+      area.addColorStop(1, "rgba(" + CYAN + ",0)");
+      ctx.fillStyle = area;
+      ctx.beginPath();
+      ctx.moveTo(samples[0][0], y0);
+      samples.forEach(function (q) { ctx.lineTo(q[0], q[1]); });
+      ctx.lineTo(samples[samples.length-1][0], y0);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(" + CYAN_HI + ",0.95)";
+      ctx.lineWidth = 2.2;
+      ctx.shadowColor = "rgba(" + CYAN + ",0.9)";
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      samples.forEach(function (q, i2) { if (i2 === 0) ctx.moveTo(q[0], q[1]); else ctx.lineTo(q[0], q[1]); });
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      var head = samples[samples.length-1];
+      var hbeat = 0.6 + 0.4*Math.sin(t*3);
+      ctx.fillStyle = "rgba(" + GOLD_HI + ",1)";
+      ctx.shadowColor = "rgba(" + GOLD + ",1)";
+      ctx.shadowBlur = 20;
+      ctx.beginPath();
+      ctx.arc(head[0], head[1], 4 + hbeat*1.6, 0, Math.PI*2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.textAlign = "center";
+    s.forEach(function (d, i3) {
+      var reveal = clamp01((total - i3 + 0.5) * 1.5);
+      if (reveal <= 0) return;
+      var x = px(i3);
+      ctx.globalAlpha = fade * reveal;
+      ctx.strokeStyle = "rgba(" + GOLD + ",0.3)";
+      ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y0+8); ctx.stroke();
+      ctx.fillStyle = "rgba(" + GOLD_HI + ",0.75)";
+      ctx.font = "500 12px Inter, system-ui, sans-serif";
+      ctx.fillText(String(d.year), x, y0+26);
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.font = "400 11px Inter, system-ui, sans-serif";
+      ctx.fillText(d.value.toFixed(1), x, py(d.value)-14);
+    });
+
+    ctx.restore();
+  }
+
+  /* Act V: three orbits, one per Vision 2040 axis. */
+  function paintPillars(ctx, w, h, t, p) {
+    var cx = w*0.5, cy = h*0.5;
+    var base = Math.min(w, h) * 0.17;
+    var fade = range(p, 0.02, 0.18);
+    if (fade <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = fade;
+    for (var i = 0; i < 3; i++) {
+      var seq = easeOut(clamp01((range(p, 0.05, 0.7)*3 - i) * 1.2));
+      if (seq <= 0) continue;
+      var r = base * (1 + i*0.52) * seq;
+      var spin = t * 0.1 * (i % 2 === 0 ? 1 : -1) + i*2;
+      ctx.strokeStyle = i === 1 ? "rgba(" + GOLD + ",0.26)" : "rgba(" + CYAN + ",0.22)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash(i === 1 ? [] : [2, 7]);
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+      ctx.setLineDash([]);
+      var nx = cx + Math.cos(spin)*r, ny = cy + Math.sin(spin)*r*0.82;
+      ctx.fillStyle = i === 1 ? "rgba(" + GOLD_HI + ",0.95)" : "rgba(" + CYAN_HI + ",0.9)";
+      ctx.shadowColor = i === 1 ? "rgba(" + GOLD + ",1)" : "rgba(" + CYAN + ",1)";
+      ctx.shadowBlur = 16;
+      ctx.beginPath(); ctx.arc(nx, ny, 3.4, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    var beat = 0.72 + 0.28*Math.sin(t*1.4);
+    var core = ctx.createRadialGradient(cx, cy, 0, cx, cy, base*0.72*beat);
+    core.addColorStop(0, "rgba(" + GOLD_HI + ",0.4)");
+    core.addColorStop(0.4, "rgba(" + GOLD + ",0.12)");
+    core.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = core;
+    ctx.beginPath(); ctx.arc(cx, cy, base*0.72*beat, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  /* Act VI: the rail runs under the phase copy, filling 2026 to 2040. */
+  function paintRoadmap(ctx, w, h, t, p) {
+    var n = 4, y = h*0.8;
+    var x0 = w*0.12, x1 = w*0.88;
+    var fade = range(p, 0.02, 0.16);
+    if (fade <= 0) return;
+    var fill = easeInOut(range(p, 0.1, 0.85));
+    ctx.save();
+    ctx.globalAlpha = fade;
+
+    ctx.strokeStyle = "rgba(255,255,255,0.09)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+
+    var xf = x0 + (x1-x0)*fill;
+    var grad = ctx.createLinearGradient(x0, 0, xf, 0);
+    grad.addColorStop(0, "rgba(" + CYAN + ",0.7)");
+    grad.addColorStop(1, "rgba(" + GOLD_HI + ",0.95)");
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 2.4;
+    ctx.shadowColor = "rgba(" + CYAN + ",0.7)";
+    ctx.shadowBlur = 14;
+    ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(xf, y); ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    for (var i = 0; i < n; i++) {
+      var sx = x0 + (x1-x0)*i/(n-1);
+      var on = clamp01((xf - sx)/40 + 0.5);
+      var r = 4 + on*4;
+      ctx.fillStyle = on > 0.5 ? "rgba(" + GOLD_HI + "," + (0.5 + on*0.5) + ")" : "rgba(255,255,255,0.22)";
+      if (on > 0.5) { ctx.shadowColor = "rgba(" + GOLD + ",0.9)"; ctx.shadowBlur = 16*on; }
+      ctx.beginPath(); ctx.arc(sx, y, r, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+      if (on > 0.9) {
+        var b = (t*0.6 + i*0.4) % 1;
+        ctx.strokeStyle = "rgba(" + GOLD + "," + (0.3*(1-b)) + ")";
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(sx, y, r + b*26, 0, Math.PI*2); ctx.stroke();
+      }
+    }
+
+    if (fill > 0.02 && fill < 0.995) {
+      ctx.fillStyle = "rgba(" + CYAN_HI + ",1)";
+      ctx.shadowColor = "rgba(" + CYAN + ",1)";
+      ctx.shadowBlur = 22;
+      ctx.beginPath(); ctx.arc(xf, y, 3.2, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    ctx.restore();
+  }
+
+  /* Act VII: a radial burst, then a pocket of shade so the sign-off reads. */
+  function paintClose(ctx, w, h, t, p, quality) {
+    var cx = w*0.5, cy = h*0.56;
+    var fade = range(p, 0.02, 0.25);
+    if (fade <= 0) return;
+    var spread = easeOut(range(p, 0.05, 0.75));
+    var rays = quality === "low" ? 26 : quality === "medium" ? 44 : 68;
+    var maxR = Math.hypot(w, h) * 0.62;
+
+    ctx.save();
+    ctx.globalAlpha = fade;
+    for (var i = 0; i < rays; i++) {
+      var a = (i/rays)*Math.PI*2 + t*0.015;
+      var len = maxR * spread * (0.45 + 0.55*((i*37)%11)/11);
+      var ex = cx + Math.cos(a)*len, ey = cy + Math.sin(a)*len*0.7;
+      var g = ctx.createLinearGradient(cx, cy, ex, ey);
+      g.addColorStop(0, "rgba(" + GOLD_HI + ",0.3)");
+      g.addColorStop(0.35, "rgba(" + CYAN + ",0.16)");
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex, ey); ctx.stroke();
+    }
+    var beat = 0.75 + 0.25*Math.sin(t*1.1);
+    var core = ctx.createRadialGradient(cx, cy, 0, cx, cy, 150*beat*spread);
+    core.addColorStop(0, "rgba(" + GOLD_HI + ",0.2)");
+    core.addColorStop(0.35, "rgba(" + GOLD + ",0.07)");
+    core.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = core;
+    ctx.beginPath(); ctx.arc(cx, cy, 150*beat*spread, 0, Math.PI*2); ctx.fill();
+
+    var pocket = ctx.createRadialGradient(w*0.5, h*0.5, 0, w*0.5, h*0.5, Math.min(w,h)*0.62);
+    pocket.addColorStop(0, "rgba(4,7,15,0.72)");
+    pocket.addColorStop(0.55, "rgba(4,7,15,0.4)");
+    pocket.addColorStop(1, "rgba(4,7,15,0)");
+    ctx.fillStyle = pocket;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+
+  /* ── The photograph ──────────────────────────────────────────────────
+     The source image, driven directly by scroll on the canvas: the overture
+     eases out of a push-in, and Act II pushes back into it frame by frame as
+     the presenter talks. Everything is drawn, not played — there is no video
+     element and no playback clock, so the picture only ever moves as fast as
+     the scroll does.                                                        */
+
+  var photo = new Image();
+  var photoReady = false;
+  photo.onload = function () { photoReady = true; };
+  photo.src = "hero.jpg";
+
+  function paintPhoto(ctx, w, h, zoom, driftY, alpha) {
+    if (!photoReady || alpha <= 0.001) return;
+    var iw = photo.naturalWidth, ih = photo.naturalHeight;
+    var s = Math.max(w / iw, h / ih) * zoom;
+    var dw = iw * s, dh = ih * s;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(photo, (w - dw) / 2, (h - dh) / 2 + driftY, dw, dh);
+    // Scrim, so gold type holds against a photograph that is bright at the horizon.
+    var sc = ctx.createLinearGradient(0, 0, 0, h);
+    sc.addColorStop(0, "rgba(3,6,13,0.74)");
+    sc.addColorStop(0.42, "rgba(4,10,22,0.52)");
+    sc.addColorStop(1, "rgba(3,6,13,0.82)");
+    ctx.fillStyle = sc;
+    ctx.fillRect(0, 0, w, h);
+    // Act II sets its copy down the left, over the brightest part of the city.
+    var side = ctx.createLinearGradient(0, 0, w * 0.68, 0);
+    side.addColorStop(0, "rgba(3,6,13,0.66)");
+    side.addColorStop(1, "rgba(3,6,13,0)");
+    ctx.fillStyle = side;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+
+  /* The lattice from the source image, rebuilt as live geometry so it can
+     ignite link by link as the act is scrolled. */
+  var LAT = (function () {
+    var seed = 7, nodes = [], i, a, b;
+    function rnd() { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }
+    for (i = 0; i < 26; i++) nodes.push({ x: 0.07 + rnd() * 0.78, y: 0.25 + rnd() * 0.33 });
+    var links = [];
+    for (a = 0; a < nodes.length; a++) {
+      for (b = a + 1; b < nodes.length; b++) {
+        var d = Math.hypot(nodes[a].x - nodes[b].x, (nodes[a].y - nodes[b].y) * 0.8);
+        if (d < 0.152) links.push([a, b]);
+      }
+    }
+    return { nodes: nodes, links: links };
+  })();
+
+  function paintLattice(ctx, w, h, t, ignite, alpha) {
+    if (alpha <= 0.001 || ignite <= 0.001) return;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    var g = easeOut(clamp01(ignite));
+    for (var i = 0; i < LAT.links.length; i++) {
+      var seq = clamp01((g * LAT.links.length - i) * 0.5);
+      if (seq <= 0) continue;
+      var A = LAT.nodes[LAT.links[i][0]], B = LAT.nodes[LAT.links[i][1]];
+      var ax = A.x * w, ay = A.y * h, bx = B.x * w, by = B.y * h;
+      ctx.strokeStyle = "rgba(" + CYAN + "," + (0.24 * seq) + ")";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(ax + (bx - ax) * seq, ay + (by - ay) * seq);
+      ctx.stroke();
+      if (seq > 0.98) {
+        var ph = (t * 0.35 + i * 0.21) % 1;
+        ctx.fillStyle = "rgba(" + CYAN_HI + "," + (0.85 * (1 - Math.abs(ph - 0.5) * 1.4)) + ")";
+        ctx.beginPath();
+        ctx.arc(ax + (bx - ax) * ph, ay + (by - ay) * ph, 1.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    for (var n = 0; n < LAT.nodes.length; n++) {
+      var sq = clamp01((g * LAT.nodes.length - n) * 0.9);
+      if (sq <= 0) continue;
+      var N = LAT.nodes[n];
+      var beat = 0.6 + 0.4 * Math.sin(t * 1.7 + n);
+      ctx.fillStyle = "rgba(" + CYAN_HI + "," + (0.9 * sq) + ")";
+      ctx.shadowColor = "rgba(" + CYAN + ",1)";
+      ctx.shadowBlur = 12 * sq;
+      ctx.beginPath();
+      ctx.arc(N.x * w, N.y * h, (1.5 + beat * 1.2) * sq, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    ctx.restore();
+  }
+
+  /* ── Engine ──────────────────────────────────────────────────────────── */
+
+  var canvas = document.querySelector(".v-canvas");
+  // There are two of these — the opening film and the closing film — and
+  // either one painting is reason enough for the backdrop to stand back.
+  var filmCanvasEls = [].slice.call(document.querySelectorAll(".v-filmcanvas"));
+  var ctx = canvas.getContext("2d");
+  var bar = document.querySelector(".v-progress__bar");
+  var root = document.documentElement;
+
+  var beats = [].slice.call(document.querySelectorAll("[data-beat]")).map(function (el) {
+    return {
+      el: el,
+      act: el.getAttribute("data-beat"),
+      from: parseFloat(el.getAttribute("data-from")),
+      to: parseFloat(el.getAttribute("data-to")),
+      hold: el.getAttribute("data-hold") === "1",
+      lift: el.hasAttribute("data-lift") ? parseFloat(el.getAttribute("data-lift")) : 30
+    };
+  });
+  beats.forEach(function (b) { b.el.style.opacity = "0"; b.el.style.visibility = "hidden"; });
+
+  var counters = [].slice.call(document.querySelectorAll("[data-count]")).map(function (el) {
+    return { el: el, value: parseFloat(el.getAttribute("data-count")), dec: parseInt(el.getAttribute("data-dec"), 10) || 0 };
+  });
+
+  var geom = {};
+  var acts = {};
+  var W = 0, H = 0, DPR = 1, cw = 0, ch = 0;
+  var quality = "high";
+  var calmQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var calm = calmQuery.matches;
+  calmQuery.addEventListener("change", function () { calm = calmQuery.matches; });
+
+  function remeasure() {
+    var y = window.scrollY;
+    ACTS.forEach(function (a) {
+      var el = document.getElementById(a.id);
+      if (!el) return;
+      var r = el.getBoundingClientRect();
+      geom[a.id] = { top: r.top + y, height: r.height };
+    });
+  }
+
+  function measure() {
+    W = window.innerWidth; H = window.innerHeight;
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    remeasure();
+  }
+
+  measure();
+  window.addEventListener("resize", measure);
+  window.addEventListener("orientationchange", measure);
+  // Web fonts land after first paint and change layout; measure again once settled.
+  setTimeout(measure, 400);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+  if (window.ResizeObserver) new ResizeObserver(remeasure).observe(document.body);
+
+  var scroll = window.scrollY;
+  var activeIndex = -1;
+  var t0 = performance.now(), last = t0;
+  var avgFrame = 16.7, sinceCheck = 0;
+
+  function frame(now) {
+    var dt = Math.min(now - last, 64);
+    last = now;
+    var time = (now - t0) / 1000;
+
+    // Step quality down if the machine cannot hold the budget — never back up,
+    // so the tier cannot visibly oscillate mid-presentation.
+    avgFrame += (dt - avgFrame) * 0.05;
+    sinceCheck += dt;
+    if (sinceCheck > 2500) {
+      sinceCheck = 0;
+      if (avgFrame > 34 && quality === "high") quality = "medium";
+      else if (avgFrame > 52 && quality === "medium") quality = "low";
+    }
+
+    var target = window.scrollY;
+    var k = 1 - Math.pow(1 - 0.16, dt / 16.7);
+    scroll += (target - scroll) * (calm ? 1 : k);
+    if (Math.abs(target - scroll) < 0.05) scroll = target;
+
+    var doc = Math.max(1, document.body.scrollHeight - H);
+    var progress = clamp01(scroll / doc);
+    bar.style.transform = "scaleX(" + progress + ")";
+
+    var active = 0;
+    for (var i = 0; i < ACTS.length; i++) {
+      var id = ACTS[i].id, g = geom[id];
+      if (!g) { acts[id] = 0; continue; }
+      acts[id] = clamp01((scroll - g.top) / Math.max(1, g.height - H));
+      if (scroll + H*0.45 >= g.top) active = i;
+    }
+    if (active !== activeIndex) { activeIndex = active; syncRail(); }
+
+    /* Beats */
+    for (var b = 0; b < beats.length; b++) {
+      var bt = beats[b];
+      var pB = acts[bt.act] || 0;
+      var localB = (pB - bt.from) / ((bt.to - bt.from) || 1);
+      // A beat anchored at an act's start is already on screen when the act
+      // arrives — that is what covers the hand-off between pinned frames.
+      var inn = bt.from <= 0 ? 1 : easeOut(range(localB, 0, 0.26));
+      var out = bt.hold ? 0 : range(localB, 0.78, 1);
+      var o = clamp01(Math.min(inn, 1 - out));
+      bt.el.style.opacity = String(o);
+      bt.el.style.setProperty("--beat-y", ((1 - o) * bt.lift) + "px");
+      bt.el.style.visibility = o < 0.008 ? "hidden" : "visible";
+    }
+
+    /* Counters */
+    var sp = acts.scale || 0;
+    for (var c = 0; c < counters.length; c++) {
+      var cn = counters[c];
+      var txt = (cn.value * easeOut(range(sp, 0.26, 0.52))).toFixed(cn.dec);
+      if (cn.el.textContent !== txt) cn.el.textContent = txt;
+    }
+
+    /* Canvas */
+    var w2 = Math.round(W*DPR), h2 = Math.round(H*DPR);
+    if (w2 !== cw || h2 !== ch) {
+      cw = w2; ch = h2;
+      canvas.width = w2; canvas.height = h2;
+      canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    }
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    var overture = acts.overture || 0;
+    var nation = acts.nation || 0, network = acts.network || 0, scale = acts.scale || 0;
+    var operators = acts.operators || 0, board = acts.board || 0, outlook = acts.outlook || 0;
+    var pillars = acts.pillars || 0, roadmap = acts.roadmap || 0, close = acts.close || 0;
+    var warmth = clamp01(0.85 - range(nation, 0.3, 1)*0.5 - network*0.35 + close*0.6);
+
+    // How much of the photograph is on screen, and where the camera sits in it.
+    var inNation = nation > 0.001 && nation < 0.999;
+    // The photograph is the understudy: once the film canvas has painted its
+    // first frame it takes over, and the still stands down.
+    // The film is behind every act now, so the still understudy is retired
+    // for the whole page once the film canvas has painted.
+    var filmUp = filmCanvasEls.some(function (c) {
+      return c.dataset.ready === "true" && c.dataset.past !== "true";
+    });
+    var photoA = (photoReady && !filmUp) ? Math.max(
+      1 - range(overture, 0.55, 0.95),
+      inNation ? range(nation, 0, 0.05) * (1 - range(nation, 0.93, 1)) : 0
+    ) : 0;
+    var photoZoom, photoDrift;
+    if (inNation) {
+      // Act II: scroll is the dolly. The frame pushes in and drifts as you talk.
+      photoZoom = 1.03 + easeInOut(nation) * 0.22;
+      photoDrift = (nation - 0.5) * H * 0.1;
+    } else {
+      photoZoom = 1.17 - easeOut(range(overture, 0, 0.85)) * 0.14;
+      photoDrift = 0;
+    }
+    var ignite = inNation ? clamp01(0.4 + range(nation, 0, 0.5) * 0.6) : range(overture, 0.02, 0.5);
+
+    ctx.save();
+    ctx.globalAlpha = 1 - Math.max(photoA, filmUp ? 1 : 0) * 0.92;
+    paintBackdrop(ctx, W, H, time, warmth, quality);
+    ctx.restore();
+
+    paintPhoto(ctx, W, H, photoZoom, photoDrift, photoA);
+    paintLattice(ctx, W, H, time, ignite, photoA);
+
+    // A scene keeps painting until the next act takes over, so the canvas is
+    // never empty at a hand-off.
+    if (network > 0.001 && scale < 0.02) paintNetwork(ctx, W, H, time, network, quality);
+    if (scale > 0.001 && operators < 0.02) paintGrowth(ctx, W, H, time, scale);
+    if (pillars > 0.001 && roadmap < 0.02) paintPillars(ctx, W, H, time, pillars);
+    if (roadmap > 0.001 && outlook < 0.02) paintRoadmap(ctx, W, H, time, roadmap);
+    // The closing film now runs underneath Act XI, so the light-burst scene
+    // steps aside for it and only paints when no film is up.
+    if (close > 0.001 && !filmUp) paintClose(ctx, W, H, time, close, quality);
+
+    paintFinish(ctx, W, H, quality);
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* ── Chrome ──────────────────────────────────────────────────────────── */
+
+  var railList = document.querySelector(".v-rail ol");
+  ACTS.forEach(function (a, i) {
+    var li = document.createElement("li");
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.innerHTML = '<span class="v-rail__num"></span><span class="v-rail__name"></span><span class="v-rail__tick" aria-hidden="true"></span>';
+    btn.querySelector(".v-rail__num").textContent = a.numeral;
+    btn.querySelector(".v-rail__name").textContent = a.rail;
+    btn.addEventListener("click", function () { goTo(i); });
+    li.appendChild(btn);
+    railList.appendChild(li);
+  });
+  var railBtns = [].slice.call(railList.querySelectorAll("button"));
+
+  function syncRail() {
+    railBtns.forEach(function (b, i) {
+      var on = i === activeIndex;
+      b.className = on ? "is-active" : "";
+      if (on) b.setAttribute("aria-current", "true"); else b.removeAttribute("aria-current");
+    });
+    if (presenterEl) renderPresenter();
+  }
+
+  function goTo(i) {
+    var idx = Math.max(0, Math.min(ACTS.length - 1, i));
+    var g = geom[ACTS[idx].id];
+    if (!g) return;
+    window.scrollTo({ top: g.top + 2, behavior: calm ? "auto" : "smooth" });
+  }
+
+  /* Presenter mode */
+  var presenterEl = null, presenterStart = null, presenterTimer = null;
+
+  function renderPresenter() {
+    if (!presenterEl) return;
+    var a = ACTS[activeIndex] || ACTS[0];
+    var secs = Math.floor((performance.now() - presenterStart) / 1000);
+    var mm = String(Math.floor(secs / 60)).padStart(2, "0");
+    var ss = String(secs % 60).padStart(2, "0");
+    presenterEl.innerHTML =
+      '<div class="v-presenter__numeral"></div><div>' +
+      '<div class="v-presenter__act"></div>' +
+      '<div class="v-presenter__clock"></div></div>' +
+      '<div class="v-presenter__count"></div>';
+    presenterEl.querySelector(".v-presenter__numeral").textContent = a.numeral;
+    presenterEl.querySelector(".v-presenter__act").textContent = a.rail;
+    presenterEl.querySelector(".v-presenter__clock").textContent = mm + ":" + ss;
+    presenterEl.querySelector(".v-presenter__count").textContent = (activeIndex + 1) + " / " + ACTS.length;
+  }
+
+  function togglePresenter() {
+    if (presenterEl) {
+      presenterEl.remove(); presenterEl = null;
+      clearInterval(presenterTimer); presenterTimer = null;
+      return;
+    }
+    presenterEl = document.createElement("aside");
+    presenterEl.className = "v-presenter";
+    presenterEl.setAttribute("role", "status");
+    document.querySelector(".v-root").appendChild(presenterEl);
+    if (presenterStart === null) presenterStart = performance.now();
+    renderPresenter();
+    presenterTimer = setInterval(renderPresenter, 500);
+  }
+
+  /* Review mode */
+  var reviewEl = null;
+  function toggleReview() {
+    if (reviewEl) {
+      reviewEl.remove(); reviewEl = null;
+      root.dataset.review = "off";
+      return;
+    }
+    root.dataset.review = "on";
+    reviewEl = document.createElement("div");
+    reviewEl.className = "v-reviewflag";
+    reviewEl.setAttribute("role", "status");
+    reviewEl.textContent = "Review mode — unverified figures are marked";
+    document.querySelector(".v-root").appendChild(reviewEl);
+  }
+  root.dataset.review = "off";
+
+  /* Modals */
+  var modal = null;
+  function closeModal() { if (modal) { modal.remove(); modal = null; } }
+
+  function openModal(html, wide) {
+    closeModal();
+    modal = document.createElement("div");
+    modal.className = "v-modal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.innerHTML = '<div class="v-modal__panel' + (wide ? " v-modal__panel--wide" : "") + '">' + html + "</div>";
+    document.querySelector(".v-root").appendChild(modal);
+    var btn = modal.querySelector(".v-btn");
+    if (btn) btn.focus();
+    return modal;
+  }
+
+  function openHelp() {
+    openModal(
+      "<h2>Presenter controls</h2>" +
+      '<dl class="v-keys">' +
+      "<div><dt>Space · →</dt><dd>Next section</dd></div>" +
+      "<div><dt>←</dt><dd>Previous section</dd></div>" +
+      "<div><dt>Home · End</dt><dd>First · last section</dd></div>" +
+      "<div><dt>F</dt><dd>Fullscreen</dd></div>" +
+      "<div><dt>P</dt><dd>Presenter mode — section, clock, position</dd></div>" +
+      "<div><dt>V</dt><dd>Review mode — flag unverified figures</dd></div>" +
+      "<div><dt>H · ?</dt><dd>This panel</dd></div>" +
+      "<div><dt>Esc</dt><dd>Close</dd></div>" +
+      "</dl>" +
+      '<p class="v-modal__note">Every key press lands the next section pinned and centred, so there is no hunting with a scroll wheel at the podium.</p>' +
+      '<button type="button" class="v-btn">Close</button>'
+    ).querySelector(".v-btn").addEventListener("click", closeModal);
+  }
+
+  function openPreflight() {
+    var items = UNVERIFIED.map(function (u) {
+      return '<li><span class="v-preflight__label"></span><span class="v-preflight__source"></span></li>';
+    }).join("");
+    var m = openModal(
+      '<span class="v-kicker">Before you present</span>' +
+      "<h2>Pre-flight check</h2>" +
+      '<p class="v-modal__lede">' + UNVERIFIED.length + " figures in this briefing are still illustrative. " +
+      "They were chosen so the page reads correctly, and they are <strong>not official statistics</strong>. " +
+      "Replace them with confirmed values before this is shown to the sector.</p>" +
+      '<ul class="v-preflight__list">' + items + "</ul>" +
+      '<div class="v-modal__actions"><button type="button" class="v-btn v-btn--primary">Understood — begin</button></div>' +
+      '<p class="v-modal__note">This check runs once per device. Add <code>?preflight</code> to the URL to see it again.</p>',
+      true
+    );
+    var lis = m.querySelectorAll(".v-preflight__list li");
+    UNVERIFIED.forEach(function (u, i) {
+      lis[i].querySelector(".v-preflight__label").textContent = u[0];
+      lis[i].querySelector(".v-preflight__source").textContent = u[1];
+    });
+    m.querySelector(".v-btn").addEventListener("click", function () {
+      try { localStorage.setItem("vision2040.preflight.v1", "done"); } catch (e) { /* private mode */ }
+      presenterStart = performance.now();
+      closeModal();
+    });
+  }
+
+  document.querySelector(".v-help-btn").addEventListener("click", openHelp);
+
+  document.addEventListener("keydown", function (e) {
+    var tag = e.target && e.target.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+    if (e.key === "Escape") { closeModal(); return; }
+    if (modal) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        var b = modal.querySelector(".v-btn");
+        if (b) b.click();
+      }
+      return;
+    }
+    switch (e.key) {
+      case " ": case "ArrowRight": case "ArrowDown": case "PageDown":
+        e.preventDefault(); goTo(activeIndex + 1); break;
+      case "ArrowLeft": case "ArrowUp": case "PageUp":
+        e.preventDefault(); goTo(activeIndex - 1); break;
+      case "Home": e.preventDefault(); goTo(0); break;
+      case "End": e.preventDefault(); goTo(ACTS.length - 1); break;
+      case "f": case "F":
+        if (document.fullscreenElement) { document.exitFullscreen().catch(function () {}); }
+        else { (document.documentElement.requestFullscreen() || Promise.resolve()).catch(function () {}); }
+        break;
+      case "p": case "P": togglePresenter(); break;
+      case "v": case "V": toggleReview(); break;
+      case "h": case "H": case "?": openHelp(); break;
+    }
+  });
+
+  var forced = new URLSearchParams(window.location.search).has("preflight");
+  var seen = false;
+  try { seen = localStorage.getItem("vision2040.preflight.v1") === "done"; } catch (e) { seen = false; }
+  if (forced || !seen) openPreflight();
+  syncRail();
+})();
+</script>
+<script>
+/* Vanilla port of lib/vision2040/filmScrub.ts — same mapping, same fallbacks. */
+(function (global) {
+  "use strict";
+  var clamp01 = function (x) { return x < 0 ? 0 : x > 1 ? 1 : x; };
+
+  function framePath(pattern, i) {
+    return pattern.replace(/%(?:0(\d+))?d/, function (_m, w) {
+      return String(i).padStart(w ? parseInt(w, 10) : 1, "0");
+    });
+  }
+
+  /* Weighted segments, so the sequence can hold (from === to) and cut
+     (a gap between one segment's `to` and the next one's `from`). */
+  function progressToFrameT(p, segments) {
+    var total = segments.reduce(function (a, s) { return a + s.weight; }, 0);
+    if (total <= 0) return 0;
+    var target = clamp01(p) * total, acc = 0;
+    for (var i = 0; i < segments.length; i++) {
+      var seg = segments[i];
+      if (target <= acc + seg.weight || i === segments.length - 1) {
+        var local = seg.weight > 0 ? clamp01((target - acc) / seg.weight) : 0;
+        return seg.from + (seg.to - seg.from) * local;
+      }
+      acc += seg.weight;
+    }
+    return segments[segments.length - 1].to;
+  }
+
+  function createFilmScrub(opts) {
+    var canvas = opts.canvas, trigger = opts.trigger, segments = opts.segments;
+    var manifest = opts.manifest, scrim = opts.scrim, holdStream = opts.holdStream;
+    var ctx = canvas.getContext("2d");
+    var calm = window.matchMedia("(prefers-reduced-motion: reduce)");
+    var images = new Array(manifest.count), loaded = new Array(manifest.count).fill(false);
+    var current = 0, firstPainted = false, raf = 0, cw = 0, ch = 0, lastP = 0;
+
+    function size() {
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var w = Math.round(window.innerWidth * dpr), h = Math.round(window.innerHeight * dpr);
+      if (w === cw && h === ch) return;
+      cw = w; ch = h; canvas.width = w; canvas.height = h;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+    }
+
+    function drawFrame(img, alpha) {
+      if (!img || !img.naturalWidth) return;
+      var w = canvas.width, h = canvas.height;
+      var sc = Math.max(w / img.naturalWidth, h / img.naturalHeight);
+      var dw = img.naturalWidth * sc, dh = img.naturalHeight * sc;
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+      ctx.globalAlpha = 1;
+    }
+
+    /* Paint frame i0, then cross-dissolve `frac` into i0+1.
+
+       This is what stops the picture stepping. A sequence only has so many
+       frames, and when the scroll it covers is long the gap between two of
+       them is tens of pixels — a visible jump on a slow scroll. Mixing the
+       neighbours by the fractional part turns that jump into a dissolve, at
+       no extra download and no extra memory. Not motion-compensated: a fast
+       pan ghosts slightly rather than resolving into true intermediate
+       motion. */
+    function paint(i0, frac) {
+      var a = images[i0];
+      if (!a || !a.naturalWidth) return;
+      size();
+      drawFrame(a, 1);
+      if (frac > 0.02 && i0 + 1 < manifest.count && loaded[i0 + 1]) {
+        drawFrame(images[i0 + 1], frac);
+      }
+      if (scrim) {
+        ctx.save();
+        var dpr = canvas.width / window.innerWidth;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        scrim(ctx, window.innerWidth, window.innerHeight, lastP);
+        ctx.restore();
+      }
+      if (canvas.dataset.frame !== String(i0)) canvas.dataset.frame = String(i0);
+      if (!firstPainted) { firstPainted = true; canvas.dataset.ready = "true"; }
+    }
+
+    /* Nearest decoded frame rather than a blank canvas when scrubbing ahead
+       of the download. */
+    function render(want) {
+      var max = manifest.count - 1;
+      var clamped = Math.max(0, Math.min(max, want));
+      var base = Math.floor(clamped), frac = clamped - base;
+      current = base;
+      if (loaded[base]) return paint(base, frac);
+      for (var d = 1; d <= max; d++) {
+        if (base - d >= 0 && loaded[base - d]) return paint(base - d, 0);
+        if (base + d <= max && loaded[base + d]) return paint(base + d, 0);
+      }
+    }
+
+    function fetchOne(i, done) {
+      var img = new Image();
+      img.decoding = "async";
+      img.onload = function () {
+        loaded[i] = true;
+        if (Math.abs(i - current) <= 1 || !firstPainted) render(current);
+        done();
+      };
+      img.onerror = done;
+      img.src = framePath(manifest.pattern, i);
+      images[i] = img;
+    }
+
+    // Frame 0 alone first, then stream the rest six at a time — but only
+    // once holdStream lets them, so the closing film's 464 frames cannot
+    // starve the opening act, which is the one thing that has to be instant.
+    fetchOne(0, function () {
+      function streamRest() {
+        var next = 1;
+        function pump() { if (next < manifest.count) fetchOne(next++, pump); }
+        for (var c = 0; c < 6; c++) pump();
+      }
+      if (holdStream) holdStream(streamRest); else streamRest();
+    });
+
+    function apply(p) { lastP = p; render(progressToFrameT(p, segments) * (manifest.count - 1)); }
+
+    /* A section can carry more than one segment — an advancing stretch and a
+       hold — so compare the SUM of its weights against its height. */
+    function checkWeights() {
+      var vh = window.innerHeight, by = {};
+      segments.forEach(function (seg) { by[seg.section] = (by[seg.section] || 0) + seg.weight; });
+      Object.keys(by).forEach(function (section) {
+        var el = document.getElementById(section);
+        if (!el) return console.warn('[filmScrub] no element for "' + section + '"');
+        var actual = (el.getBoundingClientRect().height / vh) * 100;
+        if (Math.abs(actual - by[section]) > 1.5) {
+          console.warn('[filmScrub] segment "' + section + '" weight ' + by[section] +
+            ' does not match its section height ' + actual.toFixed(1) + 'vh.');
+        }
+      });
+    }
+
+    /* Whether this canvas's own stretch of the page is on screen.
+
+       Both canvases are fixed and full-bleed, so one outside its range must
+       stand down or it simply covers the other. This is decided from the
+       trigger's own rect against the viewport, using the bounds ScrollTrigger
+       itself uses (start "top top", end "bottom bottom") rather than its
+       enter/leave callbacks, for two reasons found the hard way:
+
+         - a long instant jump (End key, hash link, a presenter skipping acts)
+           can land past a trigger without its leave callback ever firing,
+           leaving the opening film painting over the closing one;
+         - at the page's very last scroll position the closing film's trigger
+           reaches its end, so a leave-driven flag fades the picture out on
+           exactly the frame the sign-off sits on.
+
+       Geometry has neither failure. */
+    function inRangeNow() {
+      var r = trigger.getBoundingClientRect();
+      return r.top <= 1 && r.bottom >= window.innerHeight - 1;
+    }
+    function setInRange(on) {
+      var next = on ? "false" : "true";
+      if (canvas.dataset.past !== next) canvas.dataset.past = next;
+    }
+    function watchRange() {
+      var pending = false;
+      function onScroll() {
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(function () { pending = false; setInRange(inRangeNow()); });
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+    }
+
+    function startNative() {
+      var smoothed = -1;
+      (function tick() {
+        var top = trigger.offsetTop;
+        var span = Math.max(1, trigger.offsetHeight - window.innerHeight);
+        var raw = clamp01((window.scrollY - top) / span);
+        if (smoothed < 0) smoothed = raw;
+        smoothed = calm.matches ? raw : smoothed + (raw - smoothed) * 0.16;
+        apply(smoothed);
+        setInRange(inRangeNow());
+        raf = requestAnimationFrame(tick);
+      })();
+    }
+
+    checkWeights();
+    canvas.dataset.driver = "pending";
+    // Before any driver has a say: a canvas whose acts are nowhere near the
+    // viewport must not paint over one whose acts are.
+    setInRange(inRangeNow());
+
+    // Reduced motion: hold one frame. The page still scrolls.
+    if (calm.matches) {
+      canvas.dataset.driver = "calm";
+      render(0);
+      // Still needed with nothing moving: two fixed canvases holding a still
+      // would stack, and only the one whose acts are on screen should show.
+      watchRange();
+      return;
+    }
+
+    var g = window.gsap, ST = window.ScrollTrigger;
+    if (g && ST) {
+      canvas.dataset.driver = "gsap";
+      g.registerPlugin(ST);
+      ST.create({
+        trigger: trigger, start: "top top", end: "bottom bottom", scrub: 0.5,
+        onUpdate: function (self) { apply(self.progress); },
+        onRefresh: function () { size(); checkWeights(); setInRange(inRangeNow()); render(current); }
+      });
+      apply(0);
+      // Visibility is geometry's job, not ScrollTrigger's — see inRangeNow.
+      watchRange();
+    } else {
+      // Library missing: frame 0 is up and the page scrolls; keep scrubbing too.
+      console.warn("[filmScrub] GSAP/ScrollTrigger unavailable — using native scrub");
+      canvas.dataset.driver = "native";
+      startNative();
+    }
+    window.addEventListener("resize", function () { size(); setInRange(inRangeNow()); render(current); });
+  }
+
+  global.FilmScrub = { create: createFilmScrub, progressToFrameT: progressToFrameT, framePath: framePath };
+})(window);
+
+</script>
+<script>
+(function () {
+  /* ── Segment map ───────────────────────────────────────────────────────
+     `weight` is each section's height in vh and MUST match the markup above.
+     They are the same numbers written twice with nothing tying them together,
+     so the engine measures the real sections and warns in the console when
+     they drift.
+
+     The slices are derived from the weights, so the film runs first frame to
+     last across the whole page and the arithmetic cannot fall out of step. To
+     park the picture while a passage is read, set a segment's `from` and `to`
+     equal; to cut, leave a gap to the next `from`.
+     ────────────────────────────────────────────────────────────────────── */
+  /* Holds take scroll but no film, so they are out of the denominator: the
+     sequence still runs first frame to last across the advancing segments. */
+  function build(spec) {
+    var adv = spec.filter(function (x) { return !x.hold; })
+                  .reduce(function (a, x) { return a + x.weight; }, 0) || 1;
+    var acc = 0;
+    return spec.map(function (x) {
+      if (x.hold) { var at = acc / adv; return { section: x.section, weight: x.weight, from: at, to: at }; }
+      var from = acc / adv; acc += x.weight;
+      return { section: x.section, weight: x.weight, from: from, to: acc / adv };
+    });
+  }
+
+  var SEGMENTS = build([
+    { section: "overture", weight: 230 },
+    // The film finishes inside Act II rather than exactly on its boundary,
+    // and the last frame then holds for the rest of the act. Running it to
+    // the boundary meant the closing frames were only reached as the canvas
+    // was already fading — the end of the film was never actually seen.
+    { section: "nation",   weight: 260 },
+    { section: "nation",   weight: 80, hold: true }
+  ]);
+
+  /* FILM TWO — the 58-second close, acts X-XI. Act X gives it all of its
+     advancing scroll; the film then runs the first 100vh of Act XI and holds
+     its last frame under the asks and the sign-off, so the deck ends on the
+     picture it opened with rather than cutting away from it.
+
+     800vh of advancing scroll against 464 frames is 15.5 px/frame on a 900px
+     viewport — the same scrub density as film one, which is what makes the
+     two feel like one instrument under the hand. Matching px/frame is what
+     matters; fps is an artefact of how long each film is. */
+  var SEGMENTS_2 = build([
+    { section: "horizon", weight: 700 },
+    { section: "close",   weight: 100 },
+    { section: "close",   weight: 180, hold: true }
+  ]);
+
+  FilmScrub.create({
+    canvas: document.getElementById("filmcanvas-1"),
+    trigger: document.getElementById("film-range"),
+    // Inlined rather than fetched: one less round trip, and it works from a
+    // file:// copy where fetch() would be blocked by CORS.
+    manifest: { count: 289, pattern: "frames/f%04d.webp" },
+    segments: SEGMENTS,
+    // Film one: the footage is the subject, so one light scrim throughout.
+    scrim: function (ctx, w, h) {
+      var v = ctx.createLinearGradient(0, 0, 0, h);
+      v.addColorStop(0, "rgba(3,6,13,0.36)");
+      v.addColorStop(0.42, "rgba(4,10,22,0.12)");
+      v.addColorStop(1, "rgba(3,6,13,0.46)");
+      ctx.fillStyle = v; ctx.fillRect(0, 0, w, h);
+      var side = ctx.createLinearGradient(0, 0, w * 0.68, 0);
+      side.addColorStop(0, "rgba(3,6,13,0.36)");
+      side.addColorStop(1, "rgba(3,6,13,0)");
+      ctx.fillStyle = side; ctx.fillRect(0, 0, w, h);
+    }
+  });
+
+  FilmScrub.create({
+    canvas: document.getElementById("filmcanvas-2"),
+    trigger: document.getElementById("film-range-2"),
+    manifest: { count: 464, pattern: "frames-2/f%04d.webp" },
+    segments: SEGMENTS_2,
+    /* Film two opens as light as film one and deepens across its run, because
+       the sign-off sits on the last frames and white type has to hold there.
+       `p` is the scrub progress, so the darkening tracks the film rather than
+       the clock. The centred pool is for Act X's lines, which sit dead centre
+       over a lit city where a corner-to-corner gradient does nothing. */
+    scrim: function (ctx, w, h, p) {
+      var d = p * 0.2;
+      var v = ctx.createLinearGradient(0, 0, 0, h);
+      v.addColorStop(0, "rgba(3,6,13," + (0.42 + d).toFixed(3) + ")");
+      v.addColorStop(0.44, "rgba(4,10,22," + (0.18 + d * 0.9).toFixed(3) + ")");
+      v.addColorStop(1, "rgba(3,6,13," + (0.5 + d).toFixed(3) + ")");
+      ctx.fillStyle = v; ctx.fillRect(0, 0, w, h);
+      var side = ctx.createLinearGradient(0, 0, w * 0.7, 0);
+      side.addColorStop(0, "rgba(3,6,13," + (0.3 + d * 0.7).toFixed(3) + ")");
+      side.addColorStop(1, "rgba(3,6,13,0)");
+      ctx.fillStyle = side; ctx.fillRect(0, 0, w, h);
+      var pool = ctx.createRadialGradient(w * 0.5, h * 0.5, 0, w * 0.5, h * 0.5, Math.max(w, h) * 0.52);
+      pool.addColorStop(0, "rgba(3,6,13,0.46)");
+      pool.addColorStop(0.55, "rgba(3,6,13,0.3)");
+      pool.addColorStop(1, "rgba(3,6,13,0)");
+      ctx.fillStyle = pool; ctx.fillRect(0, 0, w, h);
+    },
+    /* 464 frames. Streaming them from the top of the page would put them in
+       the same queue as the opening film's 289 and the opening act — the one
+       thing here that has to be instant — would be what gives way. Frame 0 is
+       still fetched at once so the canvas is never empty; the rest start when
+       the range is within three screens, or after 15s, whichever comes first. */
+    holdStream: function (go) {
+      var done = false, t = null, trigger = document.getElementById("film-range-2");
+      function release() {
+        if (done) return;
+        done = true;
+        window.removeEventListener("scroll", onScroll);
+        clearTimeout(t);
+        go();
+      }
+      function onScroll() {
+        if (trigger.getBoundingClientRect().top < window.innerHeight * 3) release();
+      }
+      t = setTimeout(release, 15000);
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+    }
+  });
+})();
+</script>

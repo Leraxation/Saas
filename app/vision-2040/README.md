@@ -203,3 +203,21 @@ instant.
 | A frame manifest is missing | That canvas stays empty; the procedural stage carries the act |
 | Frames are still downloading | The nearest decoded frame is held rather than blanking; it resolves as the stream lands |
 | `prefers-reduced-motion` | Each canvas holds a single frame; the page scrolls normally |
+
+### The single-file build
+
+`public/vision2040/deck.html` is the whole presentation as one framework-free
+HTML file — same content, same engine, same two films, no Next.js and no build
+step. It resolves `frames/` and `frames-2/` relative to itself, so it works
+from `public/vision2040/` unchanged, and it is what gets deployed anywhere the
+Next app cannot go.
+
+It carries its own `<meta charset="utf-8">`. That is not decoration: served
+standalone without it, every Arabic string on the page renders as mojibake —
+the masthead, the sign-off, the Act X kicker. The Next app never had the
+problem because `next/font` and the App Router emit the charset for it.
+
+Verified against the native fallback driver (GSAP blocked at the network
+level), which is the harder case: exactly one film paints at any scroll
+position, film two maps 1 → 463 across its range and holds the last frame
+through the sign-off, and no segment-weight warnings.
