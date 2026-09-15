@@ -1,47 +1,68 @@
 #!/usr/bin/env node
 /**
- * Turns a 360 orbit render into the JPEG sequence the garage canvas scrubs.
+ * Turns a Higgsfield reveal clip into the assets the scroll canvas consumes.
  *
- *   node scripts/extract-frames.mjs <slug> <video: path or https URL> [frames] [width]
+ *   node scripts/extract-frames.mjs <part> <video: path or URL> [frames] [width]
  *
- * Writes public/garage/<slug>/frames/0001.jpg ... and the reveal.json manifest
- * that VehicleReveal reads. Re-running replaces the previous sequence.
+ * Writes, under public/vehicles/<part>/:
+ *   reveal.mp4     the clip itself (copied in, so the repo is self-contained)
+ *   frames/NNNN.jpg  the scrubbed sequence
+ *   poster.jpg     first frame, used by the no-WebGL fallback
+ *   reveal.json    the manifest components/scroll-canvas/revealSource.ts reads
+ *
+ * Re-running replaces that part's previous sequence.
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync, readdirSync, existsSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 
 const require = createRequire(import.meta.url);
 const ffmpeg = require("ffmpeg-static");
 
-const [, , slug, source, framesArg = "120", widthArg = "1440"] = process.argv;
+const [, , part, source, framesArg = "120", widthArg = "1600"] = process.argv;
 
-if (!slug || !source) {
-  console.error("usage: node scripts/extract-frames.mjs <slug> <video> [frames] [width]");
+if (!part || !source) {
+  console.error("usage: node scripts/extract-frames.mjs <part> <video> [frames] [width]");
+  console.error("example: node scripts/extract-frames.mjs part-1 ./vrod-reveal.mp4 120 1600");
+  process.exit(1);
+}
+
+if (!/^part-\d+$/.test(part)) {
+  console.error(`"${part}" is not a part id — expected something like part-1`);
   process.exit(1);
 }
 
 const frames = Number(framesArg);
 const width = Number(widthArg);
-const outDir = path.join("public", "garage", slug, "frames");
+const partDir = path.join("public", "vehicles", part);
+const framesDir = path.join(partDir, "frames");
 
-rmSync(outDir, { recursive: true, force: true });
-mkdirSync(outDir, { recursive: true });
-
-// Probe duration so the sequence spans the whole orbit evenly.
-const probe = execFileSync(ffmpeg, ["-i", source], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] })
-  .toString();
-const durMatch = /Duration:\s*(\d+):(\d+):(\d+\.\d+)/.exec(probe);
-if (!durMatch) {
-  console.error("could not read duration from", source);
+if (!existsSync(partDir)) {
+  console.error(`${partDir} does not exist — add the part's source photos first`);
   process.exit(1);
 }
+
+rmSync(framesDir, { recursive: true, force: true });
+mkdirSync(framesDir, { recursive: true });
+
+// ffmpeg reports metadata on stderr and exits non-zero with no output file.
+const probe = execFileSync(ffmpeg, ["-i", source], {
+  encoding: "utf8",
+  stdio: ["ignore", "pipe", "pipe"],
+}).toString();
+
+const durationMatch = /Duration:\s*(\d+):(\d+):(\d+\.\d+)/.exec(probe);
+if (!durationMatch) {
+  console.error("could not read a duration from", source);
+  process.exit(1);
+}
+
 const duration =
-  Number(durMatch[1]) * 3600 + Number(durMatch[2]) * 60 + Number(durMatch[3]);
+  Number(durationMatch[1]) * 3600 + Number(durationMatch[2]) * 60 + Number(durationMatch[3]);
 const fps = frames / duration;
 
-console.log(`${slug}: ${duration.toFixed(2)}s → ${frames} frames @ ${fps.toFixed(3)} fps`);
+console.log(`${part}: ${duration.toFixed(2)}s -> ${frames} frames @ ${fps.toFixed(3)} fps`);
 
 execFileSync(
   ffmpeg,
@@ -51,35 +72,51 @@ execFileSync(
     "-vf", `fps=${fps},scale=${width}:-2:flags=lanczos`,
     "-q:v", "4",
     "-frames:v", String(frames),
-    path.join(outDir, "%04d.jpg"),
+    path.join(framesDir, "%04d.jpg"),
   ],
   { stdio: "inherit" },
 );
 
-const written = readdirSync(outDir).filter((f) => f.endsWith(".jpg")).sort();
+const written = readdirSync(framesDir).filter((f) => f.endsWith(".jpg")).sort();
 if (!written.length) {
   console.error("ffmpeg produced no frames");
   process.exit(1);
 }
 
-// The poster doubles as the section's fallback still.
-const posterSrc = path.join(outDir, written[0]);
-const posterDest = path.join("public", "garage", slug, "poster.jpg");
-if (existsSync(posterSrc)) {
-  execFileSync(ffmpeg, ["-y", "-i", posterSrc, "-q:v", "3", posterDest], { stdio: "ignore" });
+// Keep the clip alongside the frames: the lite tier scrubs it instead of
+// holding a decoded sequence in memory.
+const localVideo = path.join(partDir, "reveal.mp4");
+if (path.resolve(source) !== path.resolve(localVideo) && existsSync(source)) {
+  copyFileSync(source, localVideo);
 }
 
-const manifest = {
-  mode: "frames",
-  count: written.length,
-  pattern: `/garage/${slug}/frames/%04d.jpg`,
-  width,
-  height: Math.round(width * 9 / 16),
-  generatedAt: new Date().toISOString(),
-};
-writeFileSync(
-  path.join("public", "garage", slug, "reveal.json"),
-  JSON.stringify(manifest, null, 2) + "\n",
+execFileSync(
+  ffmpeg,
+  ["-y", "-i", path.join(framesDir, written[0]), "-q:v", "3", path.join(partDir, "poster.jpg")],
+  { stdio: "ignore" },
 );
 
-console.log(`${slug}: wrote ${written.length} frames + reveal.json`);
+const dimensions = /,\s(\d{2,5})x(\d{2,5})[\s,]/.exec(probe);
+
+writeFileSync(
+  path.join(partDir, "reveal.json"),
+  JSON.stringify(
+    {
+      mode: "frames",
+      part,
+      count: written.length,
+      pattern: `/vehicles/${part}/frames/%04d.jpg`,
+      video: `/vehicles/${part}/reveal.mp4`,
+      width,
+      height: Math.round(
+        dimensions ? (width * Number(dimensions[2])) / Number(dimensions[1]) : (width * 9) / 16,
+      ),
+      sourceDuration: Number(duration.toFixed(3)),
+      generatedAt: new Date().toISOString(),
+    },
+    null,
+    2,
+  ) + "\n",
+);
+
+console.log(`${part}: wrote ${written.length} frames, poster.jpg and reveal.json`);
