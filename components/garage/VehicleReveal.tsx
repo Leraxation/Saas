@@ -28,7 +28,7 @@ export default function VehicleReveal({ vehicle, index }: Props) {
   const dialRef = useRef<HTMLDivElement>(null);
   const angleRef = useRef<HTMLSpanElement>(null);
 
-  const [source, setSource] = useState<RevealSource>({ mode: "stills", frames: vehicle.stills });
+  const [source, setSource] = useState<RevealSource>({ mode: "stills", frames: vehicle.scrub });
   const [loadPct, setLoadPct] = useState(0);
   const [ready, setReady] = useState(false);
   const framesRef = useRef<HTMLImageElement[]>([]);
@@ -39,7 +39,7 @@ export default function VehicleReveal({ vehicle, index }: Props) {
     let cancelled = false;
 
     (async () => {
-      const resolved = await loadRevealSource(vehicle.slug, vehicle.stills, ctrl.signal);
+      const resolved = await loadRevealSource(vehicle.slug, vehicle.scrub, ctrl.signal);
       if (cancelled) return;
       setSource(resolved);
 
@@ -86,7 +86,7 @@ export default function VehicleReveal({ vehicle, index }: Props) {
       cancelled = true;
       ctrl.abort();
     };
-  }, [vehicle.slug, vehicle.stills]);
+  }, [vehicle.slug, vehicle.scrub]);
 
   // Scroll-driven render loop. Everything here mutates the DOM directly —
   // running this through React state would re-render on every frame.
@@ -236,11 +236,11 @@ export default function VehicleReveal({ vehicle, index }: Props) {
       // Scrim under the headline block, faded in with the text itself.
       const scrim = span(p, COVER_PHASE * 0.55, COVER_PHASE + 0.1);
       if (scrim > 0) {
-        const sg = ctx.createLinearGradient(0, cssH * 0.38, 0, cssH);
+        const sg = ctx.createLinearGradient(0, cssH * 0.26, 0, cssH);
         sg.addColorStop(0, "rgba(0,0,0,0)");
-        sg.addColorStop(1, `rgba(0,0,0,${0.82 * scrim})`);
+        sg.addColorStop(1, `rgba(0,0,0,${0.88 * scrim})`);
         ctx.fillStyle = sg;
-        ctx.fillRect(0, cssH * 0.38, cssW, cssH * 0.62);
+        ctx.fillRect(0, cssH * 0.26, cssW, cssH * 0.74);
       }
     };
 

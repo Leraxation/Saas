@@ -20,6 +20,11 @@ export type Vehicle = {
   specs: Spec[];
   /** Ordered stills; [0] is the poster used before the reveal media loads */
   stills: string[];
+  /**
+   * Subset of `stills` used for scroll scrubbing before a 360 render exists.
+   * Portrait shots crop badly full-bleed, so they stay on the contact sheet only.
+   */
+  scrub: string[];
 };
 
 /**
@@ -54,6 +59,12 @@ export const VEHICLES: Vehicle[] = [
       "/garage/vrod-muscle/stills/04-rear.jpg",
       "/garage/vrod-muscle/stills/02-beach-profile.jpg",
     ],
+    scrub: [
+      "/garage/vrod-muscle/stills/05-right-profile-sunlit.jpg",
+      "/garage/vrod-muscle/stills/03-front-quarter.jpg",
+      "/garage/vrod-muscle/stills/01-rear-quarter.jpg",
+      "/garage/vrod-muscle/stills/04-rear.jpg",
+    ],
   },
   {
     slug: "ferrari-458",
@@ -81,6 +92,12 @@ export const VEHICLES: Vehicle[] = [
       "/garage/ferrari-458/stills/01-rear-workshop.jpg",
       "/garage/ferrari-458/stills/04-engine-bay.jpg",
       "/garage/ferrari-458/stills/05-garage-wide.jpg",
+    ],
+    scrub: [
+      "/garage/ferrari-458/stills/02-side-profile.jpg",
+      "/garage/ferrari-458/stills/03-rear-quarter-garage.jpg",
+      "/garage/ferrari-458/stills/01-rear-workshop.jpg",
+      "/garage/ferrari-458/stills/04-engine-bay.jpg",
     ],
   },
 ];
