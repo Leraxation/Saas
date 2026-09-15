@@ -104,10 +104,10 @@ const FRAGMENT = /* glsl */ `
    * spec table keep contrast over a bright floor or a blown-out sky.
    */
   vec3 applyScrim(vec3 colour, float strength) {
-    float lower = 1.0 - smoothstep(0.0, 0.74, vUv.y);
+    float lower = 1.0 - smoothstep(0.0, 0.80, vUv.y);
     float upper = smoothstep(0.86, 1.0, vUv.y);
-    float mask = max(lower * 0.88, upper * 0.34) * clamp(strength, 0.0, 1.0);
-    return mix(colour, colour * 0.14, mask);
+    float mask = max(lower * 0.95, upper * 0.34) * clamp(strength, 0.0, 1.0);
+    return mix(colour, colour * 0.11, mask);
   }
 
   vec3 sampleVehicle(sampler2D tex, vec2 size, float cover, vec3 accent, float scrim) {

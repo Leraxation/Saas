@@ -191,8 +191,9 @@ export default function ScrollCanvas({ vehicles }: Props) {
         stage.setTextures("B", a.texture, a.size, vehicles[activeIndex].accent);
       }
 
-      // The scrim tracks the overlay's own fade, so type and backdrop arrive together.
-      const overlayIn = span(p, COVER_PHASE * 0.55, COVER_PHASE + 0.1) * (1 - span(p, 0.9, 1));
+      // The scrim leads the type: the ground settles first, then the headline
+      // arrives onto a prepared backdrop rather than onto a bright floor.
+      const overlayIn = span(p, COVER_PHASE * 0.35, COVER_PHASE + 0.02) * (1 - span(p, 0.9, 1));
 
       stage.setState(
         { a: span(p, 0, COVER_PHASE), b: 0 },
