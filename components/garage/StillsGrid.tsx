@@ -3,8 +3,24 @@ import type { Vehicle } from "@/lib/garage/vehicles";
 /** Closing contact sheet — every frame the collection was built from. */
 export default function StillsGrid({ vehicles }: { vehicles: Vehicle[] }) {
   return (
-    <section className="relative bg-[#050506] px-6 py-24 md:px-12 md:py-36">
-      <div className="mx-auto max-w-7xl">
+    <section className="relative isolate overflow-hidden bg-[#050506] px-6 py-24 md:px-12 md:py-36">
+      {/* Background plate, far enough back that the grid still reads */}
+      <div
+        className="absolute inset-0 -z-10 bg-cover bg-fixed opacity-[0.38]"
+        style={{
+          backgroundImage: "url('/garage/vrod-muscle/stills/03-front-quarter.jpg')",
+          backgroundPosition: "center 40%",
+          filter: "grayscale(0.85) brightness(0.3)",
+        }}
+      />
+      <div
+        className="absolute inset-0 -z-10"
+        style={{
+          background:
+            "linear-gradient(180deg, #050506 0%, rgba(5,5,6,0.72) 34%, rgba(5,5,6,0.88) 100%)",
+        }}
+      />
+      <div className="relative mx-auto max-w-7xl">
         <p className="font-mono text-[10px] uppercase tracking-[0.5em] text-white/35">
           Contact sheet
         </p>

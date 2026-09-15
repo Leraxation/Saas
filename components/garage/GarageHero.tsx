@@ -10,6 +10,7 @@ export default function GarageHero({ count }: { count: number }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const cueRef = useRef<HTMLDivElement>(null);
+  const plateRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -26,6 +27,7 @@ export default function GarageHero({ count }: { count: number }) {
         innerRef.current.style.transform = `translateY(${-p * 60}px) scale(${1 - p * 0.06})`;
       }
       if (cueRef.current) cueRef.current.style.opacity = String(1 - p * 3);
+      if (plateRef.current) plateRef.current.style.transform = `scale(${1.06 + p * 0.06})`;
     };
 
     raf = requestAnimationFrame(tick);
@@ -35,12 +37,22 @@ export default function GarageHero({ count }: { count: number }) {
   return (
     <section ref={rootRef} className="relative h-[180vh] bg-[#050506]">
       <div className="sticky top-0 grid h-screen place-items-center overflow-hidden">
-        {/* Slow sweep of light across the empty floor */}
+        {/* The collection itself, held well back behind the title */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.55]"
+          ref={plateRef}
+          className="pointer-events-none absolute inset-0 bg-cover opacity-[0.55]"
+          style={{
+            backgroundImage: "url('/garage/ferrari-458/stills/01-rear-workshop.jpg')",
+            backgroundPosition: "center 58%",
+            filter: "grayscale(0.72) contrast(1.08) brightness(0.42)",
+            willChange: "transform",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(120% 70% at 50% 120%, rgba(255,255,255,0.11) 0%, rgba(0,0,0,0) 60%)",
+              "radial-gradient(120% 70% at 50% 120%, rgba(255,255,255,0.11) 0%, rgba(0,0,0,0) 60%), radial-gradient(96% 76% at 50% 44%, rgba(5,5,6,0.32) 0%, rgba(5,5,6,0.93) 78%)",
           }}
         />
         <div
