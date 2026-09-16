@@ -48,6 +48,15 @@ and both live on each vehicle's `brief` in the manifest.
 > the silhouette from the background, subtle volumetric fog, deep charcoal
 > negative space, no text, no people, no other vehicles
 
+**Fixed unveiling clause** — identical in every prompt. The attendant is
+deliberately anonymous: seen from behind and in silhouette, face never visible,
+so no real person's likeness appears in generated footage.
+
+> a single attendant in a dark suit, seen only from behind and in silhouette
+> with the face never visible, steps into frame, takes the edge of the cover and
+> draws it smoothly off the vehicle in one continuous motion, the fabric
+> rippling and lifting away, then walks out of frame
+
 **Fixed camera and action clause** — identical in every prompt:
 
 > smooth continuous 360 degree orbit around the vehicle at low hero height,
@@ -83,9 +92,16 @@ Cost at time of writing: **90 credits** per clip at 1080p, 65 at 720p.
 
 ### Extraction
 
+The clip source may be a local path or the https result URL Higgsfield returns —
+a remote source is fetched to `reveal.mp4` before extraction.
+
 ```bash
-node scripts/extract-frames.mjs part-1 ./vrod-reveal.mp4 120 1600
+node scripts/extract-frames.mjs part-1 https://.../reveal.mp4 120 1600
 ```
+
+Note: generated media cannot be pulled into this repo from a Claude Code web
+session — the egress proxy denies the Higgsfield CDN by policy. Run the command
+above locally, where the CDN is reachable.
 
 120 frames over 10s is one frame per ~83ms of clip — dense enough that scrubbing
 reads as continuous motion, and about 4–6 MB per vehicle at `-q:v 4`. Raise the
