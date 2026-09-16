@@ -13,10 +13,8 @@ export type Capabilities = {
   reducedMotion: boolean;
   /** Bloom and grain are the first things dropped on the lite tier. */
   postProcessing: boolean;
-  /** Scrub the mp4 instead of holding a decoded frame sequence in memory. */
+  /** Cut the sheet from the mp4 rather than from an ingested frame sequence. */
   preferVideo: boolean;
-  /** Keep every Nth frame when preloading a sequence. */
-  frameStride: number;
   maxPixelRatio: number;
 };
 
@@ -41,7 +39,6 @@ export function detectCapabilities(): Capabilities {
       reducedMotion: false,
       postProcessing: false,
       preferVideo: false,
-      frameStride: 1,
       maxPixelRatio: 1,
     };
   }
@@ -64,7 +61,6 @@ export function detectCapabilities(): Capabilities {
       reducedMotion,
       postProcessing: false,
       preferVideo: false,
-      frameStride: 1,
       maxPixelRatio: 1,
     };
   }
@@ -75,7 +71,6 @@ export function detectCapabilities(): Capabilities {
     reducedMotion,
     postProcessing: !lite && !reducedMotion,
     preferVideo: lite,
-    frameStride: lite ? 2 : 1,
     maxPixelRatio: lite ? 1.5 : 2,
   };
 }

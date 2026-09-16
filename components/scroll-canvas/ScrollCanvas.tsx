@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { Vehicle } from "@/lib/vehicles/manifest";
 import { detectCapabilities, type Capabilities } from "./capabilities";
+import { tileSize } from "./frameSheet";
 import { loadRevealSource } from "./revealSource";
 import { RevealStage } from "./RevealStage";
 import { useSmoothScroll } from "./useSmoothScroll";
@@ -16,8 +17,8 @@ import { VehicleTextures } from "./VehicleTextures";
  * each one arrives out of the dark and leaves the same way.
  */
 const FADE = 0.10;
-/** Share of the lit window spent lifting the cover before the orbit runs on. */
-const COVER_PHASE = 0.26;
+/** Where the cover has finished coming off in the clip, as a share of it. */
+const REVEAL_PHASE = 0.62;
 
 const clamp01 = (n: number) => (n < 0 ? 0 : n > 1 ? 1 : n);
 const span = (v: number, a: number, b: number) => clamp01((v - a) / (b - a));
@@ -48,6 +49,8 @@ export default function ScrollCanvas({ vehicles }: Props) {
     gsap.registerPlugin(ScrollTrigger);
 
     const stage = new RevealStage(canvas, caps);
+    // One sheet per vehicle, sized to what this GPU will actually hold.
+    const tile = tileSize(stage.maxTextureSize, caps.tier !== "full");
     const textures = new Map<number, VehicleTextures>();
     const sections: HTMLElement[] = vehicles
       .map((v) => document.querySelector<HTMLElement>(`[data-vehicle-section="${v.id}"]`))
@@ -78,14 +81,14 @@ export default function ScrollCanvas({ vehicles }: Props) {
         if (textures.has(i)) return;
 
         // Claim the slot immediately so a second pass does not double-load it.
-        const pending = new VehicleTextures({ mode: "none" }, caps.frameStride);
+        const pending = new VehicleTextures({ mode: "none" }, tile);
         textures.set(i, pending);
 
         void (async () => {
           const source = await loadRevealSource(vehicles[i], { preferVideo: caps.preferVideo });
           if (disposed || textures.get(i) !== pending) return;
 
-          const resolved = new VehicleTextures(source, caps.frameStride);
+          const resolved = new VehicleTextures(source, tile);
           const isPrimary = i === activeIndex;
           await resolved.load(isPrimary ? (p) => setLoadPct(Math.round(p * 100)) : undefined);
 
@@ -118,8 +121,8 @@ export default function ScrollCanvas({ vehicles }: Props) {
       const root = document.querySelector<HTMLElement>(`[data-overlay="${id}"]`);
       if (!root) return;
 
-      const shown = visible ? span(progress, COVER_PHASE * 0.55, COVER_PHASE + 0.1) * fade : 0;
-      const specs = visible ? span(progress, COVER_PHASE + 0.06, COVER_PHASE + 0.3) * fade : 0;
+      const shown = visible ? span(progress, REVEAL_PHASE * 0.55, REVEAL_PHASE + 0.1) * fade : 0;
+      const specs = visible ? span(progress, REVEAL_PHASE + 0.06, REVEAL_PHASE + 0.3) * fade : 0;
       const out = 1 - span(progress, 0.9, 1);
 
       root.style.opacity = String(shown * out);
@@ -195,23 +198,25 @@ export default function ScrollCanvas({ vehicles }: Props) {
       const vA = vehicles[activeIndex];
       const vB = vehicles[activeIndex + 1];
 
+      let at = 0;
       if (a) {
-        a.seek(shot);
-        stage.setTextures("A", a.texture, a.size, vA.accent, vA.silhouette, !a.ready);
+        at = a.at(shot);
+        stage.setTextures("A", a.texture, a.size, a.grid);
         // Both slots hold the same vehicle: the handover is through black now,
         // so nothing needs to be mixed across the boundary.
-        stage.setTextures("B", a.texture, a.size, vA.accent, vA.silhouette, !a.ready);
+        stage.setTextures("B", a.texture, a.size, a.grid);
       }
       void b;
+      void vA;
       void vB;
 
       // The scrim leads the type: the ground settles first, then the headline
       // arrives onto a prepared backdrop rather than onto a bright floor.
       const overlayIn =
-        span(shot, COVER_PHASE * 0.35, COVER_PHASE + 0.02) * (1 - span(shot, 0.9, 1));
+        span(shot, REVEAL_PHASE * 0.35, REVEAL_PHASE + 0.02) * (1 - span(shot, 0.9, 1));
 
       stage.setState(
-        { a: span(shot, 0, COVER_PHASE), b: 0 },
+        { a: at, b: at },
         { a: overlayIn, b: 0 },
         0,
         gsap.ticker.time,

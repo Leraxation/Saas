@@ -67,9 +67,9 @@ export type Vehicle = {
   /** Section accent, used for the rail, tagline and bloom tint. */
   accent: string;
   /**
-   * Which body shape the cover is cut to, and which stand-in form is drawn
-   * before a render exists. The cover has to fit the vehicle or it reads as a
-   * curtain rather than something tailored to the car underneath.
+   * Body shape, recorded so a re-render can describe the vehicle and cut its
+   * cover to the right form. The reveal itself comes from the generated clip,
+   * so nothing on the page draws from this.
    */
   silhouette: "motorcycle" | "car" | "truck";
   /** Manufacturer published figures for the model, not readings from this car. */
