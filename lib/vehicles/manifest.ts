@@ -66,6 +66,12 @@ export type Vehicle = {
   colour: string;
   /** Section accent, used for the rail, tagline and bloom tint. */
   accent: string;
+  /**
+   * Which body shape the cover is cut to, and which stand-in form is drawn
+   * before a render exists. The cover has to fit the vehicle or it reads as a
+   * curtain rather than something tailored to the car underneath.
+   */
+  silhouette: "motorcycle" | "car" | "truck";
   /** Manufacturer published figures for the model, not readings from this car. */
   specs: Spec[];
   /** Every upload part that contributed photos of this vehicle. */
@@ -111,6 +117,7 @@ export const VEHICLES: Vehicle[] = [
     plate: "Oman · LK 8728",
     colour: "Vivid Black",
     accent: "#c8a24a",
+    silhouette: "motorcycle",
     specs: [
       { label: "Engine", value: "1250cc Revolution 60° V-twin" },
       { label: "Cooling", value: "Liquid-cooled DOHC, 4v" },
@@ -161,6 +168,7 @@ export const VEHICLES: Vehicle[] = [
     plate: "Oman · 247 AR",
     colour: "Rosso Corsa",
     accent: "#e2231a",
+    silhouette: "car",
     specs: [
       { label: "Engine", value: "4.5L V8, F136 F" },
       { label: "Aspiration", value: "Naturally aspirated" },
@@ -206,6 +214,7 @@ export const VEHICLES: Vehicle[] = [
       "A Gladiator is a Wrangler that decided it needed a bed, and this one has been taken considerably further: a long-travel suspension lifting it clear of its own arches, forty-inch mud-terrains on beadlock-style wheels, a winch bumper and light bar up front, and a rooftop tent over a bed rack carrying recovery boards and fuel. Painted in red over black with the Desert Chief mark on the flank, it is equipped to leave the tarmac and stay gone.",
     colour: "Firecracker Red",
     accent: "#e08b3a",
+    silhouette: "truck",
     specs: [
       { label: "Engine", value: "3.6L Pentastar V6" },
       { label: "Power", value: "285 hp @ 6,400 rpm" },

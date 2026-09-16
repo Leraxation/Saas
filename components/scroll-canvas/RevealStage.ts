@@ -15,6 +15,15 @@ import type { RevealSource } from "./revealSource";
  * passes through tone mapping and bloom with everything else.
  */
 
+export type SilhouetteKind = "motorcycle" | "car" | "truck";
+
+/** Profile index handed to the shader. */
+const SILHOUETTE_KIND: Record<SilhouetteKind, number> = {
+  motorcycle: 0,
+  car: 1,
+  truck: 2,
+};
+
 export type StageVehicle = {
   id: string;
   accent: string;
@@ -49,15 +58,21 @@ const FRAGMENT = /* glsl */ `
   uniform float uBlend;
   uniform float uCoverA;
   uniform float uCoverB;
-  uniform vec3 uAccentA;
-  uniform vec3 uAccentB;
   uniform float uScrimA;
   uniform float uScrimB;
+  uniform float uKindA;
+  uniform float uKindB;
+  uniform float uStandInA;
+  uniform float uStandInB;
+  uniform vec3 uAccentA;
+  uniform vec3 uAccentB;
   uniform float uTime;
 
   varying vec2 vUv;
 
   const float PI = 3.141592653589793;
+  /** Where the vehicle meets the floor, in uv space. */
+  const float GROUND = 0.30;
 
   /** Crops a texture to fill the viewport, preserving its aspect. */
   vec2 coverUv(vec2 uv, vec2 texSize) {
@@ -69,34 +84,152 @@ const FRAGMENT = /* glsl */ `
     return (uv - 0.5) * scale + 0.5;
   }
 
-  float easeOutCubic(float t) {
-    return 1.0 - pow(1.0 - t, 3.0);
+  float easeOutCubic(float t) { return 1.0 - pow(1.0 - t, 3.0); }
+
+  /** Scene space: origin at the vehicle's contact patch, 1.0 = viewport height. */
+  vec2 sceneSpace(vec2 uv) {
+    return vec2((uv.x - 0.5) * (uResolution.x / uResolution.y), uv.y - GROUND);
+  }
+
+  float sdRoundBox(vec2 p, vec2 b, float r) {
+    vec2 d = abs(p) - b + r;
+    return min(max(d.x, d.y), 0.0) + length(max(d, 0.0)) - r;
+  }
+
+  float smin(float a, float b, float k) {
+    float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+    return mix(b, a, h) - k * h * (1.0 - h);
   }
 
   /**
-   * The cover: an opaque sheet whose lower edge sweeps up and off the vehicle.
-   * Returns x = how much of this pixel is cloth, y = proximity to the lit edge.
+   * Body of the vehicle as a signed distance, built from rounded boxes so it
+   * has a roofline, a cabin and squared ends rather than reading as a mound.
    */
-  vec2 clothMask(vec2 uv, float t) {
-    float e = easeOutCubic(clamp(t, 0.0, 1.0));
-    float edge = -0.12 + e * 1.44;
-    float amp = 0.03 * (1.0 - e) + 0.009;
-    float wave = sin(e * PI * 2.0 + uv.x * PI * 2.4) * amp;
-    float y = edge + wave;
-    float cloth = smoothstep(y - 0.004, y + 0.004, uv.y);
-    float rim = 1.0 - smoothstep(0.0, 0.016, abs(uv.y - y));
-    return vec2(cloth, rim);
+  float sdBody(vec2 s, float kind) {
+    if (kind < 0.5) {
+      // Motorcycle: short, tall, tank and seat over a compact mass.
+      float mass = sdRoundBox(s - vec2(0.00, 0.245), vec2(0.130, 0.090), 0.075);
+      float tank = sdRoundBox(s - vec2(-0.040, 0.320), vec2(0.100, 0.050), 0.045);
+      float tail = sdRoundBox(s - vec2(0.145, 0.305), vec2(0.100, 0.028), 0.026);
+      return smin(smin(mass, tank, 0.05), tail, 0.05);
+    }
+    if (kind < 1.5) {
+      // Car: long and low, cabin set back, tapering nose.
+      float lower = sdRoundBox(s - vec2(0.00, 0.155), vec2(0.520, 0.085), 0.065);
+      float cabin = sdRoundBox(s - vec2(0.060, 0.268), vec2(0.200, 0.072), 0.085);
+      return smin(lower, cabin, 0.075);
+    }
+    // Truck: taller and squarer, cab forward, rack standing over the bed.
+    float body = sdRoundBox(s - vec2(0.00, 0.235), vec2(0.520, 0.130), 0.045);
+    float cab = sdRoundBox(s - vec2(-0.090, 0.395), vec2(0.245, 0.105), 0.050);
+    float rack = sdRoundBox(s - vec2(0.250, 0.430), vec2(0.230, 0.045), 0.020);
+    return smin(smin(body, cab, 0.05), rack, 0.04);
   }
 
-  /** Folded fabric: vertical bands plus the shape pressing up underneath. */
-  vec3 clothColour(vec2 uv, float t) {
+  /** Wheel centres and radius for a profile. */
+  vec3 wheelSpec(float kind) {
+    if (kind < 0.5) return vec3(0.240, 0.105, 0.105);
+    if (kind < 1.5) return vec3(0.345, 0.090, 0.090);
+    return vec3(0.355, 0.125, 0.125);
+  }
+
+  float sdWheels(vec2 s, float kind) {
+    vec3 spec = wheelSpec(kind);
+    float a = length(s - vec2(-spec.x, spec.y)) - spec.z;
+    float b = length(s - vec2(spec.x, spec.y)) - spec.z;
+    return min(a, b);
+  }
+
+  /** The whole silhouette the cover is cut to. */
+  float sdVehicle(vec2 s, float kind) {
+    return smin(sdBody(s, kind), sdWheels(s, kind), 0.03);
+  }
+
+  /**
+   * The cover: the vehicle's own silhouette, inflated so the fabric stands off
+   * the body, drawn off from the nose backwards and gathering into a ridge at
+   * the edge that is still being pulled.
+   * Returns x = cloth coverage, y = the lit fold along its edge.
+   */
+  vec2 coverMask(vec2 s, float t, float kind) {
     float e = easeOutCubic(clamp(t, 0.0, 1.0));
-    vec3 base = mix(vec3(0.031, 0.031, 0.043), vec3(0.118, 0.118, 0.145), uv.y * 0.8 + 0.1);
-    float folds = sin(uv.x * PI * 14.0 + e * PI * 2.0) * 0.5 + 0.5;
-    base += (folds - 0.5) * 0.055;
-    float bulge = 1.0 - smoothstep(0.0, 0.62, distance(uv, vec2(0.5, 0.42)));
-    base += bulge * 0.06;
+    // Travels from ahead of the nose to past the tail.
+    float pull = -0.75 + e * 1.75;
+
+    // Fabric stands off the body, and bunches where it is gripped.
+    float gather = exp(-pow((s.x - pull) / 0.17, 2.0));
+    float slack = 0.030 + gather * 0.060;
+
+    float d = sdVehicle(s, kind) - slack;
+    float draped = smoothstep(0.004, -0.004, d);
+    // A long, soft release so the fabric peels rather than cutting off.
+    float remaining = smoothstep(pull - 0.07, pull + 0.13, s.x);
+    // Cloth reaches the floor rather than stopping at the body.
+    float skirt = smoothstep(-0.02, 0.01, s.y);
+
+    float cloth = draped * remaining * skirt;
+    float rim = (1.0 - smoothstep(0.0, 0.016, abs(d))) * remaining * skirt;
+    rim = max(rim, gather * remaining * draped * 0.55);
+    return vec2(clamp(cloth, 0.0, 1.0), clamp(rim, 0.0, 1.0));
+  }
+
+  /** Heavy cloth: shading follows the form it is lying on. */
+  vec3 coverColour(vec2 s, float t, float kind) {
+    float d = sdVehicle(s, kind);
+    float drape = clamp(-d * 5.0, 0.0, 1.0);
+
+    vec3 base = mix(vec3(0.048, 0.046, 0.044), vec3(0.155, 0.150, 0.142), drape);
+    // Creases run over the form, low contrast, never full-height bands.
+    float creases = sin(s.x * 34.0 + s.y * 12.0 + t * 1.5) * 0.5 + 0.5;
+    base += (creases - 0.5) * 0.026;
+    // Light from above catches the crown.
+    base += smoothstep(0.18, 0.42, s.y) * 0.055;
     return base;
+  }
+
+  /**
+   * Stand-in vehicle, drawn only until a render exists for this part. A lit
+   * form under a spotlight, not a portrait — enough that the cover has
+   * something to come off.
+   */
+  vec3 standIn(vec2 s, float kind, vec3 accent) {
+    vec3 col = vec3(0.018, 0.018, 0.022);
+
+    // Pool of light on the floor beneath the vehicle.
+    float pool = exp(-pow(s.x / 0.75, 2.0)) * exp(-pow(s.y / 0.16, 2.0));
+    col += vec3(0.085, 0.085, 0.095) * pool * step(s.y, 0.0);
+
+    float dBody = sdBody(s, kind);
+    float dWheel = sdWheels(s, kind);
+
+    // Reflection, compressed and fading with distance from the contact patch.
+    if (s.y < 0.0) {
+      float dMirror = sdVehicle(vec2(s.x, -s.y * 2.6), kind);
+      col += accent * smoothstep(0.01, -0.02, dMirror) * 0.12
+           * smoothstep(-0.22, 0.0, s.y);
+    }
+
+    // Paint: darker low on the flank, specular along the crown.
+    float body = smoothstep(0.004, -0.004, dBody);
+    float height = clamp(s.y / 0.45, 0.0, 1.0);
+    vec3 paint = mix(accent * 0.10, accent * 0.62, height);
+    paint += pow(height, 5.0) * 0.5;
+    col = mix(col, paint, body);
+
+    // Tyres, then a hint of rim inside them.
+    float wheel = smoothstep(0.004, -0.004, dWheel);
+    col = mix(col, vec3(0.028, 0.027, 0.030), wheel);
+    vec3 spec = wheelSpec(kind);
+    float hubL = length(s - vec2(-spec.x, spec.y));
+    float hubR = length(s - vec2(spec.x, spec.y));
+    float hub = smoothstep(spec.z * 0.55, spec.z * 0.5, min(hubL, hubR));
+    col += hub * 0.16;
+
+    // Rim light separating the silhouette from the dark.
+    float edge = 1.0 - smoothstep(0.0, 0.010, abs(sdVehicle(s, kind)));
+    col += edge * (0.35 + 0.35 * smoothstep(0.1, 0.45, s.y));
+
+    return col;
   }
 
   /**
@@ -110,21 +243,29 @@ const FRAGMENT = /* glsl */ `
     return mix(colour, colour * 0.11, mask);
   }
 
-  vec3 sampleVehicle(sampler2D tex, vec2 size, float cover, vec3 accent, float scrim) {
-    vec2 uv = coverUv(vUv, size);
-    vec3 colour = texture2D(tex, clamp(uv, 0.0, 1.0)).rgb;
+  vec3 sampleVehicle(
+    sampler2D tex, vec2 size, float cover, vec3 accent,
+    float scrim, float kind, float standInAmount
+  ) {
+    vec3 colour;
+    if (standInAmount > 0.5) {
+      colour = standIn(sceneSpace(vUv), kind, accent);
+    } else {
+      vec2 uv = coverUv(vUv, size);
+      colour = texture2D(tex, clamp(uv, 0.0, 1.0)).rgb;
+    }
 
-    vec2 mask = clothMask(vUv, cover);
-    vec3 cloth = clothColour(vUv, cover);
-    colour = mix(colour, cloth, mask.x);
-    // Edge catches light, tinted toward the vehicle's accent as it lifts.
-    colour += mask.y * (0.16 + 0.22 * (1.0 - cover)) * mix(vec3(1.0), accent, 0.35);
+    vec2 s = sceneSpace(vUv);
+    vec2 mask = coverMask(s, cover, kind);
+    colour = mix(colour, coverColour(s, cover, kind), mask.x);
+    colour += mask.y * (0.10 + 0.16 * (1.0 - cover)) * mix(vec3(1.0), accent, 0.30);
+
     return applyScrim(colour, scrim);
   }
 
   void main() {
-    vec3 a = sampleVehicle(uTexA, uSizeA, uCoverA, uAccentA, uScrimA);
-    vec3 b = sampleVehicle(uTexB, uSizeB, uCoverB, uAccentB, uScrimB);
+    vec3 a = sampleVehicle(uTexA, uSizeA, uCoverA, uAccentA, uScrimA, uKindA, uStandInA);
+    vec3 b = sampleVehicle(uTexB, uSizeB, uCoverB, uAccentB, uScrimB, uKindB, uStandInB);
     vec3 colour = mix(a, b, clamp(uBlend, 0.0, 1.0));
     gl_FragColor = vec4(colour, 1.0);
   }
@@ -217,6 +358,10 @@ export class RevealStage {
         uAccentB: { value: new THREE.Color("#ffffff") },
         uScrimA: { value: 0 },
         uScrimB: { value: 0 },
+        uKindA: { value: 1 },
+        uKindB: { value: 1 },
+        uStandInA: { value: 1 },
+        uStandInB: { value: 1 },
         uTime: { value: 0 },
       },
     });
@@ -244,11 +389,16 @@ export class RevealStage {
     texture: THREE.Texture | null,
     size: { width: number; height: number },
     accent: string,
+    silhouette: SilhouetteKind,
+    /** True until a render exists for this part; draws the stand-in form. */
+    standIn: boolean,
   ) {
     const u = this.material.uniforms;
     if (texture) u[`uTex${slot}`].value = texture;
     (u[`uSize${slot}`].value as THREE.Vector2).set(size.width, size.height);
     (u[`uAccent${slot}`].value as THREE.Color).set(accent);
+    u[`uKind${slot}`].value = SILHOUETTE_KIND[silhouette];
+    u[`uStandIn${slot}`].value = standIn ? 1 : 0;
   }
 
   setState(

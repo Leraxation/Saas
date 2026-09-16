@@ -179,16 +179,18 @@ export default function ScrollCanvas({ vehicles }: Props) {
 
       const a = textures.get(activeIndex);
       const b = textures.get(activeIndex + 1);
+      const vA = vehicles[activeIndex];
+      const vB = vehicles[activeIndex + 1];
 
       if (a) {
         a.seek(p);
-        stage.setTextures("A", a.texture, a.size, vehicles[activeIndex].accent);
+        stage.setTextures("A", a.texture, a.size, vA.accent, vA.silhouette, !a.ready);
       }
-      if (b) {
+      if (b && vB) {
         b.seek(0);
-        stage.setTextures("B", b.texture, b.size, vehicles[activeIndex + 1].accent);
+        stage.setTextures("B", b.texture, b.size, vB.accent, vB.silhouette, !b.ready);
       } else if (a) {
-        stage.setTextures("B", a.texture, a.size, vehicles[activeIndex].accent);
+        stage.setTextures("B", a.texture, a.size, vA.accent, vA.silhouette, !a.ready);
       }
 
       // The scrim leads the type: the ground settles first, then the headline
