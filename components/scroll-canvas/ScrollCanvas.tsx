@@ -166,6 +166,14 @@ export default function ScrollCanvas({ vehicles }: Props) {
       const active = sections[activeIndex];
       if (!active) return;
 
+      // Only show the canvas while a vehicle section is actually on screen.
+      // Behind the hero and the closing sheet nothing is drawn, and an undrawn
+      // buffer composites unpredictably.
+      const rect = active.getBoundingClientRect();
+      const onScreen = rect.bottom > 0 && rect.top < window.innerHeight;
+      canvas.style.opacity = onScreen ? "1" : "0";
+      if (!onScreen) return;
+
       const p = progressOf(active);
       const blend = span(p, HANDOVER, 1);
 
@@ -220,7 +228,7 @@ export default function ScrollCanvas({ vehicles }: Props) {
       <canvas
         ref={canvasRef}
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 h-screen w-full"
+        className="pointer-events-none fixed inset-0 -z-10 h-screen w-full bg-[#050506] opacity-0 transition-opacity duration-200"
       />
       {!ready && (
         <div className="pointer-events-none fixed inset-0 z-50 grid place-items-center bg-[#050506]">
