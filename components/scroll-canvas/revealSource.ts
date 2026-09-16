@@ -93,5 +93,20 @@ export async function loadRevealSource(
     return { mode: "hero", urls: [hero], poster: hero };
   }
 
+  // Nothing ingested yet: play the renders straight off Higgsfield's CDN so the
+  // collection shows real footage before anyone runs the ingest script.
+  if (vehicle.remote?.video) {
+    return {
+      mode: "video",
+      src: vehicle.remote.video,
+      width: 1920,
+      height: 1080,
+      poster: vehicle.remote.hero ?? "",
+    };
+  }
+  if (vehicle.remote?.hero) {
+    return { mode: "hero", urls: [vehicle.remote.hero], poster: vehicle.remote.hero };
+  }
+
   return { mode: "none" };
 }

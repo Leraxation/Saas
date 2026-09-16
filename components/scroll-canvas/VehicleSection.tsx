@@ -14,7 +14,7 @@ export default function VehicleSection({ vehicle }: { vehicle: Vehicle }) {
   // Generated hero only. Reference photographs are never served, so there is
   // nothing else this layer could show; until the hero exists the section
   // renders as an empty lit stage.
-  const poster = generatedAsset(vehicle.display.hero);
+  const poster = generatedAsset(vehicle.display.hero) ?? vehicle.remote?.hero ?? null;
 
   return (
     <section

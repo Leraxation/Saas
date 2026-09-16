@@ -82,6 +82,13 @@ export type Vehicle = {
    * files are handled: the section falls back to hero, then to a dark plate.
    */
   display: { hero: string; poster: string };
+  /**
+   * The same renders on Higgsfield's CDN, used until they are ingested locally.
+   * The browser fetches these directly, so the collection shows real footage
+   * before anyone runs scripts/ingest-renders.mjs. These links can expire —
+   * ingesting is what makes the assets permanent.
+   */
+  remote?: { hero?: string; video?: string };
   brief: RevealBrief;
 };
 
@@ -146,6 +153,10 @@ export const VEHICLES: Vehicle[] = [
       hero: "/vehicles/part-1/hero.png",
       poster: "/vehicles/part-1/poster.jpg",
     },
+    remote: {
+      hero: "https://d8j0ntlcm91z4.cloudfront.net/user_3FF4sUHGETln9sIK24fQ8Tj9Uky/hf_20260916_005519_ac7b5fe3-2c48-430d-8020-60b82756ad83.png",
+      video: "https://d8j0ntlcm91z4.cloudfront.net/user_3FF4sUHGETln9sIK24fQ8Tj9Uky/hf_20260916_000914_aa7b4ffc-26f1-4ef1-9b77-2aba3818dd80.mp4",
+    },
     brief: {
       subject:
         "a blacked-out Harley-Davidson V-Rod Muscle power cruiser motorcycle, gloss black bodywork, exposed liquid-cooled V-twin engine, polished forks, fat 240-section rear tyre, twin slash-cut mufflers on the right",
@@ -193,6 +204,10 @@ export const VEHICLES: Vehicle[] = [
       hero: "/vehicles/part-2/hero.png",
       poster: "/vehicles/part-2/poster.jpg",
     },
+    remote: {
+      hero: "https://d8j0ntlcm91z4.cloudfront.net/user_3FF4sUHGETln9sIK24fQ8Tj9Uky/hf_20260916_001436_602a3416-12e9-42ff-a4b7-4e17232bb335.png",
+      video: "https://d8j0ntlcm91z4.cloudfront.net/user_3FF4sUHGETln9sIK24fQ8Tj9Uky/hf_20260916_000914_356dc474-7a7c-4a2d-822f-b48742f495a4.mp4",
+    },
     brief: {
       subject:
         "a Rosso Corsa Ferrari 458 Italia, mid-engined berlinetta, glass engine cover showing the red-crackle V8, triple centre-exit exhaust, diamond-cut five-spoke wheels with red rim pinstripe",
@@ -233,6 +248,10 @@ export const VEHICLES: Vehicle[] = [
     display: {
       hero: "/vehicles/part-4/hero.png",
       poster: "/vehicles/part-4/poster.jpg",
+    },
+    remote: {
+      hero: "https://d8j0ntlcm91z4.cloudfront.net/user_3FF4sUHGETln9sIK24fQ8Tj9Uky/hf_20260916_005519_b0839a2b-975c-430f-8670-e803d5796eb9.png",
+      video: "https://d8j0ntlcm91z4.cloudfront.net/user_3FF4sUHGETln9sIK24fQ8Tj9Uky/hf_20260916_005558_e33e98c1-adfa-4629-8137-7977f469d129.mp4",
     },
     brief: {
       subject:

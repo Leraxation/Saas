@@ -22,7 +22,8 @@ export const metadata: Metadata = {
 export default function CollectionPage() {
   // The hero backdrop is a generated still, like everything else on the page.
   // Null until it has been rendered, which leaves the opener black by design.
-  const heroPlate = generatedAsset(VEHICLES[0].display.hero);
+  const heroPlate =
+    generatedAsset(VEHICLES[0].display.hero) ?? VEHICLES[0].remote?.hero ?? null;
 
   return (
     <main className="relative text-white antialiased">

@@ -36,7 +36,7 @@ export default function SourceSheet({ vehicles }: { vehicles: Vehicle[] }) {
 
         <div className="mt-14 grid gap-10 md:grid-cols-2 xl:grid-cols-3">
           {vehicles.map((vehicle) => {
-            const hero = generatedAsset(vehicle.display.hero);
+            const hero = generatedAsset(vehicle.display.hero) ?? vehicle.remote?.hero ?? null;
             return (
             <article key={vehicle.id}>
               <div className="relative aspect-[16/9] w-full overflow-hidden bg-black/60">
