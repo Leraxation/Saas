@@ -99,6 +99,18 @@ Assembled prompt:
 
 Cost at time of writing: **90 credits** per clip at 1080p, 65 at 720p.
 
+### Ingesting a whole set
+
+`renders.json` at the repo root maps each part to the assets generated for it.
+One command pulls all of them in and cuts the frames:
+
+```bash
+node scripts/ingest-renders.mjs renders.json
+```
+
+The URLs in that file are Higgsfield result links and can expire — regenerate
+the file from the current links if a download 404s.
+
 ### Extraction
 
 The clip source may be a local path or the https result URL Higgsfield returns —
