@@ -13,7 +13,10 @@
  * Re-running replaces that part's previous sequence.
  */
 import { execFileSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync,
+} from "node:fs";
+import { writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 
@@ -24,7 +27,8 @@ const [, , part, source, framesArg = "120", widthArg = "1600"] = process.argv;
 
 if (!part || !source) {
   console.error("usage: node scripts/extract-frames.mjs <part> <video> [frames] [width]");
-  console.error("example: node scripts/extract-frames.mjs part-1 ./vrod-reveal.mp4 120 1600");
+  console.error("  <video> may be a local path or a https URL (e.g. a Higgsfield result)");
+  console.error("example: node scripts/extract-frames.mjs part-1 https://.../reveal.mp4");
   process.exit(1);
 }
 
@@ -46,15 +50,38 @@ if (!existsSync(partDir)) {
 rmSync(framesDir, { recursive: true, force: true });
 mkdirSync(framesDir, { recursive: true });
 
+const localVideo = path.join(partDir, "reveal.mp4");
+
+/**
+ * A Higgsfield result URL is the normal input, so fetch it to reveal.mp4 before
+ * extracting — the manifest points the lite tier at that local file, and
+ * streaming straight from the CDN would leave it missing.
+ */
+async function resolveSource(input) {
+  if (!/^https?:\/\//.test(input)) return input;
+
+  console.log(`fetching ${input}`);
+  const res = await fetch(input);
+  if (!res.ok) {
+    console.error(`download failed: ${res.status} ${res.statusText}`);
+    process.exit(1);
+  }
+  await writeFile(localVideo, Buffer.from(await res.arrayBuffer()));
+  console.log(`saved ${localVideo}`);
+  return localVideo;
+}
+
+const input = await resolveSource(source);
+
 // ffmpeg reports metadata on stderr and exits non-zero with no output file.
-const probe = execFileSync(ffmpeg, ["-i", source], {
+const probe = execFileSync(ffmpeg, ["-i", input], {
   encoding: "utf8",
   stdio: ["ignore", "pipe", "pipe"],
 }).toString();
 
 const durationMatch = /Duration:\s*(\d+):(\d+):(\d+\.\d+)/.exec(probe);
 if (!durationMatch) {
-  console.error("could not read a duration from", source);
+  console.error("could not read a duration from", input);
   process.exit(1);
 }
 
@@ -68,7 +95,7 @@ execFileSync(
   ffmpeg,
   [
     "-y",
-    "-i", source,
+    "-i", input,
     "-vf", `fps=${fps},scale=${width}:-2:flags=lanczos`,
     "-q:v", "4",
     "-frames:v", String(frames),
@@ -85,9 +112,8 @@ if (!written.length) {
 
 // Keep the clip alongside the frames: the lite tier scrubs it instead of
 // holding a decoded sequence in memory.
-const localVideo = path.join(partDir, "reveal.mp4");
-if (path.resolve(source) !== path.resolve(localVideo) && existsSync(source)) {
-  copyFileSync(source, localVideo);
+if (path.resolve(input) !== path.resolve(localVideo) && existsSync(input)) {
+  copyFileSync(input, localVideo);
 }
 
 execFileSync(
