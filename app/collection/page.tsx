@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { Metadata } from "next";
 import { VEHICLES } from "@/lib/vehicles/manifest";
 import { generatedAsset } from "@/lib/vehicles/assets";
@@ -31,9 +32,17 @@ export default function CollectionPage() {
       <ProgressRail vehicles={VEHICLES} />
 
       <CollectionHero count={VEHICLES.length} plate={heroPlate} />
-      {VEHICLES.map((vehicle) => (
-        <VehicleSection key={vehicle.id} vehicle={vehicle} />
+
+      {VEHICLES.map((vehicle, i) => (
+        <Fragment key={vehicle.id}>
+          {/* Black space between vehicles: the canvas has already faded out by
+              here, so one reveal ends in the dark before the next begins. */}
+          {i > 0 && <div className="h-[50vh] bg-[#050506]" aria-hidden />}
+          <VehicleSection vehicle={vehicle} />
+        </Fragment>
       ))}
+
+      <div className="h-[50vh] bg-[#050506]" aria-hidden />
       <SourceSheet vehicles={VEHICLES} />
     </main>
   );

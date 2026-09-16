@@ -10,10 +10,14 @@ import { RevealStage } from "./RevealStage";
 import { useSmoothScroll } from "./useSmoothScroll";
 import { VehicleTextures } from "./VehicleTextures";
 
-/** Share of each section spent lifting the cover before the orbit runs on. */
+/**
+ * Share of a section spent fading up from black at each end. Vehicles are
+ * separated by real black space rather than dissolving into one another, so
+ * each one arrives out of the dark and leaves the same way.
+ */
+const FADE = 0.10;
+/** Share of the lit window spent lifting the cover before the orbit runs on. */
 const COVER_PHASE = 0.26;
-/** How far into a section the dissolve toward the next vehicle begins. */
-const HANDOVER = 0.94;
 
 const clamp01 = (n: number) => (n < 0 ? 0 : n > 1 ? 1 : n);
 const span = (v: number, a: number, b: number) => clamp01((v - a) / (b - a));
@@ -110,12 +114,12 @@ export default function ScrollCanvas({ vehicles }: Props) {
       return travel > 0 ? clamp01(-rect.top / travel) : 0;
     };
 
-    const setOverlay = (id: string, progress: number, visible: boolean) => {
+    const setOverlay = (id: string, progress: number, visible: boolean, fade = 1) => {
       const root = document.querySelector<HTMLElement>(`[data-overlay="${id}"]`);
       if (!root) return;
 
-      const shown = visible ? span(progress, COVER_PHASE * 0.55, COVER_PHASE + 0.1) : 0;
-      const specs = visible ? span(progress, COVER_PHASE + 0.06, COVER_PHASE + 0.3) : 0;
+      const shown = visible ? span(progress, COVER_PHASE * 0.55, COVER_PHASE + 0.1) * fade : 0;
+      const specs = visible ? span(progress, COVER_PHASE + 0.06, COVER_PHASE + 0.3) * fade : 0;
       const out = 1 - span(progress, 0.9, 1);
 
       root.style.opacity = String(shown * out);
@@ -175,7 +179,16 @@ export default function ScrollCanvas({ vehicles }: Props) {
       if (!onScreen) return;
 
       const p = progressOf(active);
-      const blend = span(p, HANDOVER, 1);
+
+      // Fade up out of black, hold, fade back down: the ends of the track are
+      // darkness, so the cut between vehicles is never a hard swap.
+      const fade = span(p, 0, FADE) * (1 - span(p, 1 - FADE, 1));
+      canvas.style.opacity = String(fade);
+      if (fade <= 0.001) return;
+
+      // The orbit runs across the lit window, so a full turn happens while the
+      // vehicle is actually visible rather than partly inside the fades.
+      const shot = span(p, FADE, 1 - FADE);
 
       const a = textures.get(activeIndex);
       const b = textures.get(activeIndex + 1);
@@ -183,29 +196,31 @@ export default function ScrollCanvas({ vehicles }: Props) {
       const vB = vehicles[activeIndex + 1];
 
       if (a) {
-        a.seek(p);
+        a.seek(shot);
         stage.setTextures("A", a.texture, a.size, vA.accent, vA.silhouette, !a.ready);
-      }
-      if (b && vB) {
-        b.seek(0);
-        stage.setTextures("B", b.texture, b.size, vB.accent, vB.silhouette, !b.ready);
-      } else if (a) {
+        // Both slots hold the same vehicle: the handover is through black now,
+        // so nothing needs to be mixed across the boundary.
         stage.setTextures("B", a.texture, a.size, vA.accent, vA.silhouette, !a.ready);
       }
+      void b;
+      void vB;
 
       // The scrim leads the type: the ground settles first, then the headline
       // arrives onto a prepared backdrop rather than onto a bright floor.
-      const overlayIn = span(p, COVER_PHASE * 0.35, COVER_PHASE + 0.02) * (1 - span(p, 0.9, 1));
+      const overlayIn =
+        span(shot, COVER_PHASE * 0.35, COVER_PHASE + 0.02) * (1 - span(shot, 0.9, 1));
 
       stage.setState(
-        { a: span(p, 0, COVER_PHASE), b: 0 },
+        { a: span(shot, 0, COVER_PHASE), b: 0 },
         { a: overlayIn, b: 0 },
-        b ? blend : 0,
+        0,
         gsap.ticker.time,
       );
       stage.render();
 
-      vehicles.forEach((v, i) => setOverlay(v.id, i === activeIndex ? p : 0, i === activeIndex));
+      vehicles.forEach((v, i) =>
+        setOverlay(v.id, i === activeIndex ? shot : 0, i === activeIndex, fade),
+      );
     };
 
     gsap.ticker.add(tick);

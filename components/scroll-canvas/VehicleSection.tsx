@@ -46,7 +46,10 @@ export default function VehicleSection({ vehicle }: { vehicle: Vehicle }) {
       </div>
 
       <div className="pointer-events-none sticky top-0 h-screen">
-        <div className="flex items-start justify-between p-6 md:p-12">
+        <div
+          data-marque={vehicle.id}
+          className="flex items-start justify-between p-6 opacity-0 md:p-12"
+        >
           <div className="flex items-baseline gap-3">
             <span
               className="font-mono text-[11px] tracking-[0.34em]"
