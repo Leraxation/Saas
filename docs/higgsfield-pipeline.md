@@ -23,16 +23,25 @@ instead. Nothing needs to be switched on — dropping the files in is the switch
 Photos arrive in parts; a vehicle declares which part(s) it draws from in
 `lib/vehicles/manifest.ts`. One part per vehicle is the normal case.
 
-| Part | Vehicle | Source photos |
+| Part | Vehicle | Reference photos |
 |---|---|---|
 | `part-1` | Harley-Davidson V-Rod Muscle (VRSCF) | 4 |
 | `part-2` | Ferrari 458 Italia | 5 |
 | `part-3` | *Also* the V-Rod — the part re-sent Part 1's photos and added one new angle | 1 |
+| `part-4` | Jeep Gladiator "Desert Chief" (JT Rubicon) | 3, not committed |
+
+Parts are numbered by the order they were uploaded, not by vehicle: three parts
+had already arrived when the Gladiator was added, so it is `part-4` even though
+it is the third vehicle.
+
+A part may record a `count` instead of an `images` array when its reference
+files were never committed. Nothing renders either way — the count exists so the
+page can state what a vehicle was built from.
 
 Adding a vehicle:
 
-1. `mkdir -p public/vehicles/part-4/source` and drop its photos in.
-2. Add one `VEHICLES` entry in `lib/vehicles/manifest.ts` listing `part-4`.
+1. `mkdir -p reference/part-N` and drop its photos in.
+2. Add one `VEHICLES` entry in `lib/vehicles/manifest.ts` listing `part-N`.
 3. Generate and extract (below). The page picks it up with no further changes.
 
 ## Shot contract

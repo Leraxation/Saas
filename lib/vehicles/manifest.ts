@@ -26,7 +26,10 @@ export type PartId = `part-${number}`;
  */
 export type SourcePart = {
   part: PartId;
-  images: string[];
+  /** Repo-relative paths, when the reference files are checked in. */
+  images?: string[];
+  /** Used instead of `images` when the files were not committed. */
+  count?: number;
   note?: string;
 };
 
@@ -58,7 +61,8 @@ export type Vehicle = {
   designation: string;
   tagline: string;
   body: string;
-  plate: string;
+  /** Omitted when no registration is legible in the reference photographs. */
+  plate?: string;
   colour: string;
   /** Section accent, used for the rail, tagline and bloom tint. */
   accent: string;
@@ -90,7 +94,7 @@ export function revealPaths(vehicle: Vehicle) {
 
 /** How many reference photos a vehicle drew on, without exposing any of them. */
 export function referenceCount(vehicle: Vehicle): number {
-  return vehicle.sources.reduce((n, s) => n + s.images.length, 0);
+  return vehicle.sources.reduce((n, s) => n + (s.images?.length ?? s.count ?? 0), 0);
 }
 
 export const VEHICLES: Vehicle[] = [
@@ -185,6 +189,46 @@ export const VEHICLES: Vehicle[] = [
       subject:
         "a Rosso Corsa Ferrari 458 Italia, mid-engined berlinetta, glass engine cover showing the red-crackle V8, triple centre-exit exhaust, diamond-cut five-spoke wheels with red rim pinstripe",
       cover: "a deep oxblood tailored car cover with a soft matte finish",
+      durationSeconds: 10,
+      resolution: "1080p",
+      aspectRatio: "16:9",
+    },
+  },
+  {
+    id: "gladiator-desert-chief",
+    order: 3,
+    marque: "Jeep",
+    shortName: "Desert Chief",
+    model: "Gladiator",
+    designation: "JT Rubicon",
+    tagline: "Built for where the road stops.",
+    body:
+      "A Gladiator is a Wrangler that decided it needed a bed, and this one has been taken considerably further: a long-travel suspension lifting it clear of its own arches, forty-inch mud-terrains on beadlock-style wheels, a winch bumper and light bar up front, and a rooftop tent over a bed rack carrying recovery boards and fuel. Painted in red over black with the Desert Chief mark on the flank, it is equipped to leave the tarmac and stay gone.",
+    colour: "Firecracker Red",
+    accent: "#e08b3a",
+    specs: [
+      { label: "Engine", value: "3.6L Pentastar V6" },
+      { label: "Power", value: "285 hp @ 6,400 rpm" },
+      { label: "Torque", value: "353 Nm @ 4,400 rpm" },
+      { label: "Gearbox", value: "8-speed automatic" },
+      { label: "Transfer case", value: "Rock-Trac 4:1" },
+      { label: "Axles", value: "Dana 44, front and rear" },
+    ],
+    sources: [
+      {
+        part: "part-4",
+        count: 3,
+        note: "Reference files not committed; the build was described from them.",
+      },
+    ],
+    display: {
+      hero: "/vehicles/part-4/hero.png",
+      poster: "/vehicles/part-4/poster.jpg",
+    },
+    brief: {
+      subject:
+        "a heavily built red Jeep Gladiator crew-cab pickup with black accents, long-travel suspension lift, forty-inch mud-terrain tyres on black beadlock-style wheels, a winch front bumper with an LED light bar, auxiliary cube lights, a rooftop tent on a bed rack carrying recovery boards and a fuel can, and a Desert Chief mark on the flank",
+      cover: "a sand-coloured heavy canvas tailored cover with webbing straps",
       durationSeconds: 10,
       resolution: "1080p",
       aspectRatio: "16:9",

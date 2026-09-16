@@ -34,7 +34,7 @@ export default function SourceSheet({ vehicles }: { vehicles: Vehicle[] }) {
           rather than a folder of photographs.
         </p>
 
-        <div className="mt-14 grid gap-10 md:grid-cols-2">
+        <div className="mt-14 grid gap-10 md:grid-cols-2 xl:grid-cols-3">
           {vehicles.map((vehicle) => {
             const hero = generatedAsset(vehicle.display.hero);
             return (
@@ -71,7 +71,9 @@ export default function SourceSheet({ vehicles }: { vehicles: Vehicle[] }) {
                 <h3 className="text-sm uppercase tracking-[0.3em] text-white/75">
                   {vehicle.marque} {vehicle.shortName}
                 </h3>
-                <span className="font-mono text-[10px] text-white/30">{vehicle.plate}</span>
+                {vehicle.plate && (
+                  <span className="font-mono text-[10px] text-white/30">{vehicle.plate}</span>
+                )}
               </div>
 
               <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 border-t border-white/10 pt-3">

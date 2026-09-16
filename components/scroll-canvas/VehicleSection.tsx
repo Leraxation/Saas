@@ -113,7 +113,10 @@ export default function VehicleSection({ vehicle }: { vehicle: Vehicle }) {
                 ))}
               </dl>
               <p className="mt-4 font-mono text-[10px] tracking-[0.24em] text-white/32">
-                {vehicle.colour.toUpperCase()} &middot; {vehicle.plate.toUpperCase()}
+                {[vehicle.colour, vehicle.plate]
+                  .filter(Boolean)
+                  .map((part) => part!.toUpperCase())
+                  .join(" \u00B7 ")}
               </p>
             </div>
           </div>
