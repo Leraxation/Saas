@@ -2,21 +2,30 @@
  * Part-based vehicle manifest.
  *
  * Photos arrive grouped by upload part: Part 1, Part 2, Part 3... Each part
- * lives in its own folder under public/vehicles/<part>/source/, and a vehicle
- * declares which part(s) it draws from. A vehicle normally maps to one part,
- * but may list several when the same car was uploaded across more than one
- * (Part 3 turned out to be additional angles of the Part 1 bike).
+ * lives in its own folder under `reference/<part>/`, and a vehicle declares
+ * which part(s) it draws from. A vehicle normally maps to one part, but may
+ * list several when the same car was uploaded across more than one (Part 3
+ * turned out to be additional angles of the Part 1 bike).
  *
- * Adding a vehicle: drop its photos in public/vehicles/part-N/source/, add one
- * VEHICLES entry listing that part, and the pipeline and page pick it up.
+ * Reference photos are never displayed. They sit outside `public/` so they
+ * cannot be served: they exist to inform generation prompts. Everything the
+ * page shows comes from `public/vehicles/<part>/` and is generated.
+ *
+ * Adding a vehicle: drop its photos in reference/part-N/, add one VEHICLES
+ * entry listing that part, and the pipeline and page pick it up.
  */
 
 export type PartId = `part-${number}`;
 
-/** One upload part and the source photos it contributed. */
+/**
+ * One upload part and the reference photos it contributed.
+ *
+ * Paths are repo-relative and NOT public URLs — nothing renders these. They
+ * record what fed the prompt, and let the page state how many photos a part
+ * carried without showing any of them.
+ */
 export type SourcePart = {
   part: PartId;
-  /** Public paths, ordered. The first is the primary Higgsfield reference. */
   images: string[];
   note?: string;
 };
@@ -57,8 +66,12 @@ export type Vehicle = {
   specs: Spec[];
   /** Every upload part that contributed photos of this vehicle. */
   sources: SourcePart[];
-  /** Source photos that are portrait or too tightly framed to run full-bleed. */
-  portraitSources?: string[];
+  /**
+   * Generated assets the page may display. Produced by Higgsfield and written
+   * into public/vehicles/<part>/ — see docs/higgsfield-pipeline.md. Absent
+   * files are handled: the section falls back to hero, then to a dark plate.
+   */
+  display: { hero: string; poster: string };
   brief: RevealBrief;
 };
 
@@ -71,22 +84,13 @@ export function revealPaths(vehicle: Vehicle) {
     manifest: `${root}/reveal.json`,
     video: `${root}/reveal.mp4`,
     poster: `${root}/poster.jpg`,
+    hero: `${root}/hero.png`,
   };
 }
 
-/** Flattened source photos across every part, in part order. */
-export function allSourceImages(vehicle: Vehicle): string[] {
-  return vehicle.sources.flatMap((s) => s.images);
-}
-
-/**
- * Photos usable as full-bleed scrub stand-ins before a reveal clip exists.
- * Portrait shots crop badly at 16:9, so they stay out of the scrub set.
- */
-export function scrubImages(vehicle: Vehicle): string[] {
-  const excluded = new Set(vehicle.portraitSources ?? []);
-  const usable = allSourceImages(vehicle).filter((src) => !excluded.has(src));
-  return usable.length ? usable : allSourceImages(vehicle);
+/** How many reference photos a vehicle drew on, without exposing any of them. */
+export function referenceCount(vehicle: Vehicle): number {
+  return vehicle.sources.reduce((n, s) => n + s.images.length, 0);
 }
 
 export const VEHICLES: Vehicle[] = [
@@ -115,19 +119,22 @@ export const VEHICLES: Vehicle[] = [
       {
         part: "part-1",
         images: [
-          "/vehicles/part-1/source/01-rear-quarter.jpg",
-          "/vehicles/part-1/source/02-beach-profile.jpg",
-          "/vehicles/part-1/source/03-front-quarter.jpg",
-          "/vehicles/part-1/source/04-rear.jpg",
+          "reference/part-1/01-rear-quarter.jpg",
+          "reference/part-1/02-beach-profile.jpg",
+          "reference/part-1/03-front-quarter.jpg",
+          "reference/part-1/04-rear.jpg",
         ],
       },
       {
         part: "part-3",
-        images: ["/vehicles/part-3/source/01-right-profile-sunlit.jpg"],
+        images: ["reference/part-3/01-right-profile-sunlit.jpg"],
         note: "Part 3 re-sent Part 1's photos; only this angle was new.",
       },
     ],
-    portraitSources: ["/vehicles/part-1/source/02-beach-profile.jpg"],
+    display: {
+      hero: "/vehicles/part-1/hero.png",
+      poster: "/vehicles/part-1/poster.jpg",
+    },
     brief: {
       subject:
         "a blacked-out Harley-Davidson V-Rod Muscle power cruiser motorcycle, gloss black bodywork, exposed liquid-cooled V-twin engine, polished forks, fat 240-section rear tyre, twin slash-cut mufflers on the right",
@@ -162,18 +169,18 @@ export const VEHICLES: Vehicle[] = [
       {
         part: "part-2",
         images: [
-          "/vehicles/part-2/source/01-side-profile.jpg",
-          "/vehicles/part-2/source/02-rear-quarter-garage.jpg",
-          "/vehicles/part-2/source/03-rear-workshop.jpg",
-          "/vehicles/part-2/source/04-engine-bay.jpg",
-          "/vehicles/part-2/source/05-garage-wide.jpg",
+          "reference/part-2/01-side-profile.jpg",
+          "reference/part-2/02-rear-quarter-garage.jpg",
+          "reference/part-2/03-rear-workshop.jpg",
+          "reference/part-2/04-engine-bay.jpg",
+          "reference/part-2/05-garage-wide.jpg",
         ],
       },
     ],
-    portraitSources: [
-      "/vehicles/part-2/source/02-rear-quarter-garage.jpg",
-      "/vehicles/part-2/source/05-garage-wide.jpg",
-    ],
+    display: {
+      hero: "/vehicles/part-2/hero.png",
+      poster: "/vehicles/part-2/poster.jpg",
+    },
     brief: {
       subject:
         "a Rosso Corsa Ferrari 458 Italia, mid-engined berlinetta, glass engine cover showing the red-crackle V8, triple centre-exit exhaust, diamond-cut five-spoke wheels with red rim pinstripe",

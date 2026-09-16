@@ -32,7 +32,7 @@ export class VehicleTextures {
     this.texture.magFilter = THREE.LinearFilter;
     this.texture.generateMipmaps = false;
 
-    if (source.mode !== "stills") {
+    if (source.mode === "frames" || source.mode === "video") {
       this.size = { width: source.width, height: source.height };
     }
   }
@@ -47,6 +47,11 @@ export class VehicleTextures {
 
   /** Loads enough of the source to draw, resolving once the first frame is up. */
   async load(onProgress?: (pct: number) => void): Promise<void> {
+    if (this.source.mode === "none") {
+      onProgress?.(1);
+      return;
+    }
+
     if (this.source.mode === "video") {
       await this.loadVideo(this.source.src);
       onProgress?.(1);

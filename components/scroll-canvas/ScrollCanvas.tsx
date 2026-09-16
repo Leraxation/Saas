@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { Vehicle } from "@/lib/vehicles/manifest";
-import { scrubImages } from "@/lib/vehicles/manifest";
 import { detectCapabilities, type Capabilities } from "./capabilities";
 import { loadRevealSource } from "./revealSource";
 import { RevealStage } from "./RevealStage";
@@ -73,41 +72,34 @@ export default function ScrollCanvas({ vehicles }: Props) {
 
       wanted.forEach((i) => {
         if (textures.has(i)) return;
-        const placeholder = new VehicleTextures(
-          { mode: "stills", urls: scrubImages(vehicles[i]), poster: scrubImages(vehicles[i])[0] },
-          caps.frameStride,
-        );
-        textures.set(i, placeholder);
 
-        // Swap in the generated reveal as soon as its manifest resolves.
+        // Claim the slot immediately so a second pass does not double-load it.
+        const pending = new VehicleTextures({ mode: "none" }, caps.frameStride);
+        textures.set(i, pending);
+
         void (async () => {
           const source = await loadRevealSource(vehicles[i], { preferVideo: caps.preferVideo });
-          if (disposed) return;
+          if (disposed || textures.get(i) !== pending) return;
 
           const resolved = new VehicleTextures(source, caps.frameStride);
           const isPrimary = i === activeIndex;
           await resolved.load(isPrimary ? (p) => setLoadPct(Math.round(p * 100)) : undefined);
-          if (disposed || !textures.has(i)) {
+
+          if (disposed || textures.get(i) !== pending) {
             resolved.dispose();
             return;
           }
 
-          textures.get(i)?.dispose();
+          pending.dispose();
           textures.set(i, resolved);
-          if (!firstReady && resolved.ready) {
+
+          // The stage is usable once the first vehicle resolves, whether or not
+          // anything has been generated for it yet.
+          if (!firstReady) {
             firstReady = true;
             setReady(true);
           }
         })();
-
-        void placeholder.load(
-          i === index ? (p) => setLoadPct(Math.round(p * 100)) : undefined,
-        ).then(() => {
-          if (!disposed && !firstReady && placeholder.ready) {
-            firstReady = true;
-            setReady(true);
-          }
-        });
       });
     };
 

@@ -1,4 +1,5 @@
 import type { Vehicle } from "@/lib/vehicles/manifest";
+import { generatedAsset } from "@/lib/vehicles/assets";
 
 /**
  * A vehicle's scroll track. The section itself is a transparent spacer — the
@@ -10,9 +11,10 @@ import type { Vehicle } from "@/lib/vehicles/manifest";
  */
 export default function VehicleSection({ vehicle }: { vehicle: Vehicle }) {
   const order = String(vehicle.order).padStart(2, "0");
-  // The source photo, not the generated poster: this layer only ever shows on
-  // a device without WebGL, where the generated assets may not have loaded.
-  const poster = vehicle.sources[0].images[0];
+  // Generated hero only. Reference photographs are never served, so there is
+  // nothing else this layer could show; until the hero exists the section
+  // renders as an empty lit stage.
+  const poster = generatedAsset(vehicle.display.hero);
 
   return (
     <section
@@ -23,13 +25,24 @@ export default function VehicleSection({ vehicle }: { vehicle: Vehicle }) {
     >
       {/* Behind the canvas: only ever seen when WebGL is unavailable. */}
       <div className="sticky top-0 -z-20 h-0">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={poster}
-          alt=""
-          aria-hidden
-          className="h-screen w-full object-cover opacity-70"
-        />
+        {poster ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={poster}
+            alt=""
+            aria-hidden
+            className="h-screen w-full object-cover opacity-70"
+          />
+        ) : (
+          <div
+            aria-hidden
+            className="h-screen w-full"
+            style={{
+              background:
+                "radial-gradient(70% 45% at 50% 62%, rgba(255,255,255,0.07) 0%, rgba(5,5,6,0) 70%), #050506",
+            }}
+          />
+        )}
       </div>
 
       <div className="pointer-events-none sticky top-0 h-screen">

@@ -7,7 +7,14 @@ import { useEffect, useRef } from "react";
  * section scrolls up — and it performs the same gesture the sections repeat:
  * something covered, then lifted away.
  */
-export default function CollectionHero({ count, plate }: { count: number; plate: string }) {
+export default function CollectionHero({
+  count,
+  plate,
+}: {
+  count: number;
+  /** A generated still, or null before one has been rendered. */
+  plate: string | null;
+}) {
   const rootRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const plateRef = useRef<HTMLDivElement>(null);
@@ -39,16 +46,18 @@ export default function CollectionHero({ count, plate }: { count: number; plate:
   return (
     <section ref={rootRef} className="relative h-[165vh] bg-[#050506]">
       <div className="sticky top-0 grid h-screen place-items-center overflow-hidden bg-[#050506]">
-        <div
-          ref={plateRef}
-          className="pointer-events-none absolute inset-0 bg-cover opacity-[0.55]"
-          style={{
-            backgroundImage: `url('${plate}')`,
-            backgroundPosition: "center 58%",
-            filter: "grayscale(0.72) contrast(1.08) brightness(0.42)",
-            willChange: "transform",
-          }}
-        />
+        {plate && (
+          <div
+            ref={plateRef}
+            className="pointer-events-none absolute inset-0 bg-cover opacity-[0.55]"
+            style={{
+              backgroundImage: `url('${plate}')`,
+              backgroundPosition: "center 58%",
+              filter: "grayscale(0.72) contrast(1.08) brightness(0.42)",
+              willChange: "transform",
+            }}
+          />
+        )}
         <div
           className="pointer-events-none absolute inset-0"
           style={{

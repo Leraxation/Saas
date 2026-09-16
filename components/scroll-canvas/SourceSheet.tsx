@@ -1,90 +1,111 @@
 import type { Vehicle } from "@/lib/vehicles/manifest";
+import { referenceCount } from "@/lib/vehicles/manifest";
+import { generatedAsset } from "@/lib/vehicles/assets";
 
 /**
- * Closing contact sheet, grouped by upload part so the page shows the same
- * structure the manifest and the generation pipeline use.
+ * Closing section: the generated hero of each vehicle, plus a written record of
+ * which upload part fed which car.
+ *
+ * The reference photographs themselves are never shown — they live outside
+ * `public/` and exist only to inform the generation prompts — so the parts are
+ * accounted for in words and counts rather than as a contact sheet.
  */
-export default function SourceSheet({ vehicles, plate }: { vehicles: Vehicle[]; plate: string }) {
+export default function SourceSheet({ vehicles }: { vehicles: Vehicle[] }) {
   return (
     <section className="relative isolate overflow-hidden bg-[#050506] px-6 py-24 md:px-12 md:py-36">
-      <div
-        className="absolute inset-0 -z-10 bg-cover bg-fixed opacity-[0.38]"
-        style={{
-          backgroundImage: `url('${plate}')`,
-          backgroundPosition: "center 40%",
-          filter: "grayscale(0.85) brightness(0.3)",
-        }}
-      />
       <div
         className="absolute inset-0 -z-10"
         style={{
           background:
-            "linear-gradient(180deg, #050506 0%, rgba(5,5,6,0.72) 34%, rgba(5,5,6,0.88) 100%)",
+            "radial-gradient(90% 60% at 50% 0%, rgba(255,255,255,0.05) 0%, rgba(5,5,6,0) 70%)",
         }}
       />
 
       <div className="relative mx-auto max-w-7xl">
         <p className="font-mono text-[10px] uppercase tracking-[0.5em] text-white/35">
-          Source parts
+          The collection
         </p>
         <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-5xl">
           Everything, uncovered.
         </h2>
         <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/50">
-          Every photograph that feeds the reveal pipeline, grouped by the upload part
-          it arrived in.
+          Each vehicle was rendered into the same lit stage — black ground, one
+          hard spotlight, a full orbit — so the collection reads as one film
+          rather than a folder of photographs.
         </p>
 
-        {vehicles.map((vehicle) => (
-          <div key={vehicle.id} className="mt-16">
-            <div className="flex flex-wrap items-baseline gap-4 border-b border-white/10 pb-3">
-              <h3 className="text-sm uppercase tracking-[0.3em] text-white/70">
-                {vehicle.marque} {vehicle.shortName}
-              </h3>
-              <span className="font-mono text-[10px] text-white/30">{vehicle.plate}</span>
-            </div>
-
-            {vehicle.sources.map((source) => (
-              <div key={source.part} className="mt-6">
-                <div className="flex flex-wrap items-baseline gap-3">
-                  <span
-                    className="font-mono text-[10px] uppercase tracking-[0.3em]"
-                    style={{ color: vehicle.accent }}
+        <div className="mt-14 grid gap-10 md:grid-cols-2">
+          {vehicles.map((vehicle) => {
+            const hero = generatedAsset(vehicle.display.hero);
+            return (
+            <article key={vehicle.id}>
+              <div className="relative aspect-[16/9] w-full overflow-hidden bg-black/60">
+                {hero ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={hero}
+                    alt={`${vehicle.marque} ${vehicle.model}`}
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="grid h-full w-full place-items-center"
+                    style={{
+                      background:
+                        "radial-gradient(70% 55% at 50% 66%, rgba(255,255,255,0.07) 0%, rgba(5,5,6,0) 72%), #08080b",
+                    }}
                   >
-                    {source.part.replace("-", " ")}
-                  </span>
-                  <span className="font-mono text-[10px] text-white/30">
-                    {source.images.length} {source.images.length === 1 ? "photo" : "photos"}
-                  </span>
-                  {source.note && (
-                    <span className="text-[11px] italic text-white/35">{source.note}</span>
-                  )}
-                </div>
-
-                <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-5">
-                  {source.images.map((src) => (
-                    <figure
-                      key={src}
-                      className="group relative m-0 aspect-[4/3] max-w-full overflow-hidden bg-black/40"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={src}
-                        alt={`${vehicle.marque} ${vehicle.shortName}`}
-                        loading="lazy"
-                        className="h-full w-full object-cover opacity-70 transition duration-700 group-hover:scale-[1.04] group-hover:opacity-100"
-                      />
-                      <span
-                        className="absolute inset-x-0 bottom-0 h-0.5 opacity-0 transition-opacity group-hover:opacity-100"
-                        style={{ background: vehicle.accent }}
-                      />
-                    </figure>
-                  ))}
-                </div>
+                    <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-white/25">
+                      Render pending
+                    </span>
+                  </div>
+                )}
+                <span
+                  className="absolute inset-x-0 bottom-0 h-0.5"
+                  style={{ background: vehicle.accent }}
+                />
               </div>
-            ))}
-          </div>
-        ))}
+
+              <div className="mt-4 flex flex-wrap items-baseline gap-3">
+                <h3 className="text-sm uppercase tracking-[0.3em] text-white/75">
+                  {vehicle.marque} {vehicle.shortName}
+                </h3>
+                <span className="font-mono text-[10px] text-white/30">{vehicle.plate}</span>
+              </div>
+
+              <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 border-t border-white/10 pt-3">
+                <dt className="font-mono text-[9px] uppercase tracking-[0.22em] text-white/38">
+                  Parts
+                </dt>
+                <dd className="font-mono text-[11px] text-white/70">
+                  {vehicle.sources.map((s) => s.part.replace("-", " ")).join(" + ")}
+                </dd>
+
+                <dt className="font-mono text-[9px] uppercase tracking-[0.22em] text-white/38">
+                  References
+                </dt>
+                <dd className="font-mono text-[11px] text-white/70">
+                  {referenceCount(vehicle)} photographs, not displayed
+                </dd>
+
+                <dt className="font-mono text-[9px] uppercase tracking-[0.22em] text-white/38">
+                  Cover
+                </dt>
+                <dd className="text-[12px] text-white/60">{vehicle.brief.cover}</dd>
+              </dl>
+
+              {vehicle.sources
+                .filter((s) => s.note)
+                .map((s) => (
+                  <p key={s.part} className="mt-3 text-[11px] italic text-white/35">
+                    {s.note}
+                  </p>
+                ))}
+            </article>
+            );
+          })}
+        </div>
 
         <footer className="mt-24 flex flex-col gap-2 border-t border-white/10 pt-8 font-mono text-[10px] uppercase tracking-[0.2em] text-white/30 md:flex-row md:items-center md:justify-between">
           <span>Private collection &middot; Sultanate of Oman</span>

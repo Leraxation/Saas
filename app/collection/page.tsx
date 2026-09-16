@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { VEHICLES } from "@/lib/vehicles/manifest";
+import { generatedAsset } from "@/lib/vehicles/assets";
 import CollectionHero from "@/components/scroll-canvas/CollectionHero";
 import ProgressRail from "@/components/scroll-canvas/ProgressRail";
 import ScrollCanvas from "@/components/scroll-canvas/ScrollCanvas";
@@ -18,8 +19,9 @@ export const metadata: Metadata = {
  * carry their own opaque backgrounds to hide it at either end.
  */
 export default function CollectionPage() {
-  const heroPlate = VEHICLES[1]?.sources[0].images[2] ?? VEHICLES[0].sources[0].images[0];
-  const sheetPlate = VEHICLES[0].sources[0].images[2] ?? VEHICLES[0].sources[0].images[0];
+  // The hero backdrop is a generated still, like everything else on the page.
+  // Null until it has been rendered, which leaves the opener black by design.
+  const heroPlate = generatedAsset(VEHICLES[0].display.hero);
 
   return (
     <main className="relative text-white antialiased">
@@ -32,7 +34,7 @@ export default function CollectionPage() {
       {VEHICLES.map((vehicle) => (
         <VehicleSection key={vehicle.id} vehicle={vehicle} />
       ))}
-      <SourceSheet vehicles={VEHICLES} plate={sheetPlate} />
+      <SourceSheet vehicles={VEHICLES} />
     </main>
   );
 }
