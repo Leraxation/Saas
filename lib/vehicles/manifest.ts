@@ -101,7 +101,7 @@ export function revealPaths(vehicle: Vehicle) {
     manifest: `${root}/reveal.json`,
     video: `${root}/reveal.mp4`,
     poster: `${root}/poster.jpg`,
-    hero: `${root}/hero.png`,
+    hero: `${root}/hero.webp`,
   };
 }
 
@@ -150,7 +150,7 @@ export const VEHICLES: Vehicle[] = [
       },
     ],
     display: {
-      hero: "/vehicles/part-1/hero.png",
+      hero: "/vehicles/part-1/hero.webp",
       poster: "/vehicles/part-1/poster.jpg",
     },
     remote: {
@@ -201,7 +201,7 @@ export const VEHICLES: Vehicle[] = [
       },
     ],
     display: {
-      hero: "/vehicles/part-2/hero.png",
+      hero: "/vehicles/part-2/hero.webp",
       poster: "/vehicles/part-2/poster.jpg",
     },
     remote: {
@@ -246,7 +246,7 @@ export const VEHICLES: Vehicle[] = [
       },
     ],
     display: {
-      hero: "/vehicles/part-4/hero.png",
+      hero: "/vehicles/part-4/hero.webp",
       poster: "/vehicles/part-4/poster.jpg",
     },
     remote: {

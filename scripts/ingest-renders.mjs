@@ -11,17 +11,25 @@
  *     "part-2": { "hero": "https://...png", "video": "https://...mp4" }
  *   }
  *
- * For each entry it saves the hero to public/vehicles/<part>/hero.png and runs
- * scripts/extract-frames.mjs on the clip, which writes reveal.mp4, the frame
- * sequence, poster.jpg and reveal.json.
+ * For each entry it encodes the hero to public/vehicles/<part>/hero.webp at the
+ * requested width and runs scripts/extract-frames.mjs on the clip, which writes
+ * reveal.mp4, the frame sequence, poster.jpg and reveal.json.
+ *
+ * The hero is re-encoded rather than copied: the raw render is a multi-megabyte
+ * PNG, and the page loads it full-bleed behind every section, so it ships as
+ * WebP at the same width the frame sequence uses.
  *
  * Run this locally: a Claude Code web session's egress proxy denies the
  * Higgsfield CDN by policy, so the downloads only succeed on your machine.
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import path from "node:path";
+
+const require = createRequire(import.meta.url);
+const ffmpeg = require("ffmpeg-static");
 
 const [, , configPath, framesArg = "120", widthArg = "1600"] = process.argv;
 
@@ -57,13 +65,27 @@ for (const [part, assets] of entries) {
   mkdirSync(partDir, { recursive: true });
 
   if (assets.hero) {
-    const dest = path.join(partDir, "hero.png");
+    const dest = path.join(partDir, "hero.webp");
+    const raw = path.join(partDir, "hero.download");
     try {
-      await download(assets.hero, dest);
+      await download(assets.hero, raw);
+      execFileSync(
+        ffmpeg,
+        [
+          "-y", "-loglevel", "error",
+          "-i", raw,
+          "-vf", `scale=${widthArg}:-2:flags=lanczos`,
+          "-c:v", "libwebp", "-quality", "78", "-compression_level", "6",
+          dest,
+        ],
+        { stdio: "inherit" },
+      );
       console.log(`${part}: hero -> ${dest}`);
     } catch (err) {
       console.error(`${part}: hero failed - ${err.message}`);
       failures += 1;
+    } finally {
+      rmSync(raw, { force: true });
     }
   }
 
