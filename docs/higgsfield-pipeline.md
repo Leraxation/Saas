@@ -29,6 +29,7 @@ Photos arrive in parts; a vehicle declares which part(s) it draws from in
 | `part-2` | Ferrari 458 Italia | 5 |
 | `part-3` | *Also* the V-Rod — the part re-sent Part 1's photos and added one new angle | 1 |
 | `part-4` | Jeep Gladiator "Desert Chief" (JT Rubicon) | 3, not committed |
+| `part-5` | Harley-Davidson Fat Boy (FLSTF), airbrushed flame wrap | 7, not committed |
 
 Parts are numbered by the order they were uploaded, not by vehicle: three parts
 had already arrived when the Gladiator was added, so it is `part-4` even though
@@ -57,9 +58,11 @@ and both live on each vehicle's `brief` in the manifest.
 > the silhouette from the background, subtle volumetric fog, deep charcoal
 > negative space, no text, no people, no other vehicles
 
-**Fixed unveiling clause** — identical in every prompt. The attendant is
-deliberately anonymous: seen from behind and in silhouette, face never visible,
-so no real person's likeness appears in generated footage.
+**Fixed unveiling clause** — identical in every prompt. The figure is the
+owner, but is always seen from behind and in silhouette with the face never
+visible. That is deliberate and not negotiable: reference photographs of a real
+person are never reproduced as a likeness in generated footage, and the
+silhouette is what the clips are lit for anyway.
 
 > a single attendant in a dark suit, seen only from behind and in silhouette
 > with the face never visible, steps into frame, takes the edge of the cover and

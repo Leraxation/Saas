@@ -262,6 +262,51 @@ export const VEHICLES: Vehicle[] = [
       aspectRatio: "16:9",
     },
   },
+  {
+    id: "fatboy-devilson",
+    order: 4,
+    marque: "Harley-Davidson",
+    shortName: "Fat Boy",
+    model: "Fat Boy",
+    designation: "FLSTF",
+    tagline: "Cast solid.",
+    body:
+      "Willie G. Davidson drew it in 1990 with solid disc wheels front and rear, and nothing since has looked quite so deliberately heavy \u2014 a motorcycle that reads as one cast piece rather than an assembly of parts. This one refuses the usual restraint: an airbrushed flame wrap runs the length of the tank with a grinning devil in it and a pun where the wordmark belongs. Softail frame, so the rear shocks hide under the gearbox and the back end passes for a hardtail that somehow still rides.",
+    colour: "Vivid Black with airbrushed flame wrap",
+    accent: "#d7dde2",
+    silhouette: "motorcycle",
+    specs: [
+      { label: "Engine", value: "1584cc Twin Cam 96B" },
+      { label: "Cooling", value: "Air-cooled 45\u00b0 V-twin" },
+      { label: "Torque", value: "125 Nm @ 3,000 rpm" },
+      { label: "Gearbox", value: "6-speed Cruise Drive" },
+      { label: "Front tyre", value: "140/75 R17" },
+      { label: "Rear tyre", value: "200/55 R17" },
+    ],
+    sources: [
+      {
+        part: "part-5",
+        count: 7,
+        note: "Reference files not committed. Sent in two batches; the bike appears in both plain black and the flame wrap, and the wrap is what the render was built from.",
+      },
+    ],
+    display: {
+      hero: "/vehicles/part-5/hero.webp",
+      poster: "/vehicles/part-5/poster.jpg",
+    },
+    remote: {
+      hero: "https://d8j0ntlcm91z4.cloudfront.net/user_3FF4sUHGETln9sIK24fQ8Tj9Uky/hf_20260919_203000_c77578a3-c319-4262-881f-25b0b983457a.png",
+      video: "https://d8j0ntlcm91z4.cloudfront.net/user_3FF4sUHGETln9sIK24fQ8Tj9Uky/hf_20260919_203014_897693cc-d325-47e1-b2a1-251b870a26d2.mp4",
+    },
+    brief: {
+      subject:
+        "a Harley-Davidson Fat Boy Softail with custom airbrushed flame paint across the fuel tank in orange, red and yellow with a grinning cartoon red devil holding a pitchfork, gloss black fenders, heavy chrome throughout, solid-cast disc wheels front and rear with drilled perimeters, chrome staggered shotgun dual exhaust on the right, air-cooled Twin Cam V-twin with chrome rocker covers and round chrome air cleaner, wide chrome fork sliders",
+      cover: "a bottle-green waxed canvas tailored cover with tan leather edging and brass eyelets",
+      durationSeconds: 10,
+      resolution: "720p",
+      aspectRatio: "16:9",
+    },
+  },
 ];
 
 export const getVehicle = (id: string) => VEHICLES.find((v) => v.id === id);
