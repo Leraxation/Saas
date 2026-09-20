@@ -44,6 +44,7 @@ cited figures and are labelled on screen as such.
 
 ```bash
 ./scripts/fetch-film.sh
+FPS=8 WIDTH=1600 ./scripts/fetch-film.sh --frames
 ```
 
 This pulls three files into `public/vision2040/`:
@@ -51,43 +52,72 @@ This pulls three files into `public/vision2040/`:
 | File | What it is |
 |---|---|
 | `film.mp4` | The 58-second cinematic master, 1080p |
-| `film-scrub.mp4` | An all-keyframe encode — the fallback scrub source for Act II |
+| `film-scrub.mp4` | An all-keyframe encode kept for the standalone HTML and local experiments |
 | `poster.jpg` | Hero still, also the video poster frame |
 
 The presentation **runs without them** — the canvas carries every act on its own
-and the film layers simply stay dark. With them, the overture, Act II and the
-close become footage.
+and the film layers simply stay dark. With them, the overture, acts II-IV and
+the close become footage.
 
 ### Cutting the film to frames
 
 ```bash
-./scripts/cut-frames.sh path/to/film.mp4
-FPS=12 WIDTH=1920 ./scripts/cut-frames.sh path/to/film.mp4
+./scripts/cut-frames.sh public/vision2040/film.mp4
+FPS=12 WIDTH=1600 ./scripts/cut-frames.sh public/vision2040/film.mp4
 ```
 
-Writes `public/vision2040/frames/f0000.jpg …` plus a `manifest.json`.
+Both `fetch-film.sh --frames` and `cut-frames.sh` now produce the same output:
+
+- `public/vision2040/frames/f0000.jpg …`
+- `public/vision2040/frames/manifest.json`
+
+The manifest fields are:
+
+```json
+{
+  "count": 464,
+  "interpolated": null,
+  "pattern": "/vision2040/frames/f%04d.jpg",
+  "width": 1600,
+  "fps": 8,
+  "duration": 58.04
+}
+```
+
+Human-facing “frame 1” is `f0000.jpg` / index `0` in code.
 
 **Choosing the frame rate.** Scrub frame rate is not playback frame rate —
 nothing plays, the scroll position *is* the playhead. What matters is how far
-the page scrolls between one frame and the next:
+the page scrolls between one advancing frame and the next:
 
 ```
-scroll_px_per_frame = total_scroll_px / (duration_s * FPS)
+scroll_px_per_frame = advancing_scroll_px / (duration_s * FPS)
 ```
 
-Below ~6 px/frame you are buying frames nobody can tell apart; above ~20 the
-picture visibly steps on a slow scroll. Aim for 8-12.
+Acts I-IV are the scrub range, but only **1206vh** of that range advances the
+film (`230 + 340 + 420 + 216`). The last **144vh** of Act IV is a hold on the
+final film frame while the growth chart draws, so that scroll does **not** need
+additional extracted frames.
 
-**The current cut is 24 fps: 289 frames, 1440px, `-q:v 2`, 40 MB** — every frame the source has.
-The source is 848x478 (a WhatsApp re-encode at 1.4 Mbps), so 24 fps captures
-all of it — there is no finer sampling available. It is upscaled with lanczos
-so the browser is not left doing a bilinear stretch on a projector; that adds
-no detail, only a cleaner scale.
+At a 900px viewport, that advancing stretch is about **9954px** of travel:
 
-**Stepping, and the two things that fix it.** 12.04s across the full 2330vh
-page is 20,070px of travel at a 900px viewport. At 24 fps that is 69.7
-px/frame, far above the ~20 px threshold, so a slow scroll would step. Two
-mechanisms address it:
+| Scrub fps | Approx. frames | px/frame @ 900px viewport | Trade-off |
+|---|---:|---:|---|
+| 4 | 232 | 42.9 | Too coarse |
+| **8** | **464** | **21.5** | Default: acceptable once blending + scrub damping are factored in |
+| 12 | 696 | 14.3 | Smoother, ~50% more bytes |
+| 24 | 1393 | 7.1 | Much heavier than the page needs |
+
+The default is **8 fps**. It is slightly above the old “ideal” 20 px/frame
+rule of thumb on paper, but this implementation already:
+
+1. cross-dissolves between adjacent frames, and
+2. holds the nearest decoded frame instead of blanking while the rest stream in.
+
+That makes 8 fps the best default byte/smoothness trade for this material.
+If a venue test rig still shows visible stepping, bump to **12 fps** first.
+
+**Motion interpolation is still available** when you need synthetic in-betweens:
 
 1. **Sub-frame blending**, always on. The canvas paints frame N and then
    cross-dissolves the fractional part into N+1, so the gap between frames is a
@@ -96,40 +126,28 @@ mechanisms address it:
    of resolving into true intermediate motion; for anything short of that it is
    the better trade.
 
-2. **Motion interpolation**, available but not shipped. `INTERPOLATE=72`
-   gives 862 frames at 23.3 px/frame and 115 MB:
+2. **Motion interpolation**, available but not shipped:
 
    ```bash
-   INTERPOLATE=72 WIDTH=1440 QUALITY=2 ./scripts/cut-frames.sh <film.mp4>
+   INTERPOLATE=72 WIDTH=1600 QUALITY=2 ./scripts/cut-frames.sh public/vision2040/film.mp4
    ```
 
-   About 90 seconds of CPU. It is not the default because blending already
-   carries this footage, and 115 MB is a lot to move for the one case it
-   improves: somebody flinging the scrollbar. Interpolation invents frames —
-   smoothness, never detail.
-
-**Blending is measured, not assumed.** Stepping across one frame interval in
-fifths, the canvas produced five distinct renders on a single base frame,
-moving monotonically — the picture changes *between* frames, which is the
-dissolve doing its job. Without it, all five would be identical.
-
-Sizing note: 289 frames at 1440x812 is ~1.35 GB of bitmap if a browser held
-every frame decoded at once (the 72 fps set is ~4 GB). It does not — decoding
-is lazy and evicted — but it is the reason not to raise the count without
-measuring.
+   Interpolation invents frames — smoothness, never detail — so keep it as a
+   venue-specific escalation, not the default.
 
 ### How the scrub is wired
 
 A fixed, full-bleed canvas (`.v-filmcanvas`) sits behind everything; the
 content sections scroll over it. GSAP ScrollTrigger drives it with `scrub`
-over `#film-range`, which is the whole page.
+over `#film-range`, which covers acts I-IV only.
 
 The scrim is progress-aware: light while the film carries the opening, then
 deepening once the map and the charts have to read over the top of it.
 
 **Segments, not a linear map.** `FILM_SEGMENTS` in
-`components/vision2040/FilmCanvas.tsx` covers all seven acts, so the film opens
-on its first frame under the title and reaches its last as the final act ends:
+`components/vision2040/FilmCanvas.tsx` covers the weighted film range only, so
+the film opens on its first frame under the title, reaches its last frame 60%
+into Act IV, and then holds:
 
 ```ts
 export const FILM_SEGMENTS = linearSegments([
@@ -141,10 +159,10 @@ export const FILM_SEGMENTS = linearSegments([
 
 `weight` is the section's height in vh. `linearSegments` derives each segment's
 slice of the sequence from the weights so the arithmetic cannot fall out of
-step; override any segment's `from`/`to` afterwards to hold or cut. This is what makes holds (`from === to` parks the picture
-while a passage is read) and cuts (a gap between one segment's `to` and the
-next one's `from`) possible without touching the engine — neither is
-expressible as one linear map.
+step; override any segment's `from`/`to` afterwards to hold or cut. This is
+what makes holds (`from === to` parks the picture while a passage is read) and
+cuts (a gap between one segment's `to` and the next one's `from`) possible
+without touching the engine — neither is expressible as one linear map.
 
 **The weights and the markup heights are the same numbers written twice** and
 nothing ties them together at compile time, so `createFilmScrub` measures the
@@ -152,17 +170,18 @@ real sections on mount and on every ScrollTrigger refresh and warns in the
 console when they drift. The failure mode is otherwise silent: the film just
 runs at the wrong rate against the text.
 
-**Loading.** Frame 0 is fetched alone so the page opens on a picture, then the
-rest stream in order six at a time. Scrubbing ahead of the download paints the
-nearest decoded frame rather than blanking — a slightly stiff scrub that
-resolves as the stream catches up, instead of a black screen.
+**Loading.** The first scrub frame (`f0000.jpg`, frame 1 to a human / index 0
+in code) is fetched alone so the page opens on a picture, then the rest stream
+in order six at a time. Scrubbing ahead of the download paints the nearest
+decoded frame rather than blanking — a slightly stiff scrub that resolves as
+the stream catches up, instead of a black screen.
 
-**Degradation.** No GSAP → a built-in rAF scrub over the same mapping, so the
-scrub survives (verified: both drivers produce identical frames, 0 / 185 / 463
-at the same scroll positions). No frames → the canvas stays empty and the
-procedural stage behind it carries the acts. `prefers-reduced-motion` → frame 0
-is held and the page scrolls normally; the one-line change to keep scrubbing
-for those users is commented in `filmScrub.ts`.
+**Degradation.** The canvas paints that first scrub frame whether or not GSAP
+loads. If GSAP/ScrollTrigger is available, the scrub upgrades to the normal
+driver; if not, the built-in rAF scrub keeps the page working. No manifest or
+no frames → the canvas stays empty and the procedural stage behind it carries
+the acts. `prefers-reduced-motion` → the first scrub frame is held and the page
+scrolls normally.
 
 Inspect `.v-filmcanvas` in devtools: `data-driver` is `gsap`, `native` or
 `calm`, and `data-frame` is the frame currently painted.
@@ -198,9 +217,9 @@ upgrade, and it can introduce artefacts on fast camera moves.
 npm run build && npm start
 ```
 
-Fonts are self-hosted through `next/font` at build time and the film is a local
-file, so **nothing on this page touches the network once built**. Venue Wi-Fi is
-not a dependency.
+The route now uses local fallback font stacks rather than build-time remote font
+fetches, and the film files are local, so **nothing on this page touches the
+network once built**. Venue Wi-Fi is not a dependency.
 
 ---
 
@@ -226,17 +245,20 @@ has already dismissed it.
 
 ---
 
-## The seven acts
+## The ten acts
 
 | | Act | What the canvas is doing |
 |---|---|---|
-| I | Overture | The film's first frames, scrubbed — the title holds still until you scroll |
-| II | The Nation | The film scrub continues to its last frame behind three beats |
-| III | The Network | Oman's coastline draws in, airports light in sequence, then the view pulls back and the international routes bloom |
-| IV | The Scale | Figures count up, then the passenger trajectory plots itself |
-| V | The Pillars | Three orbits, one per Vision 2040 axis |
-| VI | The Roadmap | A rail fills from 2026 to 2040 across four phases |
-| VII | The Ask | A radial burst settles behind the sign-off |
+| I | Overture | The film opens on its first scrub frame under the title |
+| II | The Nation | The scrub advances through the nation beats |
+| III | The Network | The scrub continues while the procedural network scene takes over |
+| IV | The Scale | The scrub reaches its last frame 60% in, then holds while the chart draws |
+| V | The Operators | Procedural backdrop only |
+| VI | The Sector Board | Procedural backdrop only |
+| VII | The Pillars | Three orbits, one per Vision 2040 axis |
+| VIII | The Roadmap | A rail fills from 2026 to 2040 across four phases |
+| IX | Outlook | Procedural backdrop only |
+| X | The Close | The cinematic master video fades up for the sign-off |
 
 ---
 

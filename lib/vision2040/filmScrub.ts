@@ -59,6 +59,11 @@ export type FilmScrubOptions = {
    */
   gsap?: any;
   ScrollTrigger?: any;
+  /**
+   * Optional lazy loader for GSAP/ScrollTrigger. Use this when a static import
+   * would make the whole component fail before the native fallback can run.
+   */
+  loadDriver?: () => Promise<{ gsap: any; ScrollTrigger: any } | null>;
 };
 
 export type FilmScrubHandle = {
@@ -78,6 +83,30 @@ export function framePath(pattern: string, i: number) {
   return pattern.replace(/%(?:0(\d+))?d/, (_m, width) =>
     String(i).padStart(width ? parseInt(width, 10) : 1, "0"),
   );
+}
+
+/**
+ * Pick the decoded frame closest to the wanted scrub position.
+ *
+ * If the base frame is present, keep its fractional part so the next decoded
+ * frame can still cross-dissolve in. If not, fall back to the nearest decoded
+ * neighbour and park there until the wanted frame arrives.
+ */
+export function nearestDecodedFrame(
+  want: number,
+  loaded: boolean[],
+): { index: number; frac: number } | null {
+  const max = loaded.length - 1;
+  if (max < 0) return null;
+  const clamped = Math.max(0, Math.min(max, want));
+  const base = Math.floor(clamped);
+  const frac = clamped - base;
+  if (loaded[base]) return { index: base, frac };
+  for (let d = 1; d <= max; d++) {
+    if (base - d >= 0 && loaded[base - d]) return { index: base - d, frac: 0 };
+    if (base + d <= max && loaded[base + d]) return { index: base + d, frac: 0 };
+  }
+  return null;
 }
 
 /**
@@ -227,18 +256,10 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
    */
   function render(want: number) {
     if (!manifest) return;
-    const max = manifest.count - 1;
-    const clamped = Math.max(0, Math.min(max, want));
-    const base = Math.floor(clamped);
-    const frac = clamped - base;
-    current = base;
-    if (loaded[base]) return paint(base, frac);
-    // Scrubbing ahead of the download: hold the nearest decoded frame rather
-    // than blanking. Reads as a stiff scrub that resolves as the stream lands.
-    for (let d = 1; d <= max; d++) {
-      if (base - d >= 0 && loaded[base - d]) return paint(base - d, 0);
-      if (base + d <= max && loaded[base + d]) return paint(base + d, 0);
-    }
+    const pick = nearestDecodedFrame(want, loaded);
+    if (!pick) return;
+    current = Math.floor(Math.max(0, Math.min(manifest.count - 1, want)));
+    return paint(pick.index, pick.frac);
   }
 
   /* ── Progressive loading ───────────────────────────────────────────── */
@@ -254,7 +275,8 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
         loaded[i] = true;
         decoded++;
         // Repaint if this is the frame we are currently sitting on, or the
-        // very first frame, which must appear as soon as it exists.
+        // very first scrub frame (f0000.jpg / frame 1 to a human), which must
+        // appear as soon as it exists.
         if (Math.abs(i - current) <= 1 || !firstPainted) render(current);
         onDone();
       };
@@ -263,8 +285,9 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
       images[i] = img;
     };
 
-    // Frame 0 alone first: it is what the page opens on, so it must not queue
-    // behind anything. The rest stream in order afterwards.
+    // Frame 0 (f0000.jpg, the first scrub frame) alone first: it is what the
+    // page opens on, so it must not queue behind anything. The rest stream in
+    // order afterwards.
     fetchOne(0, () => {
       let next = 1;
       const CONCURRENCY = 6;
@@ -315,14 +338,18 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
     render(progressToFrameT(p, segments) * (manifest.count - 1));
   }
 
+  function currentScrollProgress() {
+    const top = trigger.offsetTop;
+    const span = Math.max(1, trigger.offsetHeight - window.innerHeight);
+    return clamp01((window.scrollY - top) / span);
+  }
+
   /** Native fallback: same mapping, own rAF, used when GSAP is unavailable. */
   function startNativeScrub() {
     let smoothed = -1;
     const tick = () => {
       if (disposed) return;
-      const top = trigger.offsetTop;
-      const span = Math.max(1, trigger.offsetHeight - window.innerHeight);
-      const raw = clamp01((window.scrollY - top) / span);
+      const raw = currentScrollProgress();
       if (smoothed < 0) smoothed = raw;
       // Match ScrollTrigger's scrub feel; snap directly under reduced motion.
       smoothed = calm.matches ? raw : smoothed + (raw - smoothed) * 0.16;
@@ -330,6 +357,39 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
+  }
+
+  function startGsap(g: any, ST: any) {
+    canvas.dataset.driver = "gsap";
+    g.registerPlugin(ST);
+    st = ST.create({
+      trigger,
+      start: "top top",
+      end: "bottom bottom",
+      scrub,
+      onUpdate: (self: { progress: number }) => apply(self.progress),
+      // Past its range the film is done; the page marks it so the canvas can
+      // fade out rather than hanging on its last frame behind later acts.
+      onLeave: () => {
+        canvas.dataset.past = "true";
+      },
+      onEnterBack: () => {
+        canvas.dataset.past = "false";
+      },
+      onRefresh: () => {
+        size();
+        checkWeights();
+        render(current);
+      },
+    });
+    apply(currentScrollProgress());
+  }
+
+  let nativeWarned = false;
+  function warnNativeFallback() {
+    if (nativeWarned) return;
+    nativeWarned = true;
+    console.warn("[filmScrub] GSAP/ScrollTrigger unavailable — using native scrub");
   }
 
   function start() {
@@ -352,35 +412,30 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
     const ST = opts.ScrollTrigger ?? w.ScrollTrigger;
 
     if (g && ST) {
-      canvas.dataset.driver = "gsap";
-      g.registerPlugin(ST);
-      st = ST.create({
-        trigger,
-        start: "top top",
-        end: "bottom bottom",
-        scrub,
-        onUpdate: (self: { progress: number }) => apply(self.progress),
-        // Past its range the film is done; the page marks it so the canvas can
-        // fade out rather than hanging on its last frame behind later acts.
-        onLeave: () => {
-          canvas.dataset.past = "true";
-        },
-        onEnterBack: () => {
-          canvas.dataset.past = "false";
-        },
-        onRefresh: () => {
-          size();
-          checkWeights();
-          render(current);
-        },
-      });
-      apply(0);
+      startGsap(g, ST);
     } else {
-      // GSAP did not load. Frame 0 is already on screen and the page scrolls;
-      // this keeps the scrub working too rather than settling for a still.
-      console.warn("[filmScrub] GSAP/ScrollTrigger unavailable — using native scrub");
+      // Start the built-in scrub immediately so the page remains responsive even
+      // if GSAP never loads. If a lazy driver arrives afterwards, swap over.
       canvas.dataset.driver = "native";
       startNativeScrub();
+      if (opts.loadDriver) {
+        void opts
+          .loadDriver()
+          .then((driver) => {
+            if (disposed || calm.matches || st || !driver?.gsap || !driver.ScrollTrigger) {
+              if (!driver?.gsap || !driver?.ScrollTrigger) warnNativeFallback();
+              return;
+            }
+            cancelAnimationFrame(raf);
+            raf = 0;
+            startGsap(driver.gsap, driver.ScrollTrigger);
+          })
+          .catch(() => {
+            warnNativeFallback();
+          });
+      } else {
+        warnNativeFallback();
+      }
     }
   }
 
