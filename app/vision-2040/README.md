@@ -217,7 +217,7 @@ upgrade, and it can introduce artefacts on fast camera moves.
 npm run build && npm start
 ```
 
-The route now uses local fallback font stacks rather than build-time remote font
+The route now uses system font stacks rather than build-time remote font
 fetches, and the film files are local, so **nothing on this page touches the
 network once built**. Venue Wi-Fi is not a dependency.
 
