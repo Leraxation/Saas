@@ -334,7 +334,7 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
 
   /* ── Driving ───────────────────────────────────────────────────────── */
 
-  function apply(p: number) {
+  function applyScrollProgress(p: number) {
     if (!manifest) return;
     lastP = p;
     render(progressToFrameT(p, segments) * (manifest.count - 1));
@@ -356,7 +356,7 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
       if (smoothed < 0) smoothed = raw;
       // Match ScrollTrigger's scrub feel; snap directly under reduced motion.
       smoothed = calm.matches ? raw : smoothed + (raw - smoothed) * 0.16;
-      apply(smoothed);
+      applyScrollProgress(smoothed);
       if (disposed || driverMode !== "native") return;
       raf = requestAnimationFrame(tick);
     };
@@ -372,7 +372,7 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
       start: "top top",
       end: "bottom bottom",
       scrub,
-      onUpdate: (self: { progress: number }) => apply(self.progress),
+      onUpdate: (self: { progress: number }) => applyScrollProgress(self.progress),
       // Past its range the film is done; the page marks it so the canvas can
       // fade out rather than hanging on its last frame behind later acts.
       onLeave: () => {
@@ -387,7 +387,7 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
         render(current);
       },
     });
-    apply(currentScrollProgress());
+    applyScrollProgress(currentScrollProgress());
   }
 
   function warnNativeFallback() {
