@@ -427,8 +427,17 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
         void opts
           .loadDriver()
           .then((driver) => {
-            if (disposed || calm.matches || st || !driver?.gsap || !driver.ScrollTrigger) {
-              if (!driver?.gsap || !driver?.ScrollTrigger) warnNativeFallback();
+            if (disposed || st) return;
+            if (calm.matches) {
+              cancelAnimationFrame(raf);
+              raf = 0;
+              driverMode = "calm";
+              canvas.dataset.driver = "calm";
+              render(0);
+              return;
+            }
+            if (!driver?.gsap || !driver?.ScrollTrigger) {
+              warnNativeFallback();
               return;
             }
             cancelAnimationFrame(raf);
