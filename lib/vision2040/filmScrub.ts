@@ -173,6 +173,8 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
   let disposed = false;
   let raf = 0;
   let st: { kill: () => void } | null = null;
+  let driverMode: "pending" | "native" | "gsap" | "calm" | "off" = "pending";
+  let nativeWarned = false;
 
   /* ── Canvas sizing ─────────────────────────────────────────────────── */
 
@@ -346,20 +348,23 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
 
   /** Native fallback: same mapping, own rAF, used when GSAP is unavailable. */
   function startNativeScrub() {
+    driverMode = "native";
     let smoothed = -1;
     const tick = () => {
-      if (disposed) return;
+      if (disposed || driverMode !== "native") return;
       const raw = currentScrollProgress();
       if (smoothed < 0) smoothed = raw;
       // Match ScrollTrigger's scrub feel; snap directly under reduced motion.
       smoothed = calm.matches ? raw : smoothed + (raw - smoothed) * 0.16;
       apply(smoothed);
+      if (disposed || driverMode !== "native") return;
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
   }
 
   function startGsap(g: any, ST: any) {
+    driverMode = "gsap";
     canvas.dataset.driver = "gsap";
     g.registerPlugin(ST);
     st = ST.create({
@@ -385,7 +390,6 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
     apply(currentScrollProgress());
   }
 
-  let nativeWarned = false;
   function warnNativeFallback() {
     if (nativeWarned) return;
     nativeWarned = true;
@@ -402,6 +406,7 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
     // To keep scrubbing for these users instead, delete this branch — the
     // native path below already snaps without smoothing when calm.matches.
     if (calm.matches) {
+      driverMode = "calm";
       canvas.dataset.driver = "calm";
       render(0);
       return;
@@ -465,6 +470,7 @@ export function createFilmScrub(opts: FilmScrubOptions): FilmScrubHandle {
   return {
     destroy() {
       disposed = true;
+      driverMode = "off";
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
       st?.kill();
