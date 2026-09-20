@@ -37,7 +37,7 @@ export default function Vision2040() {
 
       <main className="v-main">
         {/*
-          The film's scroll range: acts I-IV. It reaches its last frame 64% into
+          The film's scroll range: acts I-IV. It reaches its last frame 60% into
           Act IV, right as the passenger trajectory begins to draw, and holds
           there. The segment weights in FilmCanvas mirror these act heights —
           change one, change both.
@@ -253,7 +253,7 @@ export default function Vision2040() {
           <div className="v-mapnote">{PILLARS.source}</div>
         </Act>
 
-        {/* ── VI · THE ROADMAP ───────────────────────────────────────── */}
+        {/* ── VIII · THE ROADMAP ─────────────────────────────────────── */}
         <Act api={api} id="roadmap" vh={360}>
           <Beat api={api} act="roadmap" from={0} to={0.16} className="v-panel v-panel--top">
             <Kicker>{ROADMAP.kicker}</Kicker>

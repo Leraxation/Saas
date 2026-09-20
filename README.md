@@ -136,3 +136,9 @@ lib/
   mock-data.ts                → demo data
 get_token.py                  → one-time device-flow script (Option A)
 ```
+
+## Vision 2040 presentation route
+
+This repository also includes the scroll-driven **`/vision-2040`** presentation.
+Its film-fetching, frame-extraction, offline-build, and verification workflow is
+documented in **`app/vision-2040/README.md`**.

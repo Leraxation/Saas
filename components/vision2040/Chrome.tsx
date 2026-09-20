@@ -34,7 +34,10 @@ export default function Chrome({ api }: { api: StageApi }) {
     } catch {
       seen = false;
     }
-    setPreflight(forced || !seen);
+    const id = window.requestAnimationFrame(() => {
+      setPreflight(forced || !seen);
+    });
+    return () => window.cancelAnimationFrame(id);
   }, []);
 
   const dismissPreflight = useCallback(() => {

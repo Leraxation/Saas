@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { createFilmScrub, linearSegments } from "@/lib/vision2040/filmScrub";
 
 /**
@@ -16,7 +14,7 @@ import { createFilmScrub, linearSegments } from "@/lib/vision2040/filmScrub";
  * act's height and change its weight with it.
  *
  * `linearSegments` derives each segment's slice of the frame sequence from the
- * weights, so the film runs first frame to last across the whole page and the
+ * weights, so the film runs first frame to last across acts I-IV and the
  * arithmetic cannot fall out of step. To park the picture while a passage is
  * read, set that segment's `from` and `to` equal afterwards; to cut, leave a
  * gap to the next segment's `from`. That is what the segment model is for —
@@ -50,8 +48,17 @@ export default function FilmCanvas({ triggerId }: { triggerId: string }) {
       manifestUrl: "/vision2040/frames/manifest.json",
       segments: FILM_SEGMENTS,
       scrub: 0.5,
-      gsap,
-      ScrollTrigger,
+      loadDriver: async () => {
+        try {
+          const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([
+            import("gsap"),
+            import("gsap/ScrollTrigger"),
+          ]);
+          return { gsap, ScrollTrigger };
+        } catch {
+          return null;
+        }
+      },
       scrim: (ctx, w, h, p) => {
         // Light while the film carries the opening; deeper once the map and
         // the charts have to read over the top of it.
