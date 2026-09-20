@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { StageApi } from "@/lib/vision2040/useStage";
 import { clamp01, range } from "@/lib/vision2040/useStage";
 import {
@@ -33,7 +33,7 @@ const POSTER = "/vision2040/poster.jpg";
 export default function Stage({ api }: { api: StageApi }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const playRef = useRef<HTMLVideoElement>(null);
-  const motes = useRef<Mote[]>(makeMotes(320));
+  const motes = useMemo(() => makeMotes(320), []);
   const [hasFilm, setHasFilm] = useState(false);
   // The film is owned by FilmCanvas/filmScrub now. Stage only needs to know
   // whether it is painting, so it can hold its own backdrop back.
@@ -100,7 +100,7 @@ export default function Stage({ api }: { api: StageApi }) {
 
       ctx.save();
       ctx.globalAlpha = 1 - filmIn * 0.88;
-      paintBackdrop(ctx, s.w, s.h, s.time, warmth, motes.current, s.quality);
+      paintBackdrop(ctx, s.w, s.h, s.time, warmth, motes, s.quality);
       ctx.restore();
 
       if (network > 0.001 && scale < 0.02) {
@@ -138,7 +138,7 @@ export default function Stage({ api }: { api: StageApi }) {
     });
 
     return unsubscribe;
-  }, [api, hasFilm]);
+  }, [api, hasFilm, motes]);
 
   return (
     <div className="v-stage" aria-hidden="true">

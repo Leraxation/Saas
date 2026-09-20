@@ -141,4 +141,4 @@ get_token.py                  → one-time device-flow script (Option A)
 
 This repository also includes the scroll-driven **`/vision-2040`** presentation.
 Its film-fetching, frame-extraction, offline-build, and verification workflow is
-documented in **`/home/runner/work/Saas/Saas/app/vision-2040/README.md`**.
+documented in **`app/vision-2040/README.md`**.
