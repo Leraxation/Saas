@@ -40,6 +40,8 @@ npm run dev
 
 Works immediately with sample data, no configuration needed.
 
+> This project uses **npm** (pinned via `packageManager` in `package.json`) and Node **20.9+** (`.nvmrc` → 22). Please don't commit `yarn.lock` / `pnpm-lock.yaml`; use `npm ci` for clean installs.
+
 ## Deploy to Vercel
 
 1. Go to [vercel.com/new](https://vercel.com/new) and import this repository
