@@ -1,0 +1,1046 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Manpower Budget Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Schibsted+Grotesk:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: sticky header + tab bar over a single working column; tables scroll inside their own frames. */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --surface-2:#eef0f4; --line:#dcdfe6; --line-2:#c7ccd6;
+  --fg:#141824; --fg-2:#4a5163; --fg-3:#737a8c;
+  --accent:#3140b8; --accent-soft:#e6e8fa; --accent-fg:#ffffff;
+  --good:#0f7b4b; --good-soft:#e2f4ea; --warn:#9a5b00; --warn-soft:#fdf0d8; --bad:#b42323; --bad-soft:#fbe6e4;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --neutral-bar:#9aa1b1;
+  --up:#c24a3a; --down:#1f7a55;
+  --f-display:"Schibsted Grotesk","Segoe UI",system-ui,sans-serif;
+  --f-body:"Public Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  --r:8px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12141a; --surface:#1a1d25; --surface-2:#232733; --line:#2e3340; --line-2:#3c4252;
+  --fg:#eef0f5; --fg-2:#b4b9c6; --fg-3:#8a90a0;
+  --accent:#8e9bff; --accent-soft:#262c55; --accent-fg:#0f1226;
+  --good:#5fd39a; --good-soft:#15352a; --warn:#f0b54a; --warn-soft:#3a2d12; --bad:#ff8b80; --bad-soft:#3d1c1b;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --neutral-bar:#5d6475;
+  --up:#ef7b6b; --down:#4cc28e; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#12141a; --surface:#1a1d25; --surface-2:#232733; --line:#2e3340; --line-2:#3c4252;
+  --fg:#eef0f5; --fg-2:#b4b9c6; --fg-3:#8a90a0;
+  --accent:#8e9bff; --accent-soft:#262c55; --accent-fg:#0f1226;
+  --good:#5fd39a; --good-soft:#15352a; --warn:#f0b54a; --warn-soft:#3a2d12; --bad:#ff8b80; --bad-soft:#3d1c1b;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --neutral-bar:#5d6475;
+  --up:#ef7b6b; --down:#4cc28e; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5;margin:0}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:20px;font-weight:700}
+h2{font-size:17px;font-weight:700}
+h3{font-size:14px;font-weight:600}
+.num,td.n,th.n{font-variant-numeric:tabular-nums}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:16px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding-block:12px}
+.brand{display:flex;flex-direction:column;min-width:0;flex:1 1 260px}
+.brand small{color:var(--fg-3);font-size:12px}
+.eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);font-weight:600}
+.status{font-size:12px;color:var(--fg-2);display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--surface-2)}
+.status i{width:8px;height:8px;border-radius:50%;background:var(--fg-3);display:inline-block}
+.status[data-s="ok"] i{background:var(--good)} .status[data-s="busy"] i{background:var(--warn)} .status[data-s="local"] i{background:var(--accent)}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav.tabs button{appearance:none;border:0;background:none;color:var(--fg-2);font:600 13px var(--f-body);padding:10px 14px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+nav.tabs button:hover{color:var(--fg)}
+main{padding-block:20px 60px}
+section.view{display:flex;flex-direction:column;gap:18px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
+.panel-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px;margin-bottom:12px}
+.panel-head p{margin:0;color:var(--fg-3);font-size:12.5px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.kpi{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi .v{font-family:var(--f-display);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi .l{font-size:12px;color:var(--fg-3)}
+.kpi .d{font-size:12px;color:var(--fg-2)}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.pill.good{background:var(--good-soft);color:var(--good)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.info{background:var(--accent-soft);color:var(--accent)}
+.alerts{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.alerts li{display:flex;gap:10px;align-items:flex-start;font-size:13px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:11.5px;color:var(--fg-3);font-weight:600;letter-spacing:.02em;background:var(--surface-2);position:sticky;top:0;z-index:1}
+td.n,th.n{text-align:right}
+tr.total td{font-weight:700;background:var(--surface-2);border-bottom:0}
+tr.grp td{background:var(--surface-2);font-weight:600;font-size:12px;color:var(--fg-2)}
+tbody tr:hover td{background:color-mix(in srgb,var(--accent-soft) 45%,transparent)}
+td.muted{color:var(--fg-3)}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line-2);border-radius:6px;padding:5px 8px;min-width:0}
+input[type=number]{text-align:right;font-variant-numeric:tabular-nums}
+input:focus-visible,select:focus-visible,button:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+table input,table select{padding:4px 6px;border-color:transparent;background:transparent;width:100%}
+table input:hover,table select:hover{border-color:var(--line-2)}
+table input:focus,table select:focus{border-color:var(--accent);background:var(--surface)}
+td.cell-in{padding:2px 4px}
+.w-xs{width:64px}.w-s{width:84px}.w-m{width:110px}.w-l{width:190px}
+button.btn{appearance:none;font:600 13px var(--f-body);border-radius:6px;padding:7px 12px;border:1px solid var(--line-2);background:var(--surface);color:var(--fg);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+button.btn:hover{border-color:var(--fg-3)}
+button.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button.btn.danger{color:var(--bad)}
+button.btn:disabled{opacity:.5;cursor:not-allowed}
+button.icon{appearance:none;border:0;background:none;color:var(--fg-3);cursor:pointer;padding:4px 6px;border-radius:4px;font-size:15px;line-height:1}
+button.icon:hover{color:var(--bad);background:var(--bad-soft)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar .grow{flex:1 1 auto}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px 20px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:12.5px;font-weight:600;color:var(--fg-2)}
+.field .hint{font-size:11.5px;color:var(--fg-3)}
+.field input,.field select{width:100%}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--fg-2);font-family:var(--f-body);font-size:11px}
+.chart .axis{stroke:var(--line-2)} .chart .grid{stroke:var(--line);stroke-dasharray:2 3}
+.chart-scroll{overflow-x:auto}
+.chart-scroll .chart{min-width:560px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--fg-2);margin-bottom:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+#tip{position:fixed;pointer-events:none;z-index:50;background:var(--fg);color:var(--bg);font-size:12px;padding:6px 9px;border-radius:6px;max-width:260px;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.note{font-size:12.5px;color:var(--fg-3);margin:0}
+.callout{border:1px dashed var(--line-2);border-radius:var(--r);padding:12px 14px;font-size:13px;color:var(--fg-2);background:var(--surface-2)}
+.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;border-radius:var(--r);background:var(--bad-soft);color:var(--bad);font-size:13px}
+.scen-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.scen{border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+.scen.base{border-color:var(--accent)}
+.scen .res{font-family:var(--f-display);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.bar-inline{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden}
+.bar-inline>i{display:block;height:100%;background:var(--accent)}
+.dropzone{border:2px dashed var(--line-2);border-radius:var(--r);padding:22px;text-align:center;color:var(--fg-2);background:var(--surface-2)}
+.dropzone.over{border-color:var(--accent);background:var(--accent-soft)}
+code{font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion:no-preference){.bar-inline>i{transition:width .3s}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <div class="brand">
+        <span class="eyebrow" id="hdrEyebrow">Manpower plan · FY2027 · OMR</span>
+        <h1 id="hdrTitle">Manpower Budget Planner</h1>
+      </div>
+      <span class="status" id="saveStatus" data-s="local"><i></i><span>Loading…</span></span>
+      <button class="btn primary" id="btnExportXlsx" type="button">Export to Excel</button>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+      <button role="tab" data-tab="plan" aria-selected="false">Headcount plan</button>
+      <button role="tab" data-tab="budget" aria-selected="false">Budget detail</button>
+      <button role="tab" data-tab="scen" aria-selected="false">Scenarios</button>
+      <button role="tab" data-tab="assump" aria-selected="false">Assumptions</button>
+      <button role="tab" data-tab="data" aria-selected="false">Import &amp; export</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- OVERVIEW -->
+  <section class="view" id="v-overview">
+    <div id="sampleBanner" class="callout" hidden>
+      You are looking at <b>example data</b> (3,100 staff across 11 departments) so every screen shows how the tool works. Replace it with your own figures on the <b>Import &amp; export</b> tab, or edit lines directly in <b>Headcount plan</b>.
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-head"><h2>Budget bridge</h2><p>From today's payroll run-rate to the FY budget</p></div>
+        <div class="chart-scroll" id="chBridge"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Checks</h2><p>Items that need attention before submission</p></div>
+        <ul class="alerts" id="alerts"></ul>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Budget by department</h2><p>Annual cost incl. contingency, split by cost group</p></div>
+      <div class="legend" id="lgDept"></div>
+      <div class="chart-scroll" id="chDept"></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-head"><h2>Omanisation at year end</h2><p id="omanSub">Closing Omani share of headcount vs target</p></div>
+        <div class="chart-scroll" id="chOman"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Monthly phasing</h2><p>Payroll cost and headcount by month</p></div>
+        <div class="chart-scroll" id="chMonth"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLAN -->
+  <section class="view" id="v-plan" hidden>
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Headcount plan</h2>
+        <p>One line per department × position/grade × nationality. Salaries are monthly averages in OMR.</p>
+      </div>
+      <div class="toolbar" style="margin-bottom:12px">
+        <label class="sr" for="fDept">Filter by department</label>
+        <select id="fDept"></select>
+        <label class="sr" for="fSearch">Search positions</label>
+        <input id="fSearch" type="search" placeholder="Search position or grade">
+        <span class="grow"></span>
+        <button class="btn primary" id="btnAddLine" type="button">+ Add line</button>
+      </div>
+      <div class="tbl-wrap" style="max-height:70vh">
+        <table id="tblPlan">
+          <thead><tr>
+            <th>Department</th><th>Position / grade</th><th>Nat.</th>
+            <th class="n">Current HC</th><th class="n">New hires</th><th>Start</th>
+            <th class="n">Exits</th><th>Last month</th>
+            <th class="n">Basic / mo</th><th class="n">Allow. / mo</th>
+            <th class="n">Closing HC</th><th class="n">FY cost (OMR)</th><th></th>
+          </tr></thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
+      <p class="note" style="margin-top:10px">Nat.: O = Omani, E = Expatriate. “Start” is the month new hires join; “Last month” is the final month leavers are on payroll. Costs update as you type.</p>
+    </div>
+  </section>
+
+  <!-- BUDGET -->
+  <section class="view" id="v-budget" hidden>
+    <div class="panel">
+      <div class="panel-head"><h2>Department budget</h2><p>Annual OMR by cost line. Contingency is added per department.</p></div>
+      <div class="tbl-wrap"><table id="tblBudget"></table></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Headcount movement</h2><p>Opening to closing headcount and Omanisation by department</p></div>
+      <div class="tbl-wrap"><table id="tblHC"></table></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Monthly phasing</h2><p>Cost (OMR) and headcount by month, for cash-flow and payroll forecasting</p></div>
+      <div class="tbl-wrap"><table id="tblMonth"></table></div>
+    </div>
+  </section>
+
+  <!-- SCENARIOS -->
+  <section class="view" id="v-scen" hidden>
+    <div class="panel">
+      <div class="panel-head"><h2>Scenarios</h2><p>Test what-ifs against the base plan without changing it</p></div>
+      <div class="scen-grid" id="scenGrid"></div>
+      <div class="toolbar" style="margin-top:12px"><button class="btn" id="btnAddScen" type="button">+ Add scenario</button></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Comparison</h2><p>Differences are against the base plan</p></div>
+      <div class="tbl-wrap"><table id="tblScen"></table></div>
+    </div>
+  </section>
+
+  <!-- ASSUMPTIONS -->
+  <section class="view" id="v-assump" hidden>
+    <div class="panel">
+      <div class="panel-head"><h2>Plan settings</h2></div>
+      <div class="form-grid" id="formPlan"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Pay &amp; on-cost assumptions</h2><p>Statutory rates are defaults. Confirm them with Payroll before submission.</p></div>
+      <div class="form-grid" id="formRates"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Departments</h2><p>Overtime rate, prior-year budget and budget ceiling per department</p></div>
+      <div class="tbl-wrap"><table id="tblDepts"></table></div>
+      <div class="toolbar" style="margin-top:12px"><button class="btn" id="btnAddDept" type="button">+ Add department</button></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>How the budget is calculated</h2></div>
+      <div class="note" style="display:grid;gap:6px;max-width:80ch">
+        <span>Each plan line is costed month by month. Heads in month <i>m</i> = current HC + new hires (from their start month) − exits (after their last month).</span>
+        <span>Basic and allowances rise by the increment from its effective month. Overtime is a % of basic per department; bonus accrues as <i>n</i> months of basic.</span>
+        <span>Social protection applies to Omani and expatriate staff at their own rates, on basic or gross pay. End-of-service accrues on expatriate basic. Air tickets apply to expatriates; medical and training apply per head per year.</span>
+        <span>Recruitment cost is charged in each new hire's start month. Contingency is a % on each department's total.</span>
+        <span>The run-rate is today's headcount at today's pay for 12 months with no increment, hires or exits; the bridge shows what each change adds.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- DATA -->
+  <section class="view" id="v-data" hidden>
+    <div class="panel">
+      <div class="panel-head"><h2>Import your data</h2><p>Excel (.xlsx) or CSV. Employee-level or summarised files both work.</p></div>
+      <div class="dropzone" id="drop">
+        <p style="margin:0 0 10px">Drop a file here, or</p>
+        <label class="btn primary" for="fileIn" style="display:inline-flex;cursor:pointer">Choose file</label>
+        <input id="fileIn" type="file" accept=".xlsx,.xls,.csv,.json" class="sr">
+      </div>
+      <div id="importPreview" style="margin-top:14px"></div>
+      <div class="note" style="margin-top:14px;display:grid;gap:6px;max-width:90ch">
+        <span><b>Columns recognised</b> (header names are matched loosely): Department, Position (or Grade / Job title), Nationality, Current HC, New hires, Start month, Exits, Last month, Basic, Allowances.</span>
+        <span><b>Employee-level export</b> from your HR system: leave out “Current HC”. Each row counts as one person, and rows are grouped by department, position and nationality with average pay.</span>
+        <span>Nationality accepts Omani / O / OM / Local; anything else is treated as Expatriate. Months accept 1–12 or Jan–Dec.</span>
+      </div>
+      <div class="toolbar" style="margin-top:12px">
+        <button class="btn" id="btnTemplate" type="button">Download import template</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Export &amp; backup</h2><p>Take the budget to Finance, or keep a copy of the whole plan</p></div>
+      <div class="toolbar">
+        <button class="btn primary" id="btnExportXlsx2" type="button">Budget workbook (.xlsx)</button>
+        <button class="btn" id="btnExportCsv" type="button">Plan lines (.csv)</button>
+        <button class="btn" id="btnExportJson" type="button">Full backup (.json)</button>
+        <button class="btn" id="btnCopy" type="button">Copy department summary</button>
+      </div>
+      <p class="note" id="exportMsg" style="margin-top:10px"></p>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Storage</h2></div>
+      <p class="note" id="storageNote" style="margin-bottom:12px"></p>
+      <div class="toolbar" id="resetArea">
+        <button class="btn danger" id="btnReset" type="button">Reset to example data</button>
+        <button class="btn danger" id="btnBlank" type="button">Start a blank plan</button>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="tip" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(() => {
+"use strict";
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const GROUPS = [
+  {k:"pay", label:"Basic & allowances", c:"--s1"},
+  {k:"var", label:"Overtime & bonus", c:"--s2"},
+  {k:"stat", label:"Social protection & EOSB", c:"--s3"},
+  {k:"ben", label:"Tickets, medical & training", c:"--s4"},
+  {k:"rec", label:"Recruitment", c:"--s5"},
+];
+const LS_KEY = "manpower-planner-v1";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
+const nf0 = new Intl.NumberFormat("en-GB", {maximumFractionDigits:0});
+const nf1 = new Intl.NumberFormat("en-GB", {maximumFractionDigits:1, minimumFractionDigits:1});
+const f0 = v => nf0.format(Math.round(v || 0));
+const fM = v => { const a = Math.abs(v); return a >= 1e6 ? (v/1e6).toFixed(2) + "m" : a >= 1e3 ? (v/1e3).toFixed(0) + "k" : f0(v); };
+const fPct = v => isFinite(v) ? nf1.format(v) + "%" : "—";
+const sgn = v => (v > 0 ? "+" : v < 0 ? "−" : "") ;
+const fDelta = (v, fmt = fM) => sgn(v) + fmt(Math.abs(v));
+const num = v => { const n = parseFloat(String(v ?? "").replace(/[, ]/g, "")); return isFinite(n) ? n : 0; };
+const clampM = v => Math.min(12, Math.max(1, Math.round(num(v)) || 1));
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* ---------- Example data ---------- */
+function sampleState(){
+  const D = [
+    ["Flight Operations",4, [["Captains","E",95,6,4,8,6,3800,1900],["Captains","O",110,8,4,3,9,3600,1800],["First Officers","O",190,20,3,6,7,2100,1100],["First Officers","E",40,0,1,10,6,2300,1100],["Flight Ops Support & Crew Scheduling","O",85,3,5,2,8,950,450]]],
+    ["Cabin Services",6, [["Cabin Crew","O",680,60,3,45,6,520,380],["Cabin Crew","E",180,0,1,25,6,560,380],["Pursers & Cabin Managers","O",110,6,4,4,7,900,520]]],
+    ["Engineering & Maintenance",10, [["Licensed Engineers (B1/B2)","O",160,12,5,6,8,1300,650],["Licensed Engineers (B1/B2)","E",95,4,3,12,6,1700,800],["Technicians & Mechanics","O",208,15,4,8,7,650,350],["Planning & Technical Records","O",45,2,6,1,9,800,400]]],
+    ["Ground & Airport Services",12, [["Station & Ground Staff","O",280,10,4,14,6,480,300],["Outstation Managers","E",30,0,1,3,6,1500,900],["Load Control & Ops Control","O",60,4,3,2,8,750,380]]],
+    ["Commercial",1, [["Sales & Distribution","O",110,5,4,6,6,900,480],["Network & Revenue Planning","O",35,3,3,1,6,1400,650],["Revenue Management Specialists","E",12,0,1,2,6,2000,900],["Marketing & Loyalty","O",40,2,5,2,6,950,480]]],
+    ["Cargo",5, [["Cargo Operations","O",70,4,4,3,6,600,320],["Cargo Sales","E",8,0,1,1,6,1600,800]]],
+    ["Customer Experience",3, [["Contact Centre","O",90,6,3,8,6,480,300],["Customer Service Management","O",25,1,6,1,9,1100,550]]],
+    ["Finance",1, [["Finance & Accounts","O",75,2,4,3,6,950,480],["Finance Specialists","E",6,0,1,1,6,2200,1000]]],
+    ["Human Resources & Training",1, [["HR & Administration","O",55,2,4,2,6,900,450],["Training Instructors","O",30,3,3,1,9,1500,700],["Training Instructors","E",20,0,1,4,6,2400,1100]]],
+    ["IT & Digital",2, [["IT & Digital","O",70,6,3,3,6,1100,550],["IT Specialists","E",18,0,1,3,6,2300,1000]]],
+    ["Safety, Security & Quality",2, [["Safety, Security & Quality","O",60,3,4,2,6,1000,500],["Quality & Safety Auditors","E",8,0,1,1,6,2100,950]]],
+  ];
+  const fy26 = [29.8e6, 14.6e6, 12.2e6, 5.7e6, 4.5e6, 1.25e6, 1.7e6, 1.85e6, 2.8e6, 2.35e6, 1.7e6];
+  const depts = [], lines = [];
+  D.forEach(([name, ot, ls], i) => {
+    const id = "d" + (i + 1);
+    depts.push({id, name, ot, prior: fy26[i], ceiling: 0});
+    ls.forEach(([role, nat, hc, hires, hireM, exits, exitM, basic, allow]) =>
+      lines.push({id: uid(), dept: id, role, nat, hc, hires, hireM, exits, exitM, basic, allow}));
+  });
+  depts[0].ceiling = 31e6; depts[1].ceiling = 15.5e6;
+  return {
+    v: 1, sample: true, savedAt: 0,
+    fy: 2027, org: "", baseYear: 2026,
+    a: { incPct: 3, incMonth: 1, bonusMonths: 1, omSI: 12.5, exSI: 1, siBase: "gross", eosbPct: 8.33,
+         ticket: 350, medO: 280, medE: 420, training: 220, recO: 400, recE: 1800, contingency: 2, omanTarget: 85 },
+    depts, lines,
+    scen: [
+      {id: uid(), name: "Hiring slowdown", hirePct: 60, delay: 3, incPct: 3, otPct: 100, bonusMonths: 1},
+      {id: uid(), name: "Growth & retention", hirePct: 100, delay: 0, incPct: 4.5, otPct: 110, bonusMonths: 1.5},
+    ],
+  };
+}
+function blankState(){
+  const s = sampleState();
+  s.sample = false; s.lines = []; s.depts = [{id: "d1", name: "New department", ot: 2, prior: 0, ceiling: 0}];
+  s.scen = []; return s;
+}
+
+/* ---------- Cost engine ---------- */
+function calcLine(l, dept, A, o = {}){
+  const r = {pay:0, var:0, stat:0, ben:0, rec:0, total:0, m: new Array(12).fill(0), h: new Array(12).fill(0), basic:0, allow:0, ot:0, bonus:0, si:0, eosb:0, ticket:0, med:0, train:0};
+  const isO = l.nat === "O";
+  const inc = (o.incPct ?? A.incPct) / 100;
+  const hiresPlan = o.noHires ? 0 : num(l.hires) * (o.hirePct ?? 100) / 100;
+  const hireM = clampM(l.hireM) + (o.delay || 0);
+  const hires = hireM <= 12 ? hiresPlan : 0;
+  const exits = o.noExits ? 0 : num(l.exits);
+  const exitM = clampM(l.exitM || 12);
+  const otR = num(dept?.ot) / 100 * (o.otPct ?? 100) / 100;
+  const bm = o.bonusMonths ?? A.bonusMonths;
+  const siR = (isO ? A.omSI : A.exSI) / 100;
+  const basic = num(l.basic), allow = num(l.allow), hc = num(l.hc);
+  for (let m = 1; m <= 12; m++){
+    const h = Math.max(0, hc + (m >= hireM ? hires : 0) - (m > exitM ? exits : 0));
+    const rate = o.noInc ? 1 : (m >= A.incMonth ? 1 + inc : 1);
+    const b = h * basic * rate, a = h * allow * rate;
+    const ot = b * otR, bo = b * bm / 12;
+    const si = (A.siBase === "basic" ? b : b + a) * siR;
+    const eo = isO ? 0 : b * A.eosbPct / 100;
+    const tk = isO ? 0 : h * A.ticket / 12;
+    const md = h * (isO ? A.medO : A.medE) / 12;
+    const tr = h * A.training / 12;
+    const rc = m === hireM ? hires * (isO ? A.recO : A.recE) : 0;
+    r.basic += b; r.allow += a; r.ot += ot; r.bonus += bo; r.si += si; r.eosb += eo; r.ticket += tk; r.med += md; r.train += tr;
+    r.pay += b + a; r.var += ot + bo; r.stat += si + eo; r.ben += tk + md + tr; r.rec += rc;
+    r.m[m-1] = b + a + ot + bo + si + eo + tk + md + tr + rc; r.h[m-1] = h;
+  }
+  r.total = r.pay + r.var + r.stat + r.ben + r.rec;
+  r.open = hc; r.hires = hires; r.exits = Math.min(exits, hc + hires); r.close = Math.max(0, hc + hires - exits);
+  r.fte = r.h.reduce((s, x) => s + x, 0) / 12;
+  return r;
+}
+const COST_KEYS = ["basic","allow","ot","bonus","si","eosb","ticket","med","train","rec"];
+function compute(S, o = {}){
+  const A = S.a, map = new Map(), lineRes = new Map();
+  const blank = () => ({sub:0, cont:0, total:0, open:0, close:0, openO:0, closeO:0, hires:0, exits:0, fte:0, m:new Array(12).fill(0), h:new Array(12).fill(0), pay:0, var:0, stat:0, ben:0, rec:0, ...Object.fromEntries(COST_KEYS.map(k => [k, 0]))});
+  S.depts.forEach(d => map.set(d.id, {d, ...blank()}));
+  for (const l of S.lines){
+    const g = map.get(l.dept); if (!g) continue;
+    const r = calcLine(l, g.d, A, o); lineRes.set(l.id, r);
+    for (const k of ["pay","var","stat","ben","rec","open","close","hires","exits","fte", ...COST_KEYS]) g[k] += r[k] || 0;
+    g.sub += r.total;
+    if (l.nat === "O"){ g.openO += r.open; g.closeO += r.close; }
+    r.m.forEach((v, i) => { g.m[i] += v; g.h[i] += r.h[i]; });
+  }
+  const depts = [...map.values()];
+  const tot = blank();
+  for (const g of depts){
+    g.cont = o.noCont ? 0 : g.sub * A.contingency / 100;
+    g.total = g.sub + g.cont;
+    for (const k of Object.keys(tot)) if (typeof tot[k] === "number") tot[k] += g[k];
+    g.m.forEach((v, i) => { tot.m[i] += v * (1 + (o.noCont ? 0 : A.contingency / 100)); tot.h[i] += g.h[i]; });
+  }
+  return {depts, tot, lineRes};
+}
+function bridge(S){
+  const rr = compute(S, {noHires:true, noExits:true, noInc:true, noCont:true}).tot.sub;
+  const wInc = compute(S, {noHires:true, noExits:true, noCont:true}).tot.sub;
+  const wExit = compute(S, {noHires:true, noCont:true}).tot.sub;
+  const full = compute(S);
+  return [
+    {label:"Run-rate", v:rr, kind:"total"},
+    {label:"Increment", v:wInc - rr},
+    {label:"Exits", v:wExit - wInc},
+    {label:"New hires", v:full.tot.sub - wExit},
+    {label:"Contingency", v:full.tot.cont},
+    {label:"FY budget", v:full.tot.total, kind:"total"},
+  ];
+}
+
+/* ---------- State & persistence ---------- */
+let S = null, R = null;
+let store = {db:null, ref:null, mode:"local"};
+let saveTimer = null;
+function loadLocal(){ try { const t = localStorage.getItem(LS_KEY); return t ? JSON.parse(t) : null; } catch { return null; } }
+function saveLocal(){ try { localStorage.setItem(LS_KEY, JSON.stringify(S)); return true; } catch { return false; } }
+function setStatus(s, text){ const el = $("#saveStatus"); el.dataset.s = s; el.lastElementChild.textContent = text; }
+function normalise(s){
+  const d = sampleState();
+  if (!s || typeof s !== "object" || !Array.isArray(s.lines) || !Array.isArray(s.depts)) return d;
+  s.a = {...d.a, ...(s.a || {})}; s.scen = Array.isArray(s.scen) ? s.scen : [];
+  s.fy = s.fy || d.fy; s.baseYear = s.baseYear || s.fy - 1; s.org = s.org || "";
+  return s;
+}
+function persist(){
+  S.savedAt = Date.now();
+  clearTimeout(saveTimer);
+  setStatus("busy", "Saving…");
+  saveTimer = setTimeout(async () => {
+    const okLocal = saveLocal();
+    if (store.ref){
+      try { await store.ref.set(JSON.parse(JSON.stringify(S))); setStatus("ok", "Saved to your account"); return; }
+      catch (e) { if (e && e.code === "quota_exceeded") setStatus("local", "Plan too large for account storage · saved in this browser"); else setStatus("local", okLocal ? "Saved in this browser" : "Not saved"); return; }
+    }
+    setStatus("local", okLocal ? "Saved in this browser" : "Not saved · export a backup");
+  }, 900);
+}
+function changed(){ recalc(); persist(); }
+
+async function initStore(){
+  const use = window.claude && window.claude.use;
+  if (!use) { setStatus("local", "Saved in this browser"); updateStorageNote(); return; }
+  try {
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    const id = user ? await user.id() : null;
+    if (db && id){
+      store.db = db; store.ref = db.doc("data/users/" + id + "/plan"); store.mode = "account";
+      const snap = await store.ref.get();
+      if (snap.exists){
+        const remote = normalise(snap.data());
+        if ((remote.savedAt || 0) >= (S.savedAt || 0)) { S = remote; saveLocal(); renderAll(); }
+        else persist();
+      }
+      setStatus("ok", "Saved to your account");
+    } else setStatus("local", "Saved in this browser");
+  } catch { setStatus("local", "Saved in this browser"); }
+  updateStorageNote();
+}
+function updateStorageNote(){
+  $("#storageNote").textContent = store.mode === "account"
+    ? "Your plan is saved privately to your account: nobody you share this page with can see your figures. Changes save automatically. Export a .json backup before major changes."
+    : "Your plan is saved in this browser only. Clearing site data or switching device loses it, so export a .json backup regularly.";
+}
+
+/* ---------- Tooltip ---------- */
+const tip = $("#tip");
+document.addEventListener("mousemove", e => {
+  const t = e.target.closest && e.target.closest("[data-tip]");
+  if (!t){ tip.hidden = true; return; }
+  tip.innerHTML = t.getAttribute("data-tip"); tip.hidden = false;
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = e.clientX + 14, y = e.clientY + 14;
+  if (x + w > innerWidth - 8) x = e.clientX - w - 14;
+  if (y + h > innerHeight - 8) y = e.clientY - h - 14;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+});
+document.addEventListener("scroll", () => tip.hidden = true, true);
+
+/* ---------- Charts ---------- */
+function niceMax(v){ if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))); const n = v / p; return ([1,1.2,1.6,2,2.4,3,4,5,6,8,10].find(x => n <= x)) * p; }
+function chartDept(){
+  const rows = [...R.depts].filter(g => g.total > 0 || g.open > 0).sort((a, b) => b.total - a.total);
+  const W = 760, L = 190, RP = 70, rowH = 28, T = 8, B = 26, H = T + rows.length * rowH + B;
+  const max = niceMax(Math.max(1, ...rows.map(g => Math.max(g.total, g.d.ceiling || 0))));
+  const x = v => L + (v / max) * (W - L - RP);
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Budget by department">`;
+  for (let i = 0; i <= 4; i++){ const v = max * i / 4, xx = x(v); s += `<line class="grid" x1="${xx}" x2="${xx}" y1="${T}" y2="${H - B}"/><text x="${xx}" y="${H - 8}" text-anchor="middle">${fM(v)}</text>`; }
+  rows.forEach((g, i) => {
+    const y = T + i * rowH + 5, bh = rowH - 10;
+    s += `<text x="${L - 10}" y="${y + bh / 2 + 4}" text-anchor="end">${esc(trunc(g.d.name, 28))}</text>`;
+    let acc = 0;
+    GROUPS.forEach(gr => {
+      const v = g[gr.k] * (1 + S.a.contingency / 100); if (v <= 0) return;
+      const x0 = x(acc), x1 = x(acc + v); acc += v;
+      const w = Math.max(0, x1 - x0 - 1.5);
+      s += `<rect x="${x0}" y="${y}" width="${w}" height="${bh}" rx="2" fill="var(${gr.c})" data-tip="<b>${esc(g.d.name)}</b><br>${gr.label}: OMR ${f0(v)}<br>${fPct(v / g.total * 100)} of department"/>`;
+    });
+    if (g.d.ceiling > 0){ const cx = x(g.d.ceiling); s += `<line x1="${cx}" x2="${cx}" y1="${y - 3}" y2="${y + bh + 3}" stroke="var(--fg)" stroke-width="2" data-tip="Ceiling OMR ${f0(g.d.ceiling)}"/>`; }
+    s += `<text x="${x(g.total) + 6}" y="${y + bh / 2 + 4}" style="fill:var(--fg);font-weight:600">${fM(g.total)}</text>`;
+    s += `<rect x="0" y="${y - 5}" width="${L}" height="${rowH}" fill="transparent" data-tip="<b>${esc(g.d.name)}</b><br>Budget OMR ${f0(g.total)}<br>Closing HC ${f0(g.close)}${g.d.ceiling ? "<br>Ceiling OMR " + f0(g.d.ceiling) : ""}"/>`;
+  });
+  s += `<line class="axis" x1="${L}" x2="${L}" y1="${T}" y2="${H - B}"/></svg>`;
+  $("#chDept").innerHTML = s;
+  $("#lgDept").innerHTML = GROUPS.map(g => `<span><i style="background:var(${g.c})"></i>${g.label}</span>`).join("") + `<span><i style="background:var(--fg);width:2px;height:12px"></i>Budget ceiling</span>`;
+}
+function trunc(s, n){ s = String(s); return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+function chartBridge(){
+  const steps = bridge(S);
+  const W = 640, H = 260, L = 56, T = 20, B = 36, RP = 10;
+  const tops = []; let run = 0;
+  steps.forEach(st => { if (st.kind === "total"){ st.a = 0; st.b = st.v; run = st.v; } else { st.a = run; st.b = run + st.v; run += st.v; } tops.push(st.a, st.b); });
+  const vmax = Math.max(...tops), vmin = Math.min(...tops.filter(v => v > 0).concat([vmax])) ;
+  const lo = Math.max(0, Math.floor((vmin * 0.9) / niceMax(vmax / 10)) * niceMax(vmax / 10));
+  const hi = vmax + (vmax - lo) * 0.08;
+  const y = v => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  const bw = (W - L - RP) / steps.length;
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Budget bridge">`;
+  for (let i = 0; i <= 4; i++){ const v = lo + (hi - lo) * i / 4; s += `<line class="grid" x1="${L}" x2="${W - RP}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${fM(v)}</text>`; }
+  steps.forEach((st, i) => {
+    const x0 = L + i * bw + bw * 0.18, w = bw * 0.64;
+    const a = st.kind === "total" ? lo : st.a;
+    const y0 = y(Math.max(a, st.b)), y1 = y(Math.min(a, st.b));
+    const fill = st.kind === "total" ? "var(--accent)" : st.v >= 0 ? "var(--up)" : "var(--down)";
+    s += `<rect x="${x0}" y="${y0}" width="${w}" height="${Math.max(1.5, y1 - y0)}" rx="3" fill="${fill}" data-tip="<b>${st.label}</b><br>${st.kind === "total" ? "OMR " + f0(st.v) : (st.v >= 0 ? "Adds" : "Saves") + " OMR " + f0(Math.abs(st.v))}"/>`;
+    s += `<text x="${x0 + w / 2}" y="${y0 - 6}" text-anchor="middle" style="fill:var(--fg);font-weight:600">${st.kind === "total" ? fM(st.v) : fDelta(st.v)}</text>`;
+    s += `<text x="${x0 + w / 2}" y="${H - 14}" text-anchor="middle">${st.label}</text>`;
+    if (i < steps.length - 1){ const nx = L + (i + 1) * bw + bw * 0.18; s += `<line x1="${x0 + w}" x2="${nx}" y1="${y(st.b)}" y2="${y(st.b)}" stroke="var(--line-2)" stroke-dasharray="3 3"/>`; }
+  });
+  s += `</svg>`;
+  $("#chBridge").innerHTML = s;
+}
+function chartOman(){
+  const rows = R.depts.filter(g => g.close > 0).map(g => ({n: g.d.name, p: g.closeO / g.close * 100, g})).sort((a, b) => a.p - b.p);
+  const W = 560, L = 190, RP = 60, rowH = 24, T = 18, B = 8, H = T + rows.length * rowH + B;
+  const x = v => L + v / 100 * (W - L - RP);
+  const tgt = S.a.omanTarget;
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Omanisation by department">`;
+  [0, 50, 100].forEach(v => s += `<line class="grid" x1="${x(v)}" x2="${x(v)}" y1="${T}" y2="${H - B}"/><text x="${x(v)}" y="${T - 6}" text-anchor="middle">${v}%</text>`);
+  rows.forEach((r, i) => {
+    const y = T + i * rowH + 4, bh = rowH - 9, below = r.p < tgt;
+    s += `<text x="${L - 10}" y="${y + bh / 2 + 4}" text-anchor="end">${esc(trunc(r.n, 28))}</text>`;
+    s += `<rect x="${L}" y="${y}" width="${Math.max(1, x(r.p) - L)}" height="${bh}" rx="2" fill="${below ? "var(--warn)" : "var(--s3)"}" data-tip="<b>${esc(r.n)}</b><br>Omani ${f0(r.g.closeO)} of ${f0(r.g.close)} (${fPct(r.p)})<br>Target ${fPct(tgt)}${below ? " · short by " + f0(Math.ceil(tgt / 100 * r.g.close - r.g.closeO)) + " Omani staff" : ""}"/>`;
+    s += `<text x="${x(r.p) + 6}" y="${y + bh / 2 + 4}" style="fill:var(--fg)">${fPct(r.p)}${below ? " ▼" : ""}</text>`;
+  });
+  s += `<line x1="${x(tgt)}" x2="${x(tgt)}" y1="${T - 2}" y2="${H - B}" stroke="var(--fg)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  s += `</svg>`;
+  $("#chOman").innerHTML = s;
+  $("#omanSub").textContent = `Closing Omani share vs ${fPct(tgt)} target (dashed line). ▼ marks departments below target.`;
+}
+function chartMonth(){
+  const m = R.tot.m, h = R.tot.h;
+  const W = 560, H = 240, L = 50, T = 24, B = 40, RP = 8;
+  const max = niceMax(Math.max(...m) * 1.05);
+  const y = v => T + (1 - v / max) * (H - T - B);
+  const bw = (W - L - RP) / 12;
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly phasing">`;
+  for (let i = 0; i <= 4; i++){ const v = max * i / 4; s += `<line class="grid" x1="${L}" x2="${W - RP}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${fM(v)}</text>`; }
+  m.forEach((v, i) => {
+    const x0 = L + i * bw + bw * 0.15, w = bw * 0.7;
+    s += `<rect x="${x0}" y="${y(v)}" width="${w}" height="${y(0) - y(v)}" rx="3" fill="var(--s1)" data-tip="<b>${MONTHS[i]} ${S.fy}</b><br>Cost OMR ${f0(v)}<br>Headcount ${f0(h[i])}"/>`;
+    s += `<text x="${x0 + w / 2}" y="${H - 22}" text-anchor="middle">${MONTHS[i]}</text>`;
+    s += `<text x="${x0 + w / 2}" y="${H - 8}" text-anchor="middle" style="font-size:10px;fill:var(--fg-3)">${f0(h[i])}</text>`;
+  });
+  s += `<text x="${L - 6}" y="${H - 8}" text-anchor="end" style="font-size:10px;fill:var(--fg-3)">HC</text></svg>`;
+  $("#chMonth").innerHTML = s;
+}
+
+/* ---------- Overview ---------- */
+function renderOverview(){
+  const t = R.tot, A = S.a;
+  const oman = t.close ? t.closeO / t.close * 100 : 0, omanOpen = t.open ? t.openO / t.open * 100 : 0;
+  const prior = S.depts.reduce((s, d) => s + num(d.prior), 0);
+  const perFte = t.fte ? t.total / t.fte : 0;
+  const k = [
+    {l:`FY${S.fy} manpower budget`, v:"OMR " + fM(t.total), d: prior ? `${fDelta(t.total - prior)} (${sgn(t.total - prior)}${fPct(Math.abs(t.total / prior - 1) * 100)}) vs FY${S.baseYear}` : "Enter prior-year budgets to compare"},
+    {l:"Headcount: opening → closing", v:`${f0(t.open)} → ${f0(t.close)}`, d:`+${f0(t.hires)} hires, −${f0(t.exits)} exits (${sgn(t.close - t.open)}${f0(Math.abs(t.close - t.open))} net)`},
+    {l:"Omanisation at year end", v:fPct(oman), d: `${oman >= A.omanTarget ? '<span class="pill good">✓ Meets</span>' : '<span class="pill warn">▼ Below</span>'} ${fPct(A.omanTarget)} target · ${fPct(omanOpen)} today`},
+    {l:"Average cost per FTE", v:"OMR " + f0(perFte), d:`${f0(t.fte)} average FTE across the year`},
+  ];
+  $("#kpis").innerHTML = k.map(x => `<div class="kpi"><span class="l">${x.l}</span><span class="v">${x.v}</span><span class="d">${x.d}</span></div>`).join("");
+  $("#sampleBanner").hidden = !S.sample;
+  chartBridge(); chartDept(); chartOman(); chartMonth(); renderAlerts();
+}
+function renderAlerts(){
+  const out = [], A = S.a;
+  R.depts.forEach(g => {
+    if (g.d.ceiling > 0 && g.total > g.d.ceiling) out.push(["bad", "Over ceiling", `${g.d.name} is OMR ${f0(g.total - g.d.ceiling)} over its ceiling of OMR ${f0(g.d.ceiling)}.`]);
+    if (g.close > 0 && g.closeO / g.close * 100 < A.omanTarget) out.push(["warn", "Omanisation", `${g.d.name} closes at ${fPct(g.closeO / g.close * 100)} Omani, needing ${f0(Math.ceil(A.omanTarget / 100 * g.close - g.closeO))} more Omani staff to reach ${fPct(A.omanTarget)}.`]);
+    if (num(g.d.prior) > 0){ const ch = g.total / g.d.prior - 1; if (ch > 0.1) out.push(["warn", "Growth", `${g.d.name} is up ${fPct(ch * 100)} on FY${S.baseYear}; prepare the justification.`]); }
+    if (!S.lines.some(l => l.dept === g.d.id)) out.push(["info", "Empty", `${g.d.name} has no plan lines.`]);
+  });
+  S.lines.forEach(l => { if (num(l.hc) + num(l.hires) > 0 && num(l.basic) <= 0) out.push(["bad", "Missing pay", `${l.role || "Unnamed line"} (${deptName(l.dept)}) has no basic salary.`]); if (num(l.exits) > num(l.hc) + num(l.hires)) out.push(["warn", "Exits", `${l.role} (${deptName(l.dept)}) has more exits than people.`]); });
+  const order = {bad:0, warn:1, info:2};
+  out.sort((a, b) => order[a[0]] - order[b[0]]);
+  $("#alerts").innerHTML = out.length ? out.slice(0, 12).map(([c, tag, txt]) => `<li><span class="pill ${c}">${tag}</span><span>${esc(txt)}</span></li>`).join("") + (out.length > 12 ? `<li class="note">+ ${out.length - 12} more</li>` : "")
+    : `<li><span class="pill good">✓ Clear</span><span>No ceilings breached, Omanisation targets met and every line is priced.</span></li>`;
+}
+const deptName = id => (S.depts.find(d => d.id === id) || {}).name || "—";
+
+/* ---------- Headcount plan ---------- */
+const planFilter = {dept: "", q: ""};
+function monthOpts(sel){ return MONTHS.map((m, i) => `<option value="${i + 1}"${i + 1 === +sel ? " selected" : ""}>${m}</option>`).join(""); }
+function renderPlan(){
+  $("#fDept").innerHTML = `<option value="">All departments</option>` + S.depts.map(d => `<option value="${d.id}"${d.id === planFilter.dept ? " selected" : ""}>${esc(d.name)}</option>`).join("");
+  const q = planFilter.q.toLowerCase();
+  const order = new Map(S.depts.map((d, i) => [d.id, i]));
+  const rows = S.lines.filter(l => (!planFilter.dept || l.dept === planFilter.dept) && (!q || (l.role || "").toLowerCase().includes(q)))
+    .sort((a, b) => (order.get(a.dept) ?? 999) - (order.get(b.dept) ?? 999));
+  const deptOpts = sel => S.depts.map(d => `<option value="${d.id}"${d.id === sel ? " selected" : ""}>${esc(d.name)}</option>`).join("");
+  let html = "", cur = null;
+  for (const l of rows){
+    if (l.dept !== cur){ cur = l.dept; const g = R.depts.find(x => x.d.id === cur); html += `<tr class="grp"><td colspan="3">${esc(deptName(cur))}</td><td class="n">${f0(g?.open)}</td><td class="n">${f0(g?.hires)}</td><td></td><td class="n">${f0(g?.exits)}</td><td colspan="3"></td><td class="n">${f0(g?.close)}</td><td class="n">${f0(g?.sub)}</td><td></td></tr>`; }
+    html += `<tr data-id="${l.id}">
+      <td class="cell-in"><select class="w-l" data-k="dept" aria-label="Department">${deptOpts(l.dept)}</select></td>
+      <td class="cell-in"><input class="w-l" data-k="role" value="${esc(l.role)}" aria-label="Position or grade"></td>
+      <td class="cell-in"><select class="w-xs" data-k="nat" aria-label="Nationality"><option value="O"${l.nat === "O" ? " selected" : ""}>O</option><option value="E"${l.nat !== "O" ? " selected" : ""}>E</option></select></td>
+      <td class="cell-in"><input class="w-s" type="number" min="0" step="1" data-k="hc" value="${l.hc}" aria-label="Current headcount"></td>
+      <td class="cell-in"><input class="w-s" type="number" min="0" step="1" data-k="hires" value="${l.hires}" aria-label="New hires"></td>
+      <td class="cell-in"><select class="w-xs" data-k="hireM" aria-label="Hire start month">${monthOpts(l.hireM)}</select></td>
+      <td class="cell-in"><input class="w-s" type="number" min="0" step="1" data-k="exits" value="${l.exits}" aria-label="Exits"></td>
+      <td class="cell-in"><select class="w-xs" data-k="exitM" aria-label="Last month for leavers">${monthOpts(l.exitM)}</select></td>
+      <td class="cell-in"><input class="w-m" type="number" min="0" step="10" data-k="basic" value="${l.basic}" aria-label="Average basic salary per month"></td>
+      <td class="cell-in"><input class="w-m" type="number" min="0" step="10" data-k="allow" value="${l.allow}" aria-label="Average allowances per month"></td>
+      <td class="n" data-c="close"></td><td class="n" data-c="cost"></td>
+      <td><button class="icon" data-del="${l.id}" title="Delete line" aria-label="Delete line">×</button></td></tr>`;
+  }
+  $("#tblPlan tbody").innerHTML = html || `<tr><td colspan="13" class="muted" style="padding:20px">No lines match. Add a line or clear the filter.</td></tr>`;
+  updatePlanComputed();
+}
+function updatePlanComputed(){
+  document.querySelectorAll("#tblPlan tbody tr[data-id]").forEach(tr => {
+    const r = R.lineRes.get(tr.dataset.id); if (!r) return;
+    tr.querySelector('[data-c="close"]').textContent = f0(r.close);
+    tr.querySelector('[data-c="cost"]').textContent = f0(r.total);
+  });
+  const t = R.tot;
+  $("#tblPlan tfoot").innerHTML = `<tr class="total"><td colspan="3">Total (${S.lines.length} lines, before contingency)</td><td class="n">${f0(t.open)}</td><td class="n">${f0(t.hires)}</td><td></td><td class="n">${f0(t.exits)}</td><td colspan="3"></td><td class="n">${f0(t.close)}</td><td class="n">${f0(t.sub)}</td><td></td></tr>`;
+}
+$("#tblPlan").addEventListener("input", e => {
+  const tr = e.target.closest("tr[data-id]"), k = e.target.dataset.k; if (!tr || !k) return;
+  const l = S.lines.find(x => x.id === tr.dataset.id); if (!l) return;
+  l[k] = ["role","nat","dept"].includes(k) ? e.target.value : ["hireM","exitM"].includes(k) ? +e.target.value : Math.max(0, num(e.target.value));
+  S.sample = false;
+  recalc(false); updatePlanComputed(); persist();
+});
+$("#tblPlan").addEventListener("change", e => { if (e.target.dataset.k === "dept") renderPlan(); });
+$("#tblPlan").addEventListener("click", e => {
+  const id = e.target.dataset && e.target.dataset.del; if (!id) return;
+  S.lines = S.lines.filter(l => l.id !== id); changed(); renderPlan();
+});
+$("#btnAddLine").addEventListener("click", () => {
+  const dept = planFilter.dept || (S.depts[0] && S.depts[0].id); if (!dept) return;
+  const l = {id: uid(), dept, role: "New position", nat: "O", hc: 0, hires: 1, hireM: 4, exits: 0, exitM: 12, basic: 800, allow: 400};
+  S.lines.push(l); changed(); renderPlan();
+  const inp = document.querySelector(`tr[data-id="${l.id}"] input[data-k="role"]`); if (inp){ inp.focus(); inp.select(); }
+});
+$("#fDept").addEventListener("change", e => { planFilter.dept = e.target.value; renderPlan(); });
+$("#fSearch").addEventListener("input", e => { planFilter.q = e.target.value; renderPlan(); });
+
+/* ---------- Budget detail ---------- */
+const COST_COLS = [["basic","Basic"],["allow","Allowances"],["ot","Overtime"],["bonus","Bonus"],["si","Social prot."],["eosb","EOSB"],["ticket","Air tickets"],["med","Medical"],["train","Training"],["rec","Recruitment"]];
+function renderBudget(){
+  const rows = R.depts;
+  let h = `<thead><tr><th>Department</th>${COST_COLS.map(c => `<th class="n">${c[1]}</th>`).join("")}<th class="n">Contingency</th><th class="n">FY${S.fy} total</th><th class="n">FY${S.baseYear} budget</th><th class="n">Change</th><th class="n">Ceiling</th></tr></thead><tbody>`;
+  const line = (name, g, cls = "") => {
+    const pr = num(g.prior), ch = pr ? g.total - pr : null, ceil = num(g.ceiling);
+    return `<tr class="${cls}"><td>${esc(name)}</td>${COST_COLS.map(c => `<td class="n">${f0(g[c[0]])}</td>`).join("")}<td class="n">${f0(g.cont)}</td><td class="n"><b>${f0(g.total)}</b></td><td class="n">${pr ? f0(pr) : "—"}</td><td class="n">${ch === null ? "—" : `${fDelta(ch, f0)} <span class="muted">(${sgn(ch)}${fPct(Math.abs(ch / pr) * 100)})</span>`}</td><td class="n">${ceil ? (g.total > ceil ? `<span class="pill bad">Over ${f0(g.total - ceil)}</span>` : `<span class="pill good">✓ ${f0(ceil)}</span>`) : "—"}</td></tr>`;
+  };
+  rows.forEach(g => h += line(g.d.name, {...g, prior: g.d.prior, ceiling: g.d.ceiling}));
+  const prior = S.depts.reduce((s, d) => s + num(d.prior), 0), ceil = S.depts.reduce((s, d) => s + num(d.ceiling), 0);
+  h += `</tbody><tfoot>${line("Total", {...R.tot, prior, ceiling: 0}, "total")}</tfoot>`;
+  $("#tblBudget").innerHTML = h;
+
+  let hc = `<thead><tr><th>Department</th><th class="n">Opening HC</th><th class="n">New hires</th><th class="n">Exits</th><th class="n">Closing HC</th><th class="n">Net change</th><th class="n">Avg FTE</th><th class="n">Omani (open)</th><th class="n">Omani (close)</th><th class="n">Omanisation</th><th class="n">Cost / FTE</th></tr></thead><tbody>`;
+  const hl = (name, g, cls = "") => { const p = g.close ? g.closeO / g.close * 100 : 0; return `<tr class="${cls}"><td>${esc(name)}</td><td class="n">${f0(g.open)}</td><td class="n">${f0(g.hires)}</td><td class="n">${f0(g.exits)}</td><td class="n">${f0(g.close)}</td><td class="n">${fDelta(g.close - g.open, f0)}</td><td class="n">${f0(g.fte)}</td><td class="n">${f0(g.openO)}</td><td class="n">${f0(g.closeO)}</td><td class="n"><span class="pill ${p >= S.a.omanTarget ? "good" : "warn"}">${fPct(p)}</span></td><td class="n">${g.fte ? f0(g.total / g.fte) : "—"}</td></tr>`; };
+  rows.forEach(g => hc += hl(g.d.name, g));
+  hc += `</tbody><tfoot>${hl("Total", R.tot, "total")}</tfoot>`;
+  $("#tblHC").innerHTML = hc;
+
+  let m = `<thead><tr><th>Department</th>${MONTHS.map(x => `<th class="n">${x}</th>`).join("")}<th class="n">Total</th></tr></thead><tbody>`;
+  const cf = 1 + S.a.contingency / 100;
+  rows.forEach(g => m += `<tr><td>${esc(g.d.name)}</td>${g.m.map(v => `<td class="n">${f0(v * cf)}</td>`).join("")}<td class="n"><b>${f0(g.total)}</b></td></tr>`);
+  m += `</tbody><tfoot><tr class="total"><td>Total cost</td>${R.tot.m.map(v => `<td class="n">${f0(v)}</td>`).join("")}<td class="n">${f0(R.tot.total)}</td></tr><tr class="total"><td>Headcount</td>${R.tot.h.map(v => `<td class="n">${f0(v)}</td>`).join("")}<td></td></tr></tfoot>`;
+  $("#tblMonth").innerHTML = m;
+}
+
+/* ---------- Scenarios ---------- */
+const SCEN_FIELDS = [
+  ["hirePct","Hires filled (% of plan)",0,200,5],
+  ["delay","Hiring delay (months)",0,12,1],
+  ["incPct","Salary increment (%)",0,20,0.5],
+  ["otPct","Overtime (% of plan)",0,300,5],
+  ["bonusMonths","Bonus (months of basic)",0,6,0.25],
+];
+function scenOpts(sc){ return {hirePct: sc.hirePct, delay: sc.delay, incPct: sc.incPct, otPct: sc.otPct, bonusMonths: sc.bonusMonths}; }
+function renderScen(){
+  const base = R.tot;
+  const cards = [`<div class="scen base"><div><span class="eyebrow">Base plan</span><h3>As entered</h3></div><div class="res">OMR ${fM(base.total)}</div><div class="note">Closing HC ${f0(base.close)} · Omanisation ${fPct(base.close ? base.closeO / base.close * 100 : 0)}</div><div class="note">Increment ${S.a.incPct}% · bonus ${S.a.bonusMonths} mo · all hires on plan</div></div>`];
+  S.scen.forEach(sc => {
+    const r = compute(S, scenOpts(sc)).tot, d = r.total - base.total;
+    cards.push(`<div class="scen" data-sid="${sc.id}">
+      <div class="toolbar"><input data-sk="name" value="${esc(sc.name)}" aria-label="Scenario name" style="flex:1;font-weight:600"><button class="icon" data-sdel="${sc.id}" title="Delete scenario" aria-label="Delete scenario">×</button></div>
+      <div class="res">OMR ${fM(r.total)} <span class="pill ${d > 0 ? "bad" : "good"}">${fDelta(d)}</span></div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:8px">${SCEN_FIELDS.map(([k, lab, mn, mx, st]) => `<div class="field"><label for="sc-${sc.id}-${k}">${lab}</label><input id="sc-${sc.id}-${k}" type="number" min="${mn}" max="${mx}" step="${st}" data-sk="${k}" value="${sc[k]}"></div>`).join("")}</div>
+    </div>`);
+  });
+  $("#scenGrid").innerHTML = cards.join("");
+  renderScenTable();
+}
+function renderScenTable(){
+  const base = R.tot;
+  const all = [{name:"Base plan", t: base}, ...S.scen.map(sc => ({name: sc.name, t: compute(S, scenOpts(sc)).tot}))];
+  const om = t => t.close ? t.closeO / t.close * 100 : 0;
+  let h = `<thead><tr><th>Scenario</th><th class="n">FY budget</th><th class="n">vs base</th><th class="n">Closing HC</th><th class="n">vs base</th><th class="n">Avg FTE</th><th class="n">Omanisation</th><th class="n">Recruitment</th><th class="n">Overtime</th></tr></thead><tbody>`;
+  all.forEach((s, i) => h += `<tr${i === 0 ? ' class="total"' : ""}><td>${esc(s.name)}</td><td class="n">${f0(s.t.total)}</td><td class="n">${i ? fDelta(s.t.total - base.total, f0) : "—"}</td><td class="n">${f0(s.t.close)}</td><td class="n">${i ? fDelta(s.t.close - base.close, f0) : "—"}</td><td class="n">${f0(s.t.fte)}</td><td class="n">${fPct(om(s.t))}</td><td class="n">${f0(s.t.rec)}</td><td class="n">${f0(s.t.ot)}</td></tr>`);
+  $("#tblScen").innerHTML = h + "</tbody>";
+}
+$("#scenGrid").addEventListener("input", e => {
+  const card = e.target.closest("[data-sid]"), k = e.target.dataset.sk; if (!card || !k) return;
+  const sc = S.scen.find(x => x.id === card.dataset.sid); if (!sc) return;
+  sc[k] = k === "name" ? e.target.value : Math.max(0, num(e.target.value));
+  persist();
+  const r = compute(S, scenOpts(sc)).tot, d = r.total - R.tot.total;
+  card.querySelector(".res").innerHTML = `OMR ${fM(r.total)} <span class="pill ${d > 0 ? "bad" : "good"}">${fDelta(d)}</span>`;
+  renderScenTable();
+});
+$("#scenGrid").addEventListener("click", e => { const id = e.target.dataset && e.target.dataset.sdel; if (!id) return; S.scen = S.scen.filter(s => s.id !== id); persist(); renderScen(); });
+$("#btnAddScen").addEventListener("click", () => { S.scen.push({id: uid(), name: "New scenario", hirePct: 100, delay: 0, incPct: S.a.incPct, otPct: 100, bonusMonths: S.a.bonusMonths}); persist(); renderScen(); });
+
+/* ---------- Assumptions ---------- */
+const PLAN_FIELDS = [
+  ["org","Organisation name","text",null,"Shown on exports"],
+  ["fy","Budget year","number",1,"Fiscal year being planned"],
+  ["baseYear","Comparison year","number",1,"Prior year used for variance"],
+];
+const RATE_FIELDS = [
+  ["incPct","Annual increment (%)",0.1,"Applied to basic and allowances"],
+  ["incMonth","Increment effective month","month",""],
+  ["bonusMonths","Bonus / incentive (months of basic)",0.25,"Accrued evenly across the year"],
+  ["omSI","Employer social protection, Omani (%)",0.1,"Default 12.5%. Check the current Social Protection Fund schedule"],
+  ["exSI","Employer contribution, expatriate (%)",0.1,"Occupational injury cover. Default 1%"],
+  ["siBase","Contribution base","base",""],
+  ["eosbPct","Expatriate end-of-service accrual (% of basic)",0.01,"8.33% = one month's basic per year"],
+  ["ticket","Expatriate annual air ticket (OMR per head)",10,""],
+  ["medO","Medical insurance, Omani (OMR per head / yr)",10,""],
+  ["medE","Medical insurance, expatriate (OMR per head / yr)",10,""],
+  ["training","Training (OMR per head / yr)",10,"Excludes type-rating and licence costs budgeted elsewhere"],
+  ["recO","Recruitment cost, Omani hire (OMR)",50,""],
+  ["recE","Recruitment cost, expatriate hire (OMR)",50,"Agency, visa, medical, relocation"],
+  ["contingency","Contingency (% of department total)",0.5,""],
+  ["omanTarget","Omanisation target (%)",1,"Company-wide closing target"],
+];
+function renderAssump(){
+  $("#formPlan").innerHTML = PLAN_FIELDS.map(([k, lab, type, st, hint]) => `<div class="field"><label for="p-${k}">${lab}</label><input id="p-${k}" data-pk="${k}" type="${type}"${st ? ` step="${st}"` : ""} value="${esc(S[k])}"${k === "org" ? ' placeholder="Company name"' : ""}><span class="hint">${hint}</span></div>`).join("");
+  $("#formRates").innerHTML = RATE_FIELDS.map(([k, lab, st, hint]) => {
+    let input;
+    if (st === "month") input = `<select id="a-${k}" data-ak="${k}">${monthOpts(S.a[k])}</select>`;
+    else if (st === "base") input = `<select id="a-${k}" data-ak="${k}"><option value="gross"${S.a.siBase === "gross" ? " selected" : ""}>Basic + allowances (gross)</option><option value="basic"${S.a.siBase === "basic" ? " selected" : ""}>Basic only</option></select>`;
+    else input = `<input id="a-${k}" data-ak="${k}" type="number" min="0" step="${st}" value="${S.a[k]}">`;
+    return `<div class="field"><label for="a-${k}">${lab}</label>${input}${hint ? `<span class="hint">${hint}</span>` : ""}</div>`;
+  }).join("");
+  renderDeptTable();
+}
+function renderDeptTable(){
+  const cnt = id => S.lines.filter(l => l.dept === id).length;
+  $("#tblDepts").innerHTML = `<thead><tr><th>Department</th><th class="n">Overtime (% of basic)</th><th class="n">FY${S.baseYear} budget (OMR)</th><th class="n">FY${S.fy} ceiling (OMR)</th><th class="n">Lines</th><th></th></tr></thead><tbody>` +
+    S.depts.map(d => `<tr data-did="${d.id}"><td class="cell-in"><input class="w-l" data-dk="name" value="${esc(d.name)}" aria-label="Department name" style="width:260px"></td><td class="cell-in"><input class="w-s" type="number" min="0" step="0.5" data-dk="ot" value="${d.ot}" aria-label="Overtime percent"></td><td class="cell-in"><input class="w-m" type="number" min="0" step="1000" data-dk="prior" value="${d.prior || ""}" placeholder="—" aria-label="Prior year budget" style="width:130px"></td><td class="cell-in"><input class="w-m" type="number" min="0" step="1000" data-dk="ceiling" value="${d.ceiling || ""}" placeholder="None" aria-label="Budget ceiling" style="width:130px"></td><td class="n">${cnt(d.id)}</td><td>${cnt(d.id) ? "" : `<button class="icon" data-ddel="${d.id}" title="Delete department" aria-label="Delete department">×</button>`}</td></tr>`).join("") + "</tbody>";
+}
+$("#formPlan").addEventListener("input", e => { const k = e.target.dataset.pk; if (!k) return; S[k] = k === "org" ? e.target.value : Math.round(num(e.target.value)); changed(); updateHeader(); });
+$("#formRates").addEventListener("input", e => { const k = e.target.dataset.ak; if (!k) return; S.a[k] = k === "siBase" ? e.target.value : k === "incMonth" ? +e.target.value : Math.max(0, num(e.target.value)); changed(); });
+$("#tblDepts").addEventListener("input", e => { const tr = e.target.closest("[data-did]"), k = e.target.dataset.dk; if (!tr || !k) return; const d = S.depts.find(x => x.id === tr.dataset.did); d[k] = k === "name" ? e.target.value : Math.max(0, num(e.target.value)); changed(); });
+$("#tblDepts").addEventListener("click", e => { const id = e.target.dataset && e.target.dataset.ddel; if (!id) return; S.depts = S.depts.filter(d => d.id !== id); changed(); renderDeptTable(); });
+$("#btnAddDept").addEventListener("click", () => { S.depts.push({id: "d" + uid(), name: "New department", ot: 2, prior: 0, ceiling: 0}); changed(); renderDeptTable(); });
+
+/* ---------- Import ---------- */
+const HDR = {
+  dept: ["department","dept","division","directorate","unit","cost centre","cost center"],
+  role: ["position","grade","job","title","role","designation"],
+  nat: ["nationality","nat","national","omani/expat","local/expat","citizenship"],
+  hc: ["current hc","headcount","hc","current headcount","count","actual"],
+  hires: ["new hire","hires","new position","additions","recruit"],
+  hireM: ["start month","hire month","joining month","start"],
+  exits: ["exit","leaver","separation","attrition"],
+  exitM: ["last month","exit month","leaving month"],
+  basic: ["basic"],
+  allow: ["allowance","allow"],
+};
+function mapHeaders(headers){
+  const map = {}, norm = headers.map(h => String(h || "").toLowerCase().trim());
+  // exact-ish passes first, then contains
+  for (const [k, keys] of Object.entries(HDR)){
+    let idx = norm.findIndex(h => keys.includes(h));
+    if (idx < 0) idx = norm.findIndex((h, i) => !Object.values(map).includes(i) && keys.some(kw => h.includes(kw)));
+    if (idx >= 0 && !Object.values(map).includes(idx)) map[k] = idx;
+  }
+  return map;
+}
+const parseMonth = v => { if (v === "" || v == null) return null; const s = String(v).trim().toLowerCase(); const i = MONTHS.findIndex(m => s.startsWith(m.toLowerCase())); if (i >= 0) return i + 1; const n = Math.round(num(s)); return n >= 1 && n <= 12 ? n : null; };
+const parseNat = v => /^(o|om|omani|oman|local|national|citizen)\b/i.test(String(v || "").trim()) ? "O" : "E";
+function parseCSV(text){
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (q){ if (c === '"'){ if (text[i + 1] === '"'){ cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === "," || c === ";" || c === "\t"){ row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r"){ if (c === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+    else cell += c;
+  }
+  if (cell || row.length){ row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(x => String(x).trim() !== ""));
+}
+let pending = null;
+function buildImport(rows){
+  if (rows.length < 2) throw new Error("The file has no data rows under the header.");
+  const map = mapHeaders(rows[0]);
+  if (map.dept == null) throw new Error("No Department column found. Add a column headed “Department”.");
+  if (map.basic == null) throw new Error("No Basic salary column found. Add a column headed “Basic”.");
+  const empLevel = map.hc == null;
+  const get = (r, k) => map[k] == null ? "" : r[map[k]];
+  const groups = new Map(), deptNames = [];
+  for (const r of rows.slice(1)){
+    const dept = String(get(r, "dept") || "").trim(); if (!dept) continue;
+    const role = String(get(r, "role") || "General").trim(), nat = parseNat(get(r, "nat"));
+    if (!deptNames.includes(dept)) deptNames.push(dept);
+    const key = empLevel ? dept + "|" + role + "|" + nat : dept + "|" + role + "|" + nat + "|" + groups.size;
+    const hc = empLevel ? 1 : num(get(r, "hc"));
+    const g = groups.get(key) || {dept, role, nat, hc:0, hires:0, exits:0, hireM:null, exitM:null, basicSum:0, allowSum:0, w:0};
+    const w = Math.max(hc, empLevel ? 1 : 0) || 1;
+    g.hc += hc; g.hires += num(get(r, "hires")); g.exits += num(get(r, "exits"));
+    g.hireM = g.hireM || parseMonth(get(r, "hireM")); g.exitM = g.exitM || parseMonth(get(r, "exitM"));
+    g.basicSum += num(get(r, "basic")) * w; g.allowSum += num(get(r, "allow")) * w; g.w += w;
+    groups.set(key, g);
+  }
+  const lines = [...groups.values()].map(g => ({dept: g.dept, role: g.role, nat: g.nat, hc: Math.round(g.hc), hires: Math.round(g.hires), hireM: g.hireM || 4, exits: Math.round(g.exits), exitM: g.exitM || 6, basic: Math.round(g.basicSum / g.w), allow: Math.round(g.allowSum / g.w)}));
+  return {rows: rows.length - 1, lines, deptNames, empLevel, cols: Object.keys(map)};
+}
+function showPreview(p){
+  pending = p;
+  const hc = p.lines.reduce((s, l) => s + l.hc, 0);
+  const missing = ["role","nat","hires","exits","allow"].filter(k => !p.cols.includes(k));
+  $("#importPreview").innerHTML = `<div class="callout" style="display:grid;gap:8px">
+    <b>Ready to import</b>
+    <span>${f0(p.rows)} rows read${p.empLevel ? " as individual employees" : ""} → ${f0(p.lines.length)} plan lines across ${p.deptNames.length} departments, ${f0(hc)} current staff.</span>
+    ${missing.length ? `<span class="note">Not found in file: ${missing.join(", ")}. Those values start at zero or defaults and can be edited in Headcount plan.</span>` : ""}
+    <div class="toolbar"><button class="btn primary" id="impReplace" type="button">Replace current plan</button><button class="btn" id="impAppend" type="button">Add to current plan</button><button class="btn" id="impCancel" type="button">Cancel</button></div></div>`;
+}
+function applyImport(replace){
+  const p = pending; if (!p) return;
+  if (replace){ S.lines = []; S.depts = []; S.sample = false; }
+  S.sample = false;
+  for (const name of p.deptNames){ if (!S.depts.some(d => d.name.toLowerCase() === name.toLowerCase())) S.depts.push({id: "d" + uid(), name, ot: 2, prior: 0, ceiling: 0}); }
+  for (const l of p.lines){ const d = S.depts.find(x => x.name.toLowerCase() === l.dept.toLowerCase()); S.lines.push({...l, id: uid(), dept: d.id}); }
+  pending = null; $("#importPreview").innerHTML = `<p class="note">Imported. Review overtime rates and prior-year budgets on the Assumptions tab.</p>`;
+  changed(); renderAll();
+}
+$("#importPreview").addEventListener("click", e => { if (e.target.id === "impReplace") applyImport(true); if (e.target.id === "impAppend") applyImport(false); if (e.target.id === "impCancel"){ pending = null; $("#importPreview").innerHTML = ""; } });
+async function handleFile(file){
+  const box = $("#importPreview");
+  try {
+    const name = file.name.toLowerCase();
+    if (name.endsWith(".json")){
+      const data = JSON.parse(await file.text());
+      if (!data || !Array.isArray(data.lines)) throw new Error("This JSON file is not a planner backup.");
+      S = normalise(data); S.sample = false; changed(); renderAll();
+      box.innerHTML = `<p class="note">Backup restored: ${S.lines.length} lines, ${S.depts.length} departments.</p>`; return;
+    }
+    let rows;
+    if (name.endsWith(".csv")) rows = parseCSV(await file.text());
+    else {
+      if (!window.XLSX) throw new Error("Excel reading is unavailable here. Save the sheet as CSV and import that instead.");
+      const wb = XLSX.read(await file.arrayBuffer(), {type: "array"});
+      const sheet = wb.Sheets[wb.SheetNames.find(n => /plan|import|data|staff|employee/i.test(n)) || wb.SheetNames[0]];
+      rows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: "", raw: true});
+      const hi = rows.findIndex(r => r.some(c => /department|dept/i.test(String(c))));
+      if (hi > 0) rows = rows.slice(hi);
+    }
+    showPreview(buildImport(rows));
+  } catch (err) { box.innerHTML = `<div class="confirm">${esc(err.message || "That file could not be read.")}</div>`; }
+}
+$("#fileIn").addEventListener("change", e => { const f = e.target.files[0]; if (f) handleFile(f); e.target.value = ""; });
+const drop = $("#drop");
+["dragenter","dragover"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave","drop"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) handleFile(f); });
+
+/* ---------- Export ---------- */
+let downloads;
+async function saveFile(filename, data){
+  const msg = $("#exportMsg");
+  try {
+    if (downloads === undefined) downloads = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+    if (downloads){ await downloads.save({filename, data}); msg.textContent = `Saved ${filename}.`; return; }
+    const blob = data instanceof Blob ? data : new Blob([data]);
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    msg.textContent = `Downloading ${filename}.`;
+  } catch (e) {
+    msg.textContent = e && e.code === "declined" ? "Download cancelled." : "Downloads are unavailable here. Use “Copy department summary” and paste into Excel.";
+  }
+}
+const fileStem = () => `Manpower-Budget-FY${S.fy}${S.org ? "-" + S.org.replace(/[^\w-]+/g, "-") : ""}`;
+function planRows(){
+  return [["Department","Position","Nationality","Current HC","New hires","Start month","Exits","Last month","Basic","Allowances","Closing HC","FY cost (OMR)"],
+    ...S.lines.map(l => { const r = R.lineRes.get(l.id) || {}; return [deptName(l.dept), l.role, l.nat === "O" ? "Omani" : "Expatriate", l.hc, l.hires, MONTHS[l.hireM - 1], l.exits, MONTHS[l.exitM - 1], l.basic, l.allow, Math.round(r.close || 0), Math.round(r.total || 0)]; })];
+}
+function deptRows(){
+  const head = ["Department", ...COST_COLS.map(c => c[1]), "Contingency", `FY${S.fy} total`, `FY${S.baseYear} budget`, "Change", "Ceiling", "Opening HC", "Hires", "Exits", "Closing HC", "Omanisation %"];
+  const row = (n, g, prior, ceil) => [n, ...COST_COLS.map(c => Math.round(g[c[0]])), Math.round(g.cont), Math.round(g.total), prior || "", prior ? Math.round(g.total - prior) : "", ceil || "", g.open, g.hires, g.exits, g.close, g.close ? +(g.closeO / g.close * 100).toFixed(1) : ""];
+  return [head, ...R.depts.map(g => row(g.d.name, g, num(g.d.prior), num(g.d.ceiling))), row("Total", R.tot, S.depts.reduce((s, d) => s + num(d.prior), 0), "")];
+}
+function exportXlsx(){
+  if (!window.XLSX){ $("#exportMsg").textContent = "Excel export is unavailable here. Use the CSV export instead."; switchTab("data"); return; }
+  const wb = XLSX.utils.book_new(), cf = 1 + S.a.contingency / 100;
+  const t = R.tot, br = bridge(S);
+  const summary = [
+    [`${S.org ? S.org + " · " : ""}Manpower budget FY${S.fy}`], [`Generated ${new Date().toLocaleDateString("en-GB")}. Amounts in OMR.`], [],
+    ["Total budget", Math.round(t.total)], ["Opening headcount", t.open], ["New hires", Math.round(t.hires)], ["Exits", t.exits], ["Closing headcount", Math.round(t.close)],
+    ["Omanisation at year end (%)", t.close ? +(t.closeO / t.close * 100).toFixed(1) : 0], ["Omanisation target (%)", S.a.omanTarget], ["Average cost per FTE", Math.round(t.fte ? t.total / t.fte : 0)], [],
+    ["Budget bridge"], ...br.map(b => [b.label, Math.round(b.v)]),
+  ];
+  const monthly = [["Department", ...MONTHS, "Total"], ...R.depts.map(g => [g.d.name, ...g.m.map(v => Math.round(v * cf)), Math.round(g.total)]), ["Total cost", ...t.m.map(Math.round), Math.round(t.total)], ["Headcount", ...t.h.map(v => Math.round(v))]];
+  const assump = [["Assumption","Value"], ...RATE_FIELDS.map(([k, lab]) => [lab, k === "incMonth" ? MONTHS[S.a[k] - 1] : S.a[k]]), [], ["Department","Overtime %", `FY${S.baseYear} budget`, "Ceiling"], ...S.depts.map(d => [d.name, d.ot, d.prior || "", d.ceiling || ""])];
+  const scen = [["Scenario","FY budget","vs base","Closing HC","Hires filled %","Delay (mo)","Increment %","Overtime % of plan","Bonus months"], ["Base plan", Math.round(t.total), 0, Math.round(t.close), 100, 0, S.a.incPct, 100, S.a.bonusMonths],
+    ...S.scen.map(sc => { const r = compute(S, scenOpts(sc)).tot; return [sc.name, Math.round(r.total), Math.round(r.total - t.total), Math.round(r.close), sc.hirePct, sc.delay, sc.incPct, sc.otPct, sc.bonusMonths]; })];
+  const add = (rows, name, widths) => { const ws = XLSX.utils.aoa_to_sheet(rows); ws["!cols"] = widths.map(w => ({wch: w})); XLSX.utils.book_append_sheet(wb, ws, name); };
+  add(summary, "Summary", [34, 16]);
+  add(deptRows(), "Department budget", [30, ...new Array(20).fill(13)]);
+  add(monthly, "Monthly phasing", [30, ...new Array(13).fill(11)]);
+  add(planRows(), "Plan lines", [28, 34, 12, ...new Array(9).fill(12)]);
+  add(scen, "Scenarios", [26, ...new Array(8).fill(14)]);
+  add(assump, "Assumptions", [52, 14, 14, 14]);
+  const out = XLSX.write(wb, {bookType: "xlsx", type: "array"});
+  saveFile(fileStem() + ".xlsx", new Blob([out], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+}
+const toCSV = rows => rows.map(r => r.map(v => { const s = String(v ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(",")).join("\r\n");
+$("#btnExportXlsx").addEventListener("click", exportXlsx);
+$("#btnExportXlsx2").addEventListener("click", exportXlsx);
+$("#btnExportCsv").addEventListener("click", () => saveFile(fileStem() + "-plan.csv", "﻿" + toCSV(planRows())));
+$("#btnExportJson").addEventListener("click", () => saveFile(fileStem() + "-backup.json", JSON.stringify(S, null, 1)));
+$("#btnTemplate").addEventListener("click", () => {
+  const rows = [["Department","Position","Nationality","Current HC","New hires","Start month","Exits","Last month","Basic","Allowances"],
+    ["Flight Operations","First Officers","Omani",190,20,"Mar",6,"Jul",2100,1100],["Cabin Services","Cabin Crew","Expatriate",180,0,"",25,"Jun",560,380]];
+  if (window.XLSX){ const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(rows); ws["!cols"] = [28,30,12,12,12,12,10,12,10,12].map(w => ({wch: w})); XLSX.utils.book_append_sheet(wb, ws, "Plan"); saveFile("Manpower-import-template.xlsx", new Blob([XLSX.write(wb, {bookType: "xlsx", type: "array"})])); }
+  else saveFile("Manpower-import-template.csv", toCSV(rows));
+});
+$("#btnCopy").addEventListener("click", async () => {
+  const tsv = deptRows().map(r => r.join("\t")).join("\n");
+  try { await navigator.clipboard.writeText(tsv); $("#exportMsg").textContent = "Department summary copied. Paste it into Excel."; }
+  catch { const ta = document.createElement("textarea"); ta.value = tsv; ta.style.width = "100%"; ta.rows = 6; $("#exportMsg").replaceChildren("Copying is blocked here. Select the text below and copy it:", ta); ta.select(); }
+});
+
+/* ---------- Reset ---------- */
+function askConfirm(label, fn){
+  const area = $("#resetArea"), prev = area.innerHTML;
+  area.innerHTML = `<div class="confirm"><span>${label} This replaces your current plan and cannot be undone.</span><button class="btn danger" id="cfYes" type="button">Yes, replace it</button><button class="btn" id="cfNo" type="button">Keep my plan</button></div>`;
+  $("#cfYes").onclick = () => { fn(); area.innerHTML = prev; bindReset(); };
+  $("#cfNo").onclick = () => { area.innerHTML = prev; bindReset(); };
+}
+function bindReset(){
+  $("#btnReset").onclick = () => askConfirm("Reset to example data?", () => { S = sampleState(); changed(); renderAll(); });
+  $("#btnBlank").onclick = () => askConfirm("Start a blank plan?", () => { S = blankState(); changed(); renderAll(); });
+}
+bindReset();
+
+/* ---------- Tabs & render ---------- */
+let tab = "overview";
+function switchTab(t){
+  tab = t;
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
+  document.querySelectorAll("section.view").forEach(s => s.hidden = s.id !== "v-" + t);
+  renderTab();
+  try { localStorage.setItem(LS_KEY + ":tab", t); } catch {}
+}
+document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
+function renderTab(){
+  if (tab === "overview") renderOverview();
+  else if (tab === "plan") renderPlan();
+  else if (tab === "budget") renderBudget();
+  else if (tab === "scen") renderScen();
+  else if (tab === "assump") renderAssump();
+}
+function updateHeader(){
+  $("#hdrEyebrow").textContent = `${S.org ? S.org + " · " : ""}Manpower plan · FY${S.fy} · OMR`;
+}
+function recalc(render = true){ R = compute(S); if (render && tab !== "plan" && tab !== "assump" && tab !== "scen") renderTab(); }
+function renderAll(){ R = compute(S); updateHeader(); renderTab(); }
+
+S = normalise(loadLocal() || sampleState());
+R = compute(S);
+try { const t = localStorage.getItem(LS_KEY + ":tab"); if (t && document.getElementById("v-" + t)) tab = t; } catch {}
+updateHeader(); switchTab(tab);
+setStatus("local", "Saved in this browser");
+initStore();
+if (window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => renderTab());
+})();
+</script>
+</body>
+</html>

@@ -30,6 +30,18 @@ A dual-deck DJ mixer for YouTube, at **`/mixer`**. Paste any YouTube link on eac
 
 Playback uses the official YouTube IFrame Player API — nothing is downloaded or re-hosted.
 
+## Bonus: Manpower Budget Planner (`/manpower-planner.html`)
+
+A self-contained manpower planning and budgeting tool at **`/manpower-planner.html`** (no build step, no backend):
+
+- **Headcount plan** by department × position/grade × nationality (Omani / expatriate): current HC, new hires with start month, exits with last month, average basic and allowances
+- **Monthly cost engine** (OMR): increment from its effective month, overtime per department, bonus, employer social protection, expatriate end-of-service, air tickets, medical, training, recruitment and contingency
+- **Overview**: budget bridge (run-rate → increment → exits → hires → contingency), budget by department vs ceilings, Omanisation vs target, monthly phasing, and a pre-submission checklist
+- **Scenarios**: hires filled %, hiring delay, increment, overtime and bonus levers compared against the base plan
+- **Import** Excel/CSV (employee-level exports are grouped automatically) and **export** a multi-sheet budget workbook, plan CSV or full JSON backup
+
+Data stays in the browser (localStorage). Statutory rates are editable defaults; confirm them with Payroll.
+
 ## Quick start (demo mode)
 
 ```bash
