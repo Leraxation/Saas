@@ -161,7 +161,8 @@ button.icon:hover{color:var(--bad);background:var(--bad-soft)}
 .req-act input[type=text]{flex:1 1 220px}
 #reqList{display:grid;gap:10px}
 body.form-mode > header.top, body.form-mode > main{display:none!important}
-body.gated nav.tabs, body.gated main > section, body.gated #btnExportXlsx{display:none!important}
+body.gated main, body.gated #formApp, body.gated nav.tabs, body.gated #btnExportXlsx, body.gated #userBar{display:none!important}
+.temp-pw{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:18px;font-weight:700;letter-spacing:.04em;padding:6px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--line-2);user-select:all}
 textarea{width:100%;resize:vertical}
 .flagrow .t b{font-family:var(--f-display);font-size:18px;margin-right:6px;font-variant-numeric:tabular-nums}
 </style>
@@ -175,6 +176,7 @@ textarea{width:100%;resize:vertical}
         <h1>Manpower Budget Planner</h1>
       </div>
       <span class="status" id="saveStatus" data-s="local"><i></i><span>Loading…</span></span>
+      <span class="toolbar" id="userBar" hidden><span class="note" id="userLabel"></span><button class="btn sm" type="button" data-logout>Sign out</button></span>
       <button class="btn primary" id="btnExportXlsx" type="button">Export to Excel</button>
     </div>
     <nav class="tabs" role="tablist" aria-label="Sections">
@@ -186,18 +188,33 @@ textarea{width:100%;resize:vertical}
       <button role="tab" data-tab="scen" aria-selected="false">Scenarios</button>
       <button role="tab" data-tab="assump" aria-selected="false">Assumptions</button>
       <button role="tab" data-tab="data" aria-selected="false">Import &amp; export</button>
+      <button role="tab" data-tab="users" aria-selected="false" hidden>Users</button>
+      <button role="tab" data-tab="audit" aria-selected="false" hidden>Audit log</button>
     </nav>
   </div>
 </header>
 
+<!-- SIGN-IN (localhost server) -->
+<div class="wrap" id="gate" hidden>
+  <div class="panel" style="max-width:440px;margin:48px auto">
+    <h2 id="gTitle" style="margin-bottom:6px">Sign in</h2>
+    <p class="note" id="gIntro" style="margin-bottom:14px"></p>
+    <form id="gForm" class="stack" style="gap:12px" novalidate>
+      <div class="field" id="gf-name" hidden><label for="g-name">Your full name</label><input id="g-name" autocomplete="name" maxlength="120"></div>
+      <div class="field" id="gf-user"><label for="g-user">Username</label><input id="g-user" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="40"></div>
+      <div class="field" id="gf-cur" hidden><label for="g-cur">Current or temporary password</label><input id="g-cur" type="password" autocomplete="current-password" maxlength="200"></div>
+      <div class="field" id="gf-pass"><label for="g-pass" id="g-pass-l">Password</label><input id="g-pass" type="password" autocomplete="current-password" maxlength="200"></div>
+      <div class="field" id="gf-pass2" hidden><label for="g-pass2">Repeat the new password</label><input id="g-pass2" type="password" autocomplete="new-password" maxlength="200"></div>
+      <p class="hint note" id="gHint" hidden>At least 12 characters, without your name or username. A phrase of several words is easiest to remember.</p>
+      <button class="btn primary" type="submit" id="gSubmit">Sign in</button>
+      <p class="note" id="gateMsg" role="alert" style="color:var(--bad);margin:0"></p>
+    </form>
+  </div>
+</div>
+
 <main class="wrap">
-  <!-- PIN GATE (localhost server with PLANNER_PIN) -->
-  <form class="panel" id="gate" hidden style="max-width:420px;margin:40px auto">
-    <h2 style="margin-bottom:6px">Planner PIN</h2>
-    <p class="note" style="margin-bottom:12px">This planner is protected. Enter the PIN set when the server was started. Department heads use the request form at <code>/request</code> instead.</p>
-    <div class="toolbar"><label class="sr" for="gatePin">PIN</label><input id="gatePin" type="password" autocomplete="current-password" style="flex:1"><button class="btn primary" type="submit">Open planner</button></div>
-    <p class="note" id="gateMsg" style="margin-top:8px;color:var(--bad)"></p>
-  </form>
+  <div class="callout" id="roBanner" hidden style="margin-bottom:18px"><b>Read-only access.</b> You can review the plan and export it. Changes are not saved.</div>
+  <div class="confirm" id="conflictBanner" hidden style="margin-bottom:18px"></div>
   <!-- OVERVIEW -->
   <section class="view" id="v-overview">
     <div id="sampleBanner" class="callout" hidden>
@@ -391,6 +408,40 @@ textarea{width:100%;resize:vertical}
     </div>
   </section>
 
+  <!-- USERS (admin, localhost server) -->
+  <section class="view" id="v-users" hidden>
+    <div class="panel">
+      <div class="panel-head"><h2>Add a user</h2><p>Everyone signs in with their own account. New users get a one-time password.</p></div>
+      <form id="uForm" class="stack" style="gap:12px" novalidate>
+        <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
+          <div class="field"><label for="u-user">Username</label><input id="u-user" maxlength="40" autocapitalize="none" spellcheck="false" placeholder="e.g. a.albalushi"></div>
+          <div class="field"><label for="u-name">Full name and title</label><input id="u-name" maxlength="120"></div>
+          <div class="field"><label for="u-role">Role</label><select id="u-role">
+            <option value="requester">Department head: request form only</option>
+            <option value="viewer">Viewer: read-only planner (e.g. Finance)</option>
+            <option value="planner">Planner: edit plan, decide requests</option>
+            <option value="admin">Administrator: planner + users + audit log</option></select></div>
+        </div>
+        <div class="field" id="u-depts-f"><label>Departments this person may request for</label><div class="chips" id="u-depts"></div><span class="hint">Leave all unticked to allow every department.</span></div>
+        <div class="toolbar"><button class="btn primary" type="submit">Create user</button><span class="note" id="uMsg" role="status"></span></div>
+      </form>
+      <div id="uTemp"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Users</h2><p>Disable accounts instead of deleting them, so the audit log keeps its meaning</p></div>
+      <div class="tbl-wrap"><table id="tblUsers"></table></div>
+    </div>
+  </section>
+
+  <!-- AUDIT LOG (admin, localhost server) -->
+  <section class="view" id="v-audit" hidden>
+    <div class="panel">
+      <div class="panel-head"><h2>Audit log</h2><p>Sign-ins, user changes, imports, saves, decisions and exports. Each entry is chained to the previous one, so edits to the file are detectable.</p></div>
+      <div class="toolbar" style="margin-bottom:12px"><span id="auditState"></span><span class="grow"></span><label class="sr" for="auditQ">Filter</label><input id="auditQ" type="search" placeholder="Filter by user, event or IP"><button class="btn sm" type="button" id="btnAuditReload">Refresh</button></div>
+      <div class="tbl-wrap" style="max-height:70vh"><table id="tblAudit"></table></div>
+    </div>
+  </section>
+
   <!-- REQUESTS (planner side) -->
   <section class="view" id="v-req" hidden>
     <div class="kpis" id="reqKpis"></div>
@@ -426,7 +477,7 @@ textarea{width:100%;resize:vertical}
 <div id="formApp" hidden>
   <header class="top"><div class="wrap"><div class="top-row">
     <div class="brand"><span class="eyebrow" id="fEyebrow">Manpower request</span><h1>Manpower Request Form</h1></div>
-    <button class="btn" type="button" id="btnBackPlanner" hidden>Back to planner</button>
+    <span class="toolbar"><span class="note" id="userLabel2"></span><button class="btn" type="button" id="btnBackPlanner" hidden>Back to planner</button><button class="btn sm" type="button" data-logout id="btnLogout2" hidden>Sign out</button></span>
   </div></div></header>
   <main class="wrap stack">
     <div class="callout" id="fIntro"></div>
@@ -671,7 +722,7 @@ function empFlags(e){
 /* ---------- State & persistence ---------- */
 let S = null, R = null;
 // Where data lives: "artifact" (claude.ai page), "server" (local Node server) or "local" (this browser only).
-const BE = {mode: "local", db: null, base: null, uid: null, user: null, owner: true, pin: false, ready: false};
+const BE = {mode: "local", db: null, base: null, uid: null, user: null, owner: true, ready: false, csrf: "", role: "", ver: {plan: 0, roster: 0}, pending: {plan: false, roster: false}};
 let saveTimer = null, rosTimer = null;
 const LS_REQ = "manpower-planner-v1:requests", LS_TOKEN = "manpower-planner-v1:token";
 const lsGet = k => { try { const t = localStorage.getItem(k); return t ? JSON.parse(t) : null; } catch { return null; } };
@@ -686,15 +737,15 @@ function normalise(s){
   if (s.reqOpen === undefined) s.reqOpen = true;
   return s;
 }
-const pinStore = {
-  get(){ try { return sessionStorage.getItem("mp-pin") || ""; } catch { return ""; } },
-  set(v){ try { sessionStorage.setItem("mp-pin", v); } catch {} },
-};
 async function api(path, method = "GET", body){
-  const r = await fetch("api/" + path, {method, cache: "no-store", headers: {"content-type": "application/json", "x-planner-pin": pinStore.get()}, body: body === undefined ? undefined : JSON.stringify(body)});
-  if (r.status === 401){ const e = new Error("A planner PIN is needed."); e.code = "pin"; throw e; }
-  if (!r.ok){ let msg = "HTTP " + r.status; try { msg = (await r.json()).error || msg; } catch {} throw new Error(msg); }
-  return r.json();
+  const r = await fetch("api/" + path, {method, cache: "no-store", credentials: "same-origin",
+    headers: {"content-type": "application/json", "x-csrf-token": BE.csrf || ""}, body: body === undefined ? undefined : JSON.stringify(body)});
+  let j = null; try { j = await r.json(); } catch {}
+  if (r.ok) return j || {};
+  const e = new Error((j && j.error) || "HTTP " + r.status); e.status = r.status; e.code = j && j.code; e.body = j;
+  if (r.status === 401 && path !== "login" && path !== "session") authLost();
+  if (r.status === 403 && e.code === "must_change") showAuth("change");
+  throw e;
 }
 const savedText = () => BE.mode === "artifact" ? "Saved to your account" : BE.mode === "server" ? "Saved on the server" : "Saved in this browser";
 const savedState = () => BE.mode === "local" ? "local" : "ok";
@@ -705,10 +756,10 @@ function persist(){
   saveTimer = setTimeout(async () => {
     try {
       if (BE.mode === "artifact"){ await BE.db.doc(BE.base + "/plan").set(clone(S)); lsSet(LS_KEY, S); }
-      else if (BE.mode === "server") await api("plan", "PUT", {data: S});
+      else if (BE.mode === "server"){ BE.pending.plan = true; BE.ver.plan = (await api("plan", "PUT", {data: S, baseVersion: BE.ver.plan})).version; BE.pending.plan = false; }
       else if (!lsSet(LS_KEY, S)) throw new Error("quota");
       setStatus(savedState(), savedText());
-    } catch (e) { setStatus("local", BE.mode !== "server" && lsSet(LS_KEY, S) ? "Storage unreachable · kept in this browser" : "Not saved · export a backup"); }
+    } catch (e) { if (serverSaveError(e)) return; setStatus("local", BE.mode !== "server" && lsSet(LS_KEY, S) ? "Storage unreachable · kept in this browser" : "Not saved · export a backup"); }
     publishConfig();
   }, 900);
 }
@@ -727,10 +778,10 @@ function persistRoster(){
         for (let c = n; c < prevN; c++) await BE.db.doc(`${BE.base}/roster-${c}`).delete();
         await metaRef.set(ROS ? {chunks: n, fileName: ROS.fileName || "", importedAt: ROS.importedAt || 0, savedAt: ROS.savedAt, groupBy: ROS.groupBy || "", sample: !!ROS.sample} : {chunks: 0, savedAt: Date.now(), cleared: true});
         lsSet(LS_ROS, ROS);
-      } else if (BE.mode === "server") await api("roster", "PUT", {data: ROS});
+      } else if (BE.mode === "server"){ BE.pending.roster = true; BE.ver.roster = (await api("roster", "PUT", {data: ROS, baseVersion: BE.ver.roster})).version; BE.pending.roster = false; }
       else if (!lsSet(LS_ROS, ROS)) throw new Error("quota");
       setStatus(savedState(), savedText());
-    } catch (e) { setStatus("local", BE.mode !== "server" && lsSet(LS_ROS, ROS) ? "Storage unreachable · kept in this browser" : "Employee file not saved · export a backup"); }
+    } catch (e) { if (serverSaveError(e)) return; setStatus("local", BE.mode !== "server" && lsSet(LS_ROS, ROS) ? "Storage unreachable · kept in this browser" : "Employee file not saved · export a backup"); }
   }, 1200);
 }
 function changed(){ recalc(); persist(); }
@@ -751,7 +802,7 @@ async function detectBackend(){
   if (/^https?:$/.test(location.protocol)){
     try {
       const h = await fetch("api/health", {cache: "no-store"}).then(r => r.ok ? r.json() : null);
-      if (h && h.app === "manpower-planner"){ BE.mode = "server"; BE.pin = !!h.pin; }
+      if (h && h.app === "manpower-planner") BE.mode = "server";
     } catch {}
   }
 }
@@ -775,6 +826,7 @@ async function loadPlannerData(){
     const [p, r] = await Promise.all([api("plan"), api("roster")]);
     S = p.data ? normalise(p.data) : sampleState();
     ROS = r.data && Array.isArray(r.data.emps) ? r.data : (S.sample ? sampleRoster(S) : null);
+    BE.ver.plan = p.version || 0; BE.ver.roster = r.version || 0;
   }
   rosVer++;
 }
@@ -807,6 +859,7 @@ async function loadConfig(){
 }
 function requesterToken(){
   if (BE.mode === "artifact") return BE.uid;
+  if (BE.mode === "server") return BE.user ? BE.user.username : "";
   let t = lsGet(LS_TOKEN); if (!t){ t = "r-" + uid() + uid(); lsSet(LS_TOKEN, t); } return t;
 }
 let REQ = [], reqUnsub = null, reqPoll = null;
@@ -824,7 +877,7 @@ async function loadRequests(){
 async function myRequests(){
   const tok = requesterToken();
   if (BE.mode === "artifact"){ const snap = await BE.db.doc("requests/" + tok).get(); return snap.exists ? (snap.data().items || []) : []; }
-  if (BE.mode === "server") return (await api("requests?mine=" + encodeURIComponent(tok))).items || [];
+  if (BE.mode === "server") return ((await api("requests")).items || []).filter(r => r.owner === tok);
   return (lsGet(LS_REQ) || []).filter(r => r.owner === tok);
 }
 async function saveRequest(item){
@@ -1297,19 +1350,44 @@ function updateXlsxStatus(){
   const el = $("#xlsxStatus"); if (!el) return;
   el.innerHTML = window.XLSX ? '<span class="pill good">✓ Excel reader ready</span>' : '<span class="pill warn">Excel reader not loaded</span> Import a CSV or paste from Excel instead.';
 }
+const MAX_IMPORT_BYTES = 40 * 1048576, MAX_IMPORT_ROWS = 200000;
+function parseFail(e){
+  const m = String(e && e.message || e);
+  if (/password|encrypt|ECMA-376|CFB/i.test(m)) throw new Error("This workbook is password-protected or encrypted (HR exports often are). Open it in Excel, remove the protection or use File → Save As → CSV UTF-8, then import the copy.");
+  throw new Error(/too long/.test(m) ? m : "This file could not be read as Excel (" + m + "). Save it as .xlsx or CSV and try again.");
+}
+// Excel files are parsed in a separate worker: a malformed or malicious workbook cannot reach the
+// page's data, and a parse that hangs is stopped after 90 seconds.
+function parseInWorker(buf){
+  return new Promise((resolve, reject) => {
+    const lib = new URL("xlsx.full.min.js", location.href).href;
+    const src = `self.onmessage=function(e){try{importScripts(${JSON.stringify(lib)});var wb=XLSX.read(e.data,{type:"array",cellDates:true}),out={};wb.SheetNames.forEach(function(n){out[n]=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:"",raw:true,blankrows:false});});postMessage({ok:true,sheets:out});}catch(err){postMessage({ok:false,error:String(err&&err.message||err)});}};`;
+    let w, url;
+    try { url = URL.createObjectURL(new Blob([src], {type: "text/javascript"})); w = new Worker(url); }
+    catch (e){ reject(Object.assign(new Error("worker"), {worker: true})); return; }
+    const done = () => { clearTimeout(t); w.terminate(); URL.revokeObjectURL(url); };
+    const t = setTimeout(() => { done(); reject(new Error("Reading the file took too long and was stopped. Save it as CSV and try again.")); }, 90000);
+    w.onmessage = e => { done(); if (e.data && e.data.ok) resolve(e.data.sheets); else if (/importScripts|NetworkError|Failed to execute/i.test(e.data && e.data.error || "")) reject(Object.assign(new Error("worker"), {worker: true})); else reject(new Error(e.data ? e.data.error : "Unknown error")); };
+    w.onerror = ev => { ev.preventDefault && ev.preventDefault(); done(); reject(Object.assign(new Error("worker"), {worker: true})); };
+    w.postMessage(buf, [buf]);
+  });
+}
 async function readSheets(file){
   const name = file.name.toLowerCase();
   if (/\.(csv|tsv|txt)$/.test(name)) return {"Sheet1": parseCSV((await file.text()).replace(/^\ufeff/, ""))};
   if (!(await ensureXLSX())) throw new Error("The Excel reader could not be loaded on this network. In Excel, use File → Save As → CSV UTF-8 and import the CSV, or use “Paste from Excel” below.");
-  let wb;
-  try { wb = XLSX.read(await file.arrayBuffer(), {type: "array", cellDates: true}); }
+  if (file.size > MAX_IMPORT_BYTES) throw new Error("That file is larger than 40 MB. Remove unused sheets or columns, or save it as CSV.");
+  const buf = await file.arrayBuffer();
+  let out;
+  try { out = await parseInWorker(buf.slice(0)); }
   catch (e) {
-    const m = String(e && e.message || e);
-    if (/password|encrypt|ECMA-376|CFB/i.test(m)) throw new Error("This workbook is password-protected or encrypted (HR exports often are). Open it in Excel, remove the protection or use File → Save As → CSV UTF-8, then import the copy.");
-    throw new Error("This file could not be read as Excel (" + m + "). Save it as .xlsx or CSV and try again.");
+    if (!e.worker || BE.mode === "server") return parseFail(e);
+    // Workers unavailable in this view: parse on the page instead.
+    try { const wb = XLSX.read(buf, {type: "array", cellDates: true}); out = {}; for (const n of wb.SheetNames) out[n] = XLSX.utils.sheet_to_json(wb.Sheets[n], {header: 1, defval: "", raw: true, blankrows: false}); }
+    catch (e2) { return parseFail(e2); }
   }
-  const out = {};
-  for (const n of wb.SheetNames) out[n] = XLSX.utils.sheet_to_json(wb.Sheets[n], {header: 1, defval: "", raw: true, blankrows: false});
+  const rows = Object.values(out).reduce((n, r) => n + r.length, 0);
+  if (rows > MAX_IMPORT_ROWS) throw new Error(`That workbook has ${f0(rows)} rows. The limit is ${f0(MAX_IMPORT_ROWS)}.`);
   return out;
 }
 function parseMonth(v){ if (v === "" || v == null) return null; if (v instanceof Date) return v.getMonth() + 1; const s = String(v).trim().toLowerCase(); const i = MONTHS.findIndex(m => s.startsWith(m.toLowerCase())); if (i >= 0) return i + 1; const n = Math.round(num(s)); return n >= 1 && n <= 12 ? n : null; }
@@ -1679,10 +1757,16 @@ bindDrop($("#drop"), handleFile);
 
 /* ---------- Export ---------- */
 let downloads;
+function logExport(filename){
+  if (BE.mode !== "server") return;
+  const ev = /template/i.test(filename) ? "template_download" : /\.xlsx$/.test(filename) ? "export_xlsx" : /\.csv$/.test(filename) ? "export_csv" : "export_json";
+  api("audit", "POST", {event: ev, file: filename}).catch(() => {});
+}
 async function saveFile(filename, data){
   const msg = $("#exportMsg");
   try {
     if (downloads === undefined) downloads = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+    logExport(filename);
     if (downloads){ await downloads.save({filename, data}); msg.textContent = `Saved ${filename}.`; return; }
     const blob = data instanceof Blob ? data : new Blob([data]);
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); a.remove();
@@ -1715,7 +1799,7 @@ function exportXlsx(){
   const assump = [["Assumption","Value"], ...RATE_FIELDS.map(([k, lab]) => [lab, k === "incMonth" ? MONTHS[S.a[k] - 1] : S.a[k]]), [], ["Department","Overtime %", `FY${S.baseYear} budget`, "Ceiling"], ...S.depts.map(d => [d.name, d.ot, d.prior || "", d.ceiling || ""])];
   const scen = [["Scenario","FY budget","vs base","Closing HC","Hires filled %","Delay (mo)","Increment %","Overtime % of plan","Bonus months"], ["Base plan", Math.round(t.total), 0, Math.round(t.close), 100, 0, S.a.incPct, 100, S.a.bonusMonths],
     ...S.scen.map(sc => { const r = compute(S, scenOpts(sc)).tot; return [sc.name, Math.round(r.total), Math.round(r.total - t.total), Math.round(r.close), sc.hirePct, sc.delay, sc.incPct, sc.otPct, sc.bonusMonths]; })];
-  const add = (rows, name, widths) => { const ws = XLSX.utils.aoa_to_sheet(rows); ws["!cols"] = widths.map(w => ({wch: w})); XLSX.utils.book_append_sheet(wb, ws, name); };
+  const add = (rows, name, widths) => { const ws = XLSX.utils.aoa_to_sheet(safeRows(rows)); ws["!cols"] = widths.map(w => ({wch: w})); XLSX.utils.book_append_sheet(wb, ws, name); };
   add(summary, "Summary", [34, 16]);
   add(deptRows(), "Department budget", [30, ...new Array(20).fill(13)]);
   add(monthly, "Monthly phasing", [30, ...new Array(13).fill(11)]);
@@ -1729,7 +1813,10 @@ function exportXlsx(){
   add(assump, "Assumptions", [52, 14, 14, 14]);
   saveFile(fileStem() + ".xlsx", new Blob([XLSX.write(wb, {bookType: "xlsx", type: "array"})], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
 }
-const toCSV = rows => rows.map(r => r.map(v => { const s = String(v ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(",")).join("\r\n");
+// Text starting with = + - @ could run as a formula when the file is opened in Excel: prefix it with '.
+const safeCell = v => typeof v === "string" && /^[=+\-@\t\r]/.test(v) ? "'" + v : v;
+const safeRows = rows => rows.map(r => r.map(safeCell));
+const toCSV = rows => safeRows(rows).map(r => r.map(v => { const s = String(v ?? ""); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(",")).join("\r\n");
 $("#btnExportXlsx").addEventListener("click", exportXlsx);
 $("#btnExportXlsx2").addEventListener("click", exportXlsx);
 $("#btnExportCsv").addEventListener("click", () => saveFile(fileStem() + "-plan.csv", "﻿" + toCSV(planRows())));
@@ -1742,6 +1829,7 @@ $("#btnTemplate").addEventListener("click", () => {
 });
 $("#btnCopy").addEventListener("click", async () => {
   const tsv = deptRows().map(r => r.join("\t")).join("\n");
+  if (BE.mode === "server") api("audit", "POST", {event: "copy_summary"}).catch(() => {});
   try { await navigator.clipboard.writeText(tsv); $("#exportMsg").textContent = "Department summary copied. Paste it into Excel."; }
   catch { const ta = document.createElement("textarea"); ta.value = tsv; ta.style.width = "100%"; ta.rows = 6; $("#exportMsg").replaceChildren("Copying is blocked here. Select the text below and copy it:", ta); ta.select(); }
 });
@@ -1895,6 +1983,7 @@ async function startForm(preview){
   $("#fIntro").textContent = "Loading the request form…";
   if (!$("#f-by").value) $("#f-by").value = lsGet("manpower-planner-v1:by") || "";
   try { FCFG = preview || BE.mode === "local" ? publicConfig() : await loadConfig(); } catch { FCFG = null; }
+  if (BE.mode === "server" && BE.user && !$("#f-by").value) $("#f-by").value = BE.user.name;
   if (BE.mode === "artifact" && BE.user && !$("#f-by").value){ try { const me = await BE.user.me(); if (me && me.name) $("#f-by").value = me.name; } catch {} }
   renderFormIntro(); renderMyReqs(); updateEst();
 }
@@ -1987,32 +2076,203 @@ $("#btnBackPlanner").addEventListener("click", () => {
 
 /* ---------- Boot ---------- */
 const wantsForm = () => location.hash === "#request" || /\/request\/?$/.test(location.pathname);
-function showGate(wrong){
-  document.body.classList.add("gated"); $("#gate").hidden = false;
-  $("#gateMsg").textContent = wrong ? "That PIN is not correct." : "";
-  setStatus("local", "Locked"); setTimeout(() => $("#gatePin").focus(), 0);
+const ROLE_LABEL = {admin: "Administrator", planner: "Planner", viewer: "Viewer (read-only)", requester: "Department head"};
+let authMode = "login";
+function showAuth(mode, msg){
+  authMode = mode; document.body.classList.add("gated"); $("#gate").hidden = false;
+  const show = (id, on) => { $(id).hidden = !on; };
+  show("#gf-name", mode === "setup"); show("#gf-user", mode !== "change"); show("#gf-cur", mode === "change"); show("#gf-pass2", mode !== "login"); show("#gHint", mode !== "login");
+  $("#g-pass").autocomplete = mode === "login" ? "current-password" : "new-password";
+  $("#g-pass-l").textContent = mode === "login" ? "Password" : "New password";
+  $("#gTitle").textContent = mode === "setup" ? "Create the administrator account" : mode === "change" ? "Choose a new password" : "Sign in";
+  $("#gIntro").textContent = mode === "setup" ? "First run. This account manages users and can see the audit log. You can add planners and department heads after signing in."
+    : mode === "change" ? "Your password was set by an administrator or has to be changed. Choose one only you know."
+    : wantsForm() ? "Sign in to submit manpower requests for your department." : "Sign in to the Manpower Budget Planner.";
+  $("#gSubmit").textContent = mode === "setup" ? "Create account" : mode === "change" ? "Save new password" : "Sign in";
+  $("#gateMsg").textContent = msg || "";
+  ["#g-pass", "#g-pass2", "#g-cur"].forEach(id => $(id).value = "");
+  setStatus("local", "Signed out");
+  setTimeout(() => (mode === "change" ? $("#g-cur") : mode === "setup" ? $("#g-name") : ($("#g-user").value ? $("#g-pass") : $("#g-user"))).focus(), 0);
 }
-$("#gate").addEventListener("submit", e => { e.preventDefault(); pinStore.set($("#gatePin").value); boot(true); });
-async function boot(retry){
+function authLost(){ if (BE.mode === "server" && !document.body.classList.contains("gated")) showAuth("login", "Your session ended. Sign in again; unsaved changes are kept and will be saved."); }
+$("#gForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = $("#gateMsg"), btn = $("#gSubmit");
+  const pw = $("#g-pass").value, pw2 = $("#g-pass2").value;
+  if (authMode !== "login" && pw !== pw2){ msg.textContent = "The two new passwords are different."; return; }
+  btn.disabled = true; msg.textContent = "";
+  try {
+    let r;
+    if (authMode === "login") r = await api("login", "POST", {username: $("#g-user").value.trim(), password: pw});
+    else if (authMode === "setup") r = await api("setup", "POST", {username: $("#g-user").value.trim(), name: $("#g-name").value.trim(), password: pw});
+    else r = await api("password", "POST", {current: $("#g-cur").value, next: pw});
+    if (r.csrf) BE.csrf = r.csrf;
+    BE.user = r.user;
+    if (BE.user.mustChange){ showAuth("change"); return; }
+    await afterSignIn();
+  } catch (err){ msg.textContent = err.message; }
+  finally { btn.disabled = false; $("#g-pass").value = ""; $("#g-pass2").value = ""; }
+});
+document.addEventListener("click", async e => {
+  if (!e.target.closest || !e.target.closest("[data-logout]")) return;
+  try { await api("logout", "POST", {}); } catch {}
+  location.reload();
+});
+async function serverSession(){
+  try { const r = await api("session"); BE.csrf = r.csrf; BE.user = r.user; return true; }
+  catch (e){ if (e.body && e.body.setup){ showAuth(e.body.setupAllowed ? "setup" : "login", e.body.setupAllowed ? "" : "No accounts exist yet. Open the planner on the server computer itself (http://localhost) to create the administrator account."); return false; } showAuth("login"); return false; }
+}
+// Screen lock: after the idle period the page signs out so an unattended screen does not show salaries.
+let lastActive = Date.now(), idleTimer = null;
+["mousemove", "keydown", "pointerdown", "wheel", "touchstart"].forEach(t => addEventListener(t, () => { lastActive = Date.now(); }, {passive: true}));
+function startIdleLock(minutes){
+  clearInterval(idleTimer);
+  idleTimer = setInterval(async () => {
+    if (document.body.classList.contains("gated") || Date.now() - lastActive < minutes * 60e3) return;
+    try { await api("logout", "POST", {}); } catch {}
+    showAuth("login", `Signed out after ${minutes} minutes without activity. Unsaved changes are kept.`);
+  }, 30e3);
+}
+function applyRoleUI(){
+  const u = BE.user, admin = u && u.role === "admin";
+  document.querySelectorAll('nav.tabs button[data-tab="users"], nav.tabs button[data-tab="audit"]').forEach(b => b.hidden = !admin);
+  $("#userBar").hidden = !u; $("#btnLogout2").hidden = !u;
+  const label = u ? `${u.name} · ${ROLE_LABEL[u.role] || u.role}` : "";
+  $("#userLabel").textContent = label; $("#userLabel2").textContent = label;
+  $("#roBanner").hidden = !(u && u.role === "viewer");
+  document.body.classList.toggle("readonly", !!(u && u.role === "viewer"));
+}
+async function afterSignIn(){
+  document.body.classList.remove("gated"); $("#gate").hidden = true;
+  applyRoleUI(); startIdleLock(30);
+  const role = BE.user.role;
+  if (role === "requester" || wantsForm()){
+    BE.owner = role !== "requester" && !wantsForm() ? true : false;
+    startForm(false); return;
+  }
+  BE.owner = role !== "viewer";
+  if (!BE.ready){
+    try { await loadPlannerData(); }
+    catch (e){ if (e.status === 401 || e.code === "must_change") return; setStatus("local", "Could not load the saved plan: " + e.message); return; }
+    BE.ready = true;
+  } else {
+    // Re-signed in after a timeout: save anything that was waiting.
+    if (BE.pending.plan) persist();
+    if (BE.pending.roster) persistRoster();
+  }
+  renderAll(); updateRosterInfo(); updateStorageNote();
+  setStatus(BE.owner ? savedState() : "local", BE.owner ? savedText() : "Read-only");
+  if (BE.owner) publishConfig(true);
+  loadRequests();
+}
+function serverSaveError(e){
+  if (BE.mode !== "server") return false;
+  if (e.status === 401){ setStatus("busy", "Waiting for sign-in to save"); return true; }
+  if (e.status === 409){
+    const b = $("#conflictBanner");
+    b.innerHTML = `<span>${esc(e.message)}</span><button class="btn sm" type="button" id="btnConflictReload">Reload the latest version</button>`;
+    b.hidden = false; $("#btnConflictReload").onclick = () => location.reload();
+    setStatus("local", "Not saved: newer version on the server"); return true;
+  }
+  if (e.status === 403){ setStatus("local", "Not saved: " + e.message); return true; }
+  return false;
+}
+async function boot(){
   if (wantsForm()){ document.body.classList.add("form-mode"); $("#formApp").hidden = false; }
-  if (!retry) await detectBackend();
+  await detectBackend();
+  if (BE.mode === "server"){
+    // Nothing from the example plan is shown until the user has signed in.
+    document.body.classList.add("gated");
+    if (await serverSession()){ if (BE.user.mustChange) showAuth("change"); else await afterSignIn(); }
+    return;
+  }
   if (wantsForm() || (BE.mode === "artifact" && !BE.owner)){
     if (BE.mode !== "local" && !(BE.mode === "artifact" && BE.owner)) BE.owner = false;
     startForm(BE.owner); return;
   }
-  if (BE.mode === "server" && BE.pin && !pinStore.get()){ showGate(false); return; }
   try { await loadPlannerData(); }
-  catch (e){ if (e.code === "pin"){ showGate(!!pinStore.get()); return; } setStatus("local", "Could not load the saved plan"); return; }
-  document.body.classList.remove("gated"); $("#gate").hidden = true;
+  catch (e){ setStatus("local", "Could not load the saved plan"); return; }
   BE.ready = true;
   renderAll(); updateRosterInfo(); updateStorageNote();
   setStatus(savedState(), savedText());
   publishConfig(true); loadRequests();
 }
 
+/* ---------- Users & audit (admin, localhost server) ---------- */
+let USERS = [];
+function deptChips(container, selected){
+  container.innerHTML = S.depts.map(d => `<label class="chip"><input type="checkbox" value="${esc(d.id)}"${selected.includes(d.id) ? " checked" : ""}>${esc(d.name)}</label>`).join("") || '<span class="note">No departments in the plan yet.</span>';
+}
+const chipValues = container => [...container.querySelectorAll("input:checked")].map(i => i.value);
+async function renderUsers(){
+  deptChips($("#u-depts"), chipValues($("#u-depts")));
+  $("#u-depts-f").hidden = $("#u-role").value !== "requester";
+  try { USERS = (await api("users")).users; } catch (e){ $("#tblUsers").innerHTML = `<tbody><tr><td>${esc(e.message)}</td></tr></tbody>`; return; }
+  const dn = id => (S.depts.find(d => d.id === id) || {}).name || id;
+  $("#tblUsers").innerHTML = `<thead><tr><th>User</th><th>Role</th><th>Departments</th><th>Status</th><th>Last sign-in</th><th class="n">Sessions</th><th>Actions</th></tr></thead><tbody>` + USERS.map(u => {
+    const st = u.disabled ? '<span class="pill">Disabled</span>' : u.lockedUntil ? '<span class="pill bad">Locked</span>' : u.mustChange ? '<span class="pill warn">Temporary password</span>' : '<span class="pill good">Active</span>';
+    const me = BE.user && u.username === BE.user.username;
+    return `<tr data-u="${esc(u.username)}"><td><b>${esc(u.name)}</b><br><span class="note">${esc(u.username)}${me ? " (you)" : ""}</span></td>
+      <td class="cell-in"><select data-ua="role" aria-label="Role for ${esc(u.username)}">${Object.entries(ROLE_LABEL).map(([k, v]) => `<option value="${k}"${k === u.role ? " selected" : ""}>${esc(v)}</option>`).join("")}</select></td>
+      <td style="white-space:normal;min-width:180px">${u.role === "requester" ? `${u.depts.length ? u.depts.map(d => `<span class="pill info">${esc(dn(d))}</span>`).join(" ") : '<span class="note">All departments</span>'} <button class="btn sm" type="button" data-ua="depts">Change</button><div class="chips" data-chips hidden style="margin-top:6px"></div>` : '<span class="note">Not applicable</span>'}</td>
+      <td>${st}</td><td>${u.lastLogin ? new Date(u.lastLogin).toLocaleString("en-GB", {dateStyle: "medium", timeStyle: "short"}) : '<span class="note">Never</span>'}</td><td class="n">${u.sessions}</td>
+      <td><div class="toolbar"><button class="btn sm" type="button" data-ua="reset">Reset password</button>${u.lockedUntil ? '<button class="btn sm" type="button" data-ua="unlock">Unlock</button>' : ""}${u.sessions ? '<button class="btn sm" type="button" data-ua="revoke">Sign out everywhere</button>' : ""}${me ? "" : `<button class="btn sm ${u.disabled ? "" : "danger"}" type="button" data-ua="${u.disabled ? "enable" : "disable"}">${u.disabled ? "Enable" : "Disable"}</button>`}</div></td></tr>`;
+  }).join("") + "</tbody>";
+}
+function showTemp(name, pw){
+  $("#uTemp").innerHTML = `<div class="callout" style="margin-top:14px;display:grid;gap:8px"><b>One-time password for ${esc(name)}</b><span class="temp-pw">${esc(pw)}</span><span class="note">Give it to them in person or by phone, not by email. It works once: they must choose their own password when they sign in. It is not shown again.</span><div class="toolbar"><button class="btn sm" type="button" id="btnTempCopy">Copy</button><button class="btn sm" type="button" id="btnTempHide">Done, hide it</button></div></div>`;
+  $("#btnTempCopy").onclick = async () => { try { await navigator.clipboard.writeText(pw); $("#btnTempCopy").textContent = "Copied"; } catch { $("#btnTempCopy").textContent = "Select and copy it"; } };
+  $("#btnTempHide").onclick = () => { $("#uTemp").innerHTML = ""; };
+}
+$("#u-role").addEventListener("change", () => { $("#u-depts-f").hidden = $("#u-role").value !== "requester"; });
+$("#uForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const body = {username: $("#u-user").value.trim().toLowerCase(), name: $("#u-name").value.trim(), role: $("#u-role").value, depts: $("#u-role").value === "requester" ? chipValues($("#u-depts")) : []};
+  if (!body.username){ $("#uMsg").textContent = "Enter a username."; return; }
+  try { const r = await api("users", "POST", body); $("#uMsg").textContent = `Created ${r.user.username}.`; $("#u-user").value = ""; $("#u-name").value = ""; showTemp(r.user.name, r.tempPassword); renderUsers(); }
+  catch (err){ $("#uMsg").textContent = err.message; }
+});
+$("#tblUsers").addEventListener("change", async e => {
+  if (e.target.dataset.ua !== "role") return;
+  const un = e.target.closest("[data-u]").dataset.u;
+  try { await api("users/" + encodeURIComponent(un), "PUT", {role: e.target.value}); } catch (err){ alertRow(un, err.message); }
+  renderUsers();
+});
+function alertRow(un, msg){ const tr = document.querySelector(`#tblUsers tr[data-u="${CSS.escape(un)}"] td:last-child`); if (tr) tr.insertAdjacentHTML("beforeend", `<p class="note" style="color:var(--bad)">${esc(msg)}</p>`); }
+$("#tblUsers").addEventListener("click", async e => {
+  const act = e.target.dataset && e.target.dataset.ua; if (!act || act === "role") return;
+  const tr = e.target.closest("[data-u]"), un = tr.dataset.u, u = USERS.find(x => x.username === un);
+  if (act === "depts"){
+    const box = tr.querySelector("[data-chips]");
+    if (box.hidden){ deptChips(box, u.depts); box.insertAdjacentHTML("beforeend", '<button class="btn sm primary" type="button" data-ua="saveDepts">Save departments</button>'); box.hidden = false; }
+    else box.hidden = true;
+    return;
+  }
+  const body = act === "saveDepts" ? {depts: chipValues(tr.querySelector("[data-chips]"))} : act === "reset" ? {resetPassword: true} : act === "unlock" ? {unlock: true} : act === "revoke" ? {revokeSessions: true} : {disabled: act === "disable"};
+  if ((act === "disable" || act === "reset") && e.target.dataset.sure !== "1"){ e.target.dataset.sure = "1"; e.target.textContent = act === "disable" ? "Confirm disable" : "Confirm reset"; return; }
+  try { const r = await api("users/" + encodeURIComponent(un), "PUT", body); if (r.tempPassword) showTemp(r.user.name, r.tempPassword); await renderUsers(); }
+  catch (err){ alertRow(un, err.message); }
+});
+let AUDIT = null;
+async function renderAudit(reload){
+  if (reload || !AUDIT){ try { AUDIT = await api("audit?limit=2000"); } catch (e){ $("#tblAudit").innerHTML = `<tbody><tr><td>${esc(e.message)}</td></tr></tbody>`; return; } }
+  $("#auditState").innerHTML = AUDIT.ok ? `<span class="pill good">✓ Chain intact</span> <span class="note">${f0(AUDIT.total)} entries</span>` : `<span class="pill bad">Tampering detected at line ${f0(AUDIT.brokenAt)}</span> <span class="note">Entries before that line are verified. Report this to IT security.</span>`;
+  const q = ($("#auditQ").value || "").toLowerCase();
+  const rows = AUDIT.entries.filter(e => !q || `${e.actor} ${e.event} ${e.ip} ${JSON.stringify(e.detail)}`.toLowerCase().includes(q)).slice(0, 1000);
+  $("#tblAudit").innerHTML = `<thead><tr><th>Time</th><th>User</th><th>Event</th><th>Details</th><th>IP address</th></tr></thead><tbody>` + rows.map(e => `<tr><td>${esc(new Date(e.ts).toLocaleString("en-GB", {dateStyle: "medium", timeStyle: "medium"}))}</td><td>${esc(e.actor)}</td><td>${esc(e.event.replace(/_/g, " "))}</td><td style="white-space:normal;max-width:420px" class="note">${esc(Object.entries(e.detail || {}).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" · "))}</td><td class="note">${esc(e.ip)}</td></tr>`).join("") + "</tbody>";
+}
+$("#auditQ").addEventListener("input", () => renderAudit(false));
+$("#btnAuditReload").addEventListener("click", () => renderAudit(true));
+function applyReadonly(){
+  if (!(BE.user && BE.user.role === "viewer")) return;
+  document.querySelectorAll("#v-plan input:not(#fSearch), #v-plan select:not(#fDept), #v-plan button, #v-assump input, #v-assump select, #v-assump textarea, #v-assump button, #v-scen input, #v-scen button, #tblEmp input, #tblEmp select, #empFlags button, #v-req .req-act input, #v-req .req-act button, #rqOpen, #rqDeadline, #rqNote, #wizBody button, #wizBody input, #wizBody textarea, #resetArea button, #drop button, #fileIn")
+    .forEach(el => { el.disabled = true; });
+}
+
 /* ---------- Tabs & render ---------- */
 let tab = "overview";
 function switchTab(t){
+  if ((t === "users" || t === "audit") && !(BE.user && BE.user.role === "admin")) t = "overview";
   tab = t;
   document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
   document.querySelectorAll("section.view").forEach(s => s.hidden = s.id !== "v-" + t);
@@ -2029,7 +2289,10 @@ function renderTab(){
   else if (tab === "scen") renderScen();
   else if (tab === "assump") renderAssump();
   else if (tab === "req") renderReq();
+  else if (tab === "users") renderUsers();
+  else if (tab === "audit") renderAudit(true);
   else if (tab === "data") updateRosterInfo();
+  applyReadonly();
 }
 function updateHeader(){
   $("#hdrEyebrow").textContent = `${S.org ? S.org + " · " : ""}Manpower plan · FY${S.fy} · OMR${rosterOn() ? ` · ${f0(ROS.emps.length)} employees on file` : ""}`;

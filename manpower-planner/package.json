@@ -1,11 +1,13 @@
 {
   "name": "manpower-budget-planner",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Manpower planning and budgeting tool with a department-head request form. Runs on localhost with no dependencies.",
+  "description": "Manpower planning and budgeting with a department-head request form. Secure localhost server, no dependencies.",
   "scripts": {
     "start": "node server.js",
-    "share": "node server.js --share"
+    "share": "node server.js --share",
+    "test": "node --test test/security.test.js",
+    "reset-password": "node server.js reset-password"
   },
-  "engines": { "node": ">=18" }
+  "engines": { "node": ">=18.18" }
 }
