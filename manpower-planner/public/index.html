@@ -223,8 +223,9 @@ textarea{width:100%;resize:vertical}
     <div class="kpis" id="kpis"></div>
     <div class="grid2">
       <div class="panel">
-        <div class="panel-head"><h2>Budget bridge</h2><p>From today's payroll run-rate to the FY budget</p></div>
+        <div class="panel-head"><h2>Budget bridge</h2><p id="bridgeSrc">From today's payroll run-rate to the FY budget</p></div>
         <div class="chart-scroll" id="chBridge"></div>
+        <details style="margin-top:8px"><summary style="cursor:pointer;font-size:13px;font-weight:600">Show the figures</summary><div class="tbl-wrap" style="margin-top:8px"><table id="bridgeTbl"></table></div></details>
       </div>
       <div class="panel">
         <div class="panel-head"><h2>Checks</h2><p>Items that need attention before submission</p></div>
@@ -632,18 +633,19 @@ const H_ONE = last => Array.from({length: 12}, (_, i) => i + 1 <= last ? 1 : 0);
 function calcLine(l, dept, A, o = {}, emps = null){
   const r = newAcc(), isO = l.nat === "O";
   const lineInc = o.incPct ?? A.incPct;
-  const hiresPlan = o.noHires ? 0 : num(l.hires) * (o.hirePct ?? 100) / 100;
+  const hiresPlan = o.noHires || (o.noReqHires && l.req) ? 0 : num(l.hires) * (o.hirePct ?? 100) / 100;
   const hireM = clampM(l.hireM) + (o.delay || 0);
   const hires = hireM <= 12 ? hiresPlan : 0;
-  const exits = o.noExits ? 0 : num(l.exits);
+  const exits = o.noExits || o.noOther ? 0 : num(l.exits);
+  const useNamed = !o.noExits && !o.noNamed;
   const exitM = clampM(l.exitM || 12);
   const otR = num(dept?.ot) / 100 * (o.otPct ?? 100) / 100;
   const basic = num(l.basic), allow = num(l.allow);
   if (emps){
     let named = 0;
     for (const e of emps){
-      const ex = (!o.noExits && e.ex) ? e.ex : 12;
-      if (!o.noExits && e.ex) named++;
+      const ex = useNamed && e.ex ? e.ex : 12;
+      if (useNamed && e.ex) named++;
       costHeads(r, H_ONE(ex), e.bs, e.al, isO, otR, A, o, e.inc ?? lineInc, 0, 0);
     }
     const h = Array.from({length: 12}, (_, i) => (i + 1 >= hireM ? hires : 0) - (i + 1 > exitM ? exits : 0));
@@ -685,18 +687,32 @@ function compute(st, o = {}){
   return {depts, tot, lineRes};
 }
 function bridge(st){
-  const rr = compute(st, {noHires:true, noExits:true, noInc:true, noCont:true}).tot.sub;
-  const wInc = compute(st, {noHires:true, noExits:true, noCont:true}).tot.sub;
-  const wExit = compute(st, {noHires:true, noCont:true}).tot.sub;
-  const full = compute(st);
-  return [
-    {label:"Run-rate", v:rr, kind:"total"},
-    {label:"Increment", v:wInc - rr},
-    {label:"Exits", v:wExit - wInc},
-    {label:"New hires", v:full.tot.sub - wExit},
-    {label:"Contingency", v:full.tot.cont},
-    {label:"FY budget", v:full.tot.total, kind:"total"},
+  // Each step switches one more change on, so the steps add up exactly to the budget.
+  const run = o => compute(st, {...o, noCont: true}).tot;
+  const t0 = run({noHires: true, noExits: true, noInc: true});
+  const t1 = run({noHires: true, noExits: true});
+  const t2 = run({noHires: true, noOther: true});
+  const t3 = run({noHires: true});
+  const t4 = run({noReqHires: true});
+  const full = compute(st), t5 = full.tot;
+  const named = t2.named, other = t3.exits - t3.named, planH = t4.hires, reqH = t5.hires - t4.hires;
+  const steps = [
+    {label: "Run-rate", full: "Payroll run-rate today", v: t0.sub, kind: "total", heads: t0.open,
+      desc: `${f0(t0.open)} current staff at today's pay for 12 months, with no increment, hires or exits.`},
+    {label: "Increment", full: `Salary increment (${st.a.incPct}% from ${MONTHS[st.a.incMonth - 1]})`, v: t1.sub - t0.sub, heads: 0,
+      desc: `The ${st.a.incPct}% increment on basic and allowances from ${MONTHS[st.a.incMonth - 1]}, including its knock-on effect on overtime, bonus and social protection.`},
+    {label: "Leavers", full: "Named leavers (retirements, contract ends)", v: t2.sub - t1.sub, heads: -named, optional: true,
+      desc: `${f0(named)} people marked with a planned exit on the Employees tab are paid only until their exit month.`},
+    {label: "Attrition", full: "Other exits (unnamed attrition)", v: t3.sub - t2.sub, heads: -other,
+      desc: `${f0(other)} other exits entered on Headcount plan lines, costed at each line's average pay.`},
+    {label: "New hires", full: "Planned new hires", v: t4.sub - t3.sub, heads: planH,
+      desc: `${f0(planH)} planned hires from their start month, including recruitment costs.`},
+    {label: "Requests", full: "Approved department requests", v: t5.sub - t4.sub, heads: reqH, optional: true,
+      desc: `${f0(reqH)} positions from approved department-head requests.`},
+    {label: "Contingency", full: `Contingency (${st.a.contingency}%)`, v: t5.cont, heads: 0, desc: `${st.a.contingency}% on each department's total.`},
+    {label: "FY budget", full: `FY${st.fy} manpower budget`, v: t5.total, kind: "total", heads: t5.close, desc: `${f0(t5.close)} staff at year end.`},
   ];
+  return steps.filter(x => !x.optional || x.heads || Math.abs(x.v) >= 1);
 }
 
 /* ---------- Roster helpers ---------- */
@@ -939,10 +955,11 @@ function chartDept(){
   $("#lgDept").innerHTML = GROUPS.map(g => `<span><i style="background:var(${g.c})"></i>${g.label}</span>`).join("") + `<span><i style="background:var(--fg);width:2px;height:12px"></i>Budget ceiling</span>`;
 }
 function chartBridge(){
-  const steps = bridge(S);
-  const W = 640, H = 260, L = 56, T = 20, B = 36, RP = 10;
+  const steps = bridge(S), prior = S.depts.reduce((s, d) => s + num(d.prior), 0);
+  const W = 640, H = 270, L = 56, T = 26, B = 36, RP = 10;
   const tops = []; let run = 0;
   steps.forEach(st => { if (st.kind === "total"){ st.a = 0; st.b = st.v; run = st.v; } else { st.a = run; st.b = run + st.v; run += st.v; } tops.push(st.a, st.b); });
+  if (prior > 0) tops.push(prior);
   const vmax = Math.max(...tops, 1), pos = tops.filter(v => v > 0), vmin = pos.length ? Math.min(...pos) : 0;
   const step = niceMax(vmax / 10);
   const lo = Math.max(0, Math.floor((vmin * 0.9) / step) * step);
@@ -956,12 +973,24 @@ function chartBridge(){
     const a = st.kind === "total" ? lo : st.a;
     const y0 = y(Math.max(a, st.b)), y1 = y(Math.min(a, st.b));
     const fill = st.kind === "total" ? "var(--accent)" : st.v >= 0 ? "var(--up)" : "var(--down)";
-    s += `<rect x="${x0}" y="${y0}" width="${w}" height="${Math.max(1.5, y1 - y0)}" rx="3" fill="${fill}" data-tip="<b>${st.label}</b><br>${st.kind === "total" ? "OMR " + f0(st.v) : (st.v >= 0 ? "Adds" : "Saves") + " OMR " + f0(Math.abs(st.v))}"/>`;
+    s += `<rect x="${x0}" y="${y0}" width="${w}" height="${Math.max(1.5, y1 - y0)}" rx="3" fill="${fill}" data-tip="<b>${esc(st.full)}</b><br>${st.kind === "total" ? "OMR " + f0(st.v) : (st.v >= 0 ? "Adds" : "Saves") + " OMR " + f0(Math.abs(st.v))}${st.heads && st.kind !== "total" ? `<br>${st.heads > 0 ? "+" : "−"}${f0(Math.abs(st.heads))} heads` : ""}<br>${esc(st.desc)}"/>`;
     s += `<text x="${x0 + w / 2}" y="${y0 - 6}" text-anchor="middle" style="fill:var(--fg);font-weight:600">${st.kind === "total" ? fM(st.v) : fDelta(st.v)}</text>`;
     s += `<text x="${x0 + w / 2}" y="${H - 14}" text-anchor="middle">${st.label}</text>`;
     if (i < steps.length - 1){ const nx = L + (i + 1) * bw + bw * 0.18; s += `<line x1="${x0 + w}" x2="${nx}" y1="${y(st.b)}" y2="${y(st.b)}" stroke="var(--line-2)" stroke-dasharray="3 3"/>`; }
   });
+  if (prior > 0){
+    const py = y(prior);
+    s += `<line x1="${L}" x2="${W - RP}" y1="${py}" y2="${py}" stroke="var(--fg-3)" stroke-width="1.2" stroke-dasharray="6 4" data-tip="FY${S.baseYear} budget OMR ${f0(prior)}"/>`;
+    s += `<text x="${W - RP}" y="${py - 5}" text-anchor="end" style="fill:var(--fg-2);paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round">FY${S.baseYear} budget ${fM(prior)}</text>`;
+  }
   $("#chBridge").innerHTML = s + `</svg>`;
+  const base = steps[0].v || 1, last = steps[steps.length - 1];
+  $("#bridgeSrc").textContent = rosterOn()
+    ? `Built from the ${ROS.sample ? "example employee file" : "employee file"}: ${f0(ROS.emps.length)} people costed one by one`
+    : `Built from summary plan lines: ${f0(R.tot.open)} staff at each line's average pay`;
+  $("#bridgeTbl").innerHTML = `<thead><tr><th>Step</th><th class="n">OMR</th><th class="n">Heads</th><th class="n">vs run-rate</th></tr></thead><tbody>` +
+    steps.map(st => `<tr${st.kind === "total" ? ' class="total"' : ""}><td title="${esc(st.desc)}">${esc(st.full)}</td><td class="n">${st.kind === "total" ? f0(st.v) : fDelta(st.v, f0)}</td><td class="n">${st.kind === "total" ? f0(st.heads) : st.heads ? (st.heads > 0 ? "+" : "−") + f0(Math.abs(st.heads)) : "—"}</td><td class="n">${st === steps[0] ? "—" : (st.kind === "total" ? sgn(st.v - base) + fPct(Math.abs(st.v / base - 1) * 100) : sgn(st.v) + fPct(Math.abs(st.v / base) * 100))}</td></tr>`).join("") +
+    (prior > 0 ? `<tr><td class="muted">Change vs FY${S.baseYear} budget</td><td class="n">${fDelta(last.v - prior, f0)}</td><td></td><td class="n muted">${sgn(last.v - prior)}${fPct(Math.abs(last.v / prior - 1) * 100)}</td></tr>` : "") + "</tbody>";
 }
 function chartOman(){
   const rows = R.depts.filter(g => g.close > 0).map(g => ({n: g.d.name, p: g.closeO / g.close * 100, g})).sort((a, b) => a.p - b.p);
@@ -1641,16 +1670,33 @@ function updateRosterInfo(){
   el.textContent = rosterOn() ? `Loaded: ${ROS.sample ? "example employee file" : ROS.fileName} · ${f0(ROS.emps.length)} employees${ROS.importedAt ? " · imported " + new Date(ROS.importedAt).toLocaleDateString("en-GB") : ""}.` : "No employee file loaded. The plan uses summary lines.";
 }
 function dropRosterAsk(){
-  $("#wizMsg").innerHTML = `<div class="confirm" style="margin-top:12px"><span>Remove the employee file? Plan lines keep their headcount and average pay, and named exits move to “Other exits”.</span><button class="btn danger sm" id="drYes" type="button">Remove it</button><button class="btn sm" id="drNo" type="button">Keep it</button></div>`;
-  $("#drYes").onclick = () => {
-    const idx = rosterIndex();
+  const n = ROS.emps.length;
+  $("#wizMsg").innerHTML = `<div class="callout" style="margin-top:12px;display:grid;gap:10px">
+    <b>Remove the employee file (${f0(n)} people)?</b>
+    <span>Choose what happens to the people in it:</span>
+    <div class="toolbar"><button class="btn sm" type="button" id="drKeep">Keep them as plan lines</button><span class="note">Each line keeps its headcount and average pay, so the budget stays about the same. Use this to stop costing person by person.</span></div>
+    <div class="toolbar"><button class="btn sm danger" type="button" id="drClear">Remove them from the budget</button><span class="note">Current staff are cleared. Only planned hires, attrition entries and approved requests remain.</span></div>
+    <div class="toolbar"><button class="btn sm" type="button" id="drNo">Cancel</button></div>
+    <span class="note">To start again with nothing, use “Start a blank plan” under Storage below.</span></div>`;
+  const apply = keep => {
+    const before = R.tot.total, idx = rosterIndex();
     for (const l of S.lines){
-      const em = idx.get(l.id) || []; if (!em.length){ l.hc = 0; continue; }
-      l.hc = em.length; l.basic = Math.round(em.reduce((s, e) => s + e.bs, 0) / em.length); l.allow = Math.round(em.reduce((s, e) => s + e.al, 0) / em.length);
-      const named = em.filter(e => e.ex); if (named.length){ l.exits = num(l.exits) + named.length; l.exitM = Math.round(named.reduce((s, e) => s + e.ex, 0) / named.length); }
+      const em = idx.get(l.id) || [];
+      if (!em.length){ if (!l.req) l.hc = 0; continue; }
+      if (keep){
+        l.hc = em.length; l.basic = Math.round(em.reduce((s, e) => s + e.bs, 0) / em.length); l.allow = Math.round(em.reduce((s, e) => s + e.al, 0) / em.length);
+        const named = em.filter(e => e.ex); if (named.length){ l.exits = num(l.exits) + named.length; l.exitM = Math.round(named.reduce((s, e) => s + e.ex, 0) / named.length); }
+      } else { l.hc = 0; l.exits = 0; }
     }
-    ROS = null; S.sample = false; rosVer++; changed(); persistRoster(); updateHeader(); resetWizard("Employee file removed. The plan now uses summary lines.");
+    if (!keep) S.lines = S.lines.filter(l => l.req || num(l.hires) > 0);
+    ROS = null; S.sample = false; rosVer++; changed(); persistRoster(); updateHeader();
+    const after = R.tot.total;
+    resetWizard(keep
+      ? `Employee file removed. Budget OMR ${fM(before)} → OMR ${fM(after)}: the ${f0(n)} people are now summary plan lines at their average pay, so the total barely moves.`
+      : `Employee file removed. Budget OMR ${fM(before)} → OMR ${fM(after)}: current staff were taken out; ${f0(S.lines.length)} lines with planned hires or approved requests remain.`);
   };
+  $("#drKeep").onclick = () => apply(true);
+  $("#drClear").onclick = () => apply(false);
   $("#drNo").onclick = () => { $("#wizMsg").innerHTML = ""; };
 }
 $("#wizBody").addEventListener("change", e => {
