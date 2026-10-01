@@ -150,6 +150,19 @@ button.icon:hover{color:var(--bad);background:var(--bad-soft)}
 .flagrow{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
 .flagrow:last-of-type{border-bottom:0}
 .flagrow .t{font-size:13px;min-width:0;flex:1 1 260px}
+.badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--bad);color:#fff;font-size:11px;font-weight:700;margin-left:4px}
+.req{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:8px;background:var(--surface)}
+.req-top{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
+.req-top h3{font-size:15px}
+.req-meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--fg-2)}
+.req-why{font-size:13px;color:var(--fg);white-space:pre-wrap;overflow-wrap:anywhere;max-width:90ch}
+.req-act{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.req-act input[type=number]{width:110px}
+.req-act input[type=text]{flex:1 1 220px}
+#reqList{display:grid;gap:10px}
+body.form-mode > header.top, body.form-mode > main{display:none!important}
+body.gated nav.tabs, body.gated main > section, body.gated #btnExportXlsx{display:none!important}
+textarea{width:100%;resize:vertical}
 .flagrow .t b{font-family:var(--f-display);font-size:18px;margin-right:6px;font-variant-numeric:tabular-nums}
 </style>
 </head>
@@ -168,6 +181,7 @@ button.icon:hover{color:var(--bad);background:var(--bad-soft)}
       <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
       <button role="tab" data-tab="emp" aria-selected="false">Employees</button>
       <button role="tab" data-tab="plan" aria-selected="false">Headcount plan</button>
+      <button role="tab" data-tab="req" aria-selected="false">Requests <span class="badge" id="reqBadge" hidden></span></button>
       <button role="tab" data-tab="budget" aria-selected="false">Budget detail</button>
       <button role="tab" data-tab="scen" aria-selected="false">Scenarios</button>
       <button role="tab" data-tab="assump" aria-selected="false">Assumptions</button>
@@ -177,6 +191,13 @@ button.icon:hover{color:var(--bad);background:var(--bad-soft)}
 </header>
 
 <main class="wrap">
+  <!-- PIN GATE (localhost server with PLANNER_PIN) -->
+  <form class="panel" id="gate" hidden style="max-width:420px;margin:40px auto">
+    <h2 style="margin-bottom:6px">Planner PIN</h2>
+    <p class="note" style="margin-bottom:12px">This planner is protected. Enter the PIN set when the server was started. Department heads use the request form at <code>/request</code> instead.</p>
+    <div class="toolbar"><label class="sr" for="gatePin">PIN</label><input id="gatePin" type="password" autocomplete="current-password" style="flex:1"><button class="btn primary" type="submit">Open planner</button></div>
+    <p class="note" id="gateMsg" style="margin-top:8px;color:var(--bad)"></p>
+  </form>
   <!-- OVERVIEW -->
   <section class="view" id="v-overview">
     <div id="sampleBanner" class="callout" hidden>
@@ -343,8 +364,8 @@ button.icon:hover{color:var(--bad);background:var(--bad-soft)}
       <div class="panel-head"><h2>Summary plan or backup</h2><p>Already-summarised headcount lines (.xlsx/.csv), or a planner backup (.json)</p></div>
       <div class="dropzone" id="drop">
         <p style="margin:0 0 10px">Drop a file here, or</p>
-        <label class="btn" for="fileIn">Choose file</label>
-        <input id="fileIn" type="file" accept=".xlsx,.xls,.csv,.json" class="sr">
+        <button class="btn" type="button" data-pick="fileIn">Choose file</button>
+        <input id="fileIn" type="file" accept=".xlsx,.xls,.xlsm,.csv,.json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,application/json" class="sr" tabindex="-1">
       </div>
       <div id="importPreview" style="margin-top:14px"></div>
       <p class="note" style="margin-top:12px;max-width:90ch">Columns recognised: Department, Position (or Grade), Nationality, Current HC, New hires, Start month, Exits, Last month, Basic, Allowances. Importing a summary plan with “Replace” removes any loaded employee file.</p>
@@ -369,10 +390,76 @@ button.icon:hover{color:var(--bad);background:var(--bad-soft)}
       </div>
     </div>
   </section>
+
+  <!-- REQUESTS (planner side) -->
+  <section class="view" id="v-req" hidden>
+    <div class="kpis" id="reqKpis"></div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-head"><h2>Request form</h2><p>What department heads see</p></div>
+        <div class="stack" style="gap:12px">
+          <div class="checks"><label><input type="checkbox" id="rqOpen"> Accepting requests</label></div>
+          <div class="field"><label for="rqDeadline">Submission deadline</label><input id="rqDeadline" type="date" style="max-width:220px"></div>
+          <div class="field"><label for="rqNote">Note to department heads</label><textarea id="rqNote" rows="3" placeholder="For example: submit only positions that are budgeted for FY2027. Replacements for known leavers count as requests too."></textarea></div>
+          <div class="callout" id="rqShare"></div>
+          <div class="toolbar"><button class="btn" type="button" id="btnPreviewForm">Preview the form</button></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>By department</h2><p>Requested vs approved, against each ceiling</p></div>
+        <div class="tbl-wrap"><table id="tblReqDept"></table></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Requests</h2><p>Set the salary if needed, then approve to add the positions to the headcount plan</p></div>
+      <div class="toolbar" style="margin-bottom:12px">
+        <label class="sr" for="rqFStatus">Status</label><select id="rqFStatus"><option value="open">Waiting for decision</option><option value="">All requests</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="changes">Changes requested</option></select>
+        <label class="sr" for="rqFDept">Department</label><select id="rqFDept"></select>
+        <span class="grow"></span><span class="note" id="rqSync"></span>
+      </div>
+      <div id="reqList"></div>
+    </div>
+  </section>
 </main>
+
+<!-- REQUEST FORM (department heads) -->
+<div id="formApp" hidden>
+  <header class="top"><div class="wrap"><div class="top-row">
+    <div class="brand"><span class="eyebrow" id="fEyebrow">Manpower request</span><h1>Manpower Request Form</h1></div>
+    <button class="btn" type="button" id="btnBackPlanner" hidden>Back to planner</button>
+  </div></div></header>
+  <main class="wrap stack">
+    <div class="callout" id="fIntro"></div>
+    <div class="grid2" style="align-items:start">
+      <form class="panel stack" id="reqForm" novalidate style="gap:14px">
+        <div class="panel-head" style="margin:0"><h2 id="fTitle">New request</h2><p>Fields marked <b style="color:var(--bad)">*</b> are required</p></div>
+        <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
+          <div class="field"><label for="f-dept">Department <b style="color:var(--bad)">*</b></label><select id="f-dept" required></select></div>
+          <div class="field"><label for="f-by">Your name and title <b style="color:var(--bad)">*</b></label><input id="f-by" required maxlength="120" autocomplete="name"></div>
+          <div class="field"><label for="f-title">Position title <b style="color:var(--bad)">*</b></label><input id="f-title" required maxlength="120" placeholder="e.g. Licensed Engineer B1"></div>
+          <div class="field"><label for="f-grade">Grade</label><input id="f-grade" maxlength="40" placeholder="e.g. T3"></div>
+          <div class="field"><label for="f-type">Request type</label><select id="f-type"><option value="new">New position</option><option value="replacement">Replacement for a leaver</option><option value="omanisation">Omani replacing an expatriate</option></select></div>
+          <div class="field"><label for="f-nat">Nationality</label><select id="f-nat"><option value="O">Omani</option><option value="E">Expatriate</option></select></div>
+          <div class="field"><label for="f-count">Number of positions <b style="color:var(--bad)">*</b></label><input id="f-count" type="number" min="1" max="500" step="1" value="1" required></div>
+          <div class="field"><label for="f-start">Expected start month</label><select id="f-start"></select></div>
+          <div class="field"><label for="f-prio">Priority</label><select id="f-prio"><option value="normal">Normal</option><option value="high">High</option><option value="critical">Critical (safety or regulatory)</option></select></div>
+          <div class="field"><label for="f-basic">Expected basic salary / month (OMR)</label><input id="f-basic" type="number" min="0" step="10" placeholder="If known"></div>
+          <div class="field"><label for="f-allow">Expected allowances / month (OMR)</label><input id="f-allow" type="number" min="0" step="10" placeholder="If known"></div>
+        </div>
+        <div class="field"><label for="f-why">Justification <b style="color:var(--bad)">*</b></label><textarea id="f-why" rows="4" required maxlength="2000" placeholder="Why is this position needed in the budget year? Mention fleet, routes, regulatory requirements, workload or the leaver being replaced."></textarea></div>
+        <div class="callout" id="fEst"></div>
+        <div class="toolbar"><button class="btn primary" type="submit" id="fSubmit">Submit request</button><button class="btn" type="button" id="fCancel" hidden>Cancel editing</button><span class="note" id="fMsg" role="status"></span></div>
+      </form>
+      <div class="panel">
+        <div class="panel-head"><h2>Your requests</h2><p>Status updates appear here</p></div>
+        <div id="myReqs" class="stack" style="gap:10px"></div>
+      </div>
+    </div>
+  </main>
+</div>
 <div id="tip" hidden></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="xlsx.full.min.js"></script>
 <script>
 (() => {
 "use strict";
@@ -583,83 +670,179 @@ function empFlags(e){
 
 /* ---------- State & persistence ---------- */
 let S = null, R = null;
-let store = {db:null, base:null, mode:"local"};
+// Where data lives: "artifact" (claude.ai page), "server" (local Node server) or "local" (this browser only).
+const BE = {mode: "local", db: null, base: null, uid: null, user: null, owner: true, pin: false, ready: false};
 let saveTimer = null, rosTimer = null;
+const LS_REQ = "manpower-planner-v1:requests", LS_TOKEN = "manpower-planner-v1:token";
 const lsGet = k => { try { const t = localStorage.getItem(k); return t ? JSON.parse(t) : null; } catch { return null; } };
 const lsSet = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
+const clone = v => JSON.parse(JSON.stringify(v));
 function setStatus(s, text){ const el = $("#saveStatus"); el.dataset.s = s; el.lastElementChild.textContent = text; }
 function normalise(s){
   const d = sampleState();
   if (!s || typeof s !== "object" || !Array.isArray(s.lines) || !Array.isArray(s.depts)) return d;
   s.a = {...d.a, ...(s.a || {})}; s.scen = Array.isArray(s.scen) ? s.scen : [];
   s.fy = s.fy || d.fy; s.baseYear = s.baseYear || s.fy - 1; s.org = s.org || "";
+  if (s.reqOpen === undefined) s.reqOpen = true;
   return s;
 }
+const pinStore = {
+  get(){ try { return sessionStorage.getItem("mp-pin") || ""; } catch { return ""; } },
+  set(v){ try { sessionStorage.setItem("mp-pin", v); } catch {} },
+};
+async function api(path, method = "GET", body){
+  const r = await fetch("api/" + path, {method, cache: "no-store", headers: {"content-type": "application/json", "x-planner-pin": pinStore.get()}, body: body === undefined ? undefined : JSON.stringify(body)});
+  if (r.status === 401){ const e = new Error("A planner PIN is needed."); e.code = "pin"; throw e; }
+  if (!r.ok){ let msg = "HTTP " + r.status; try { msg = (await r.json()).error || msg; } catch {} throw new Error(msg); }
+  return r.json();
+}
+const savedText = () => BE.mode === "artifact" ? "Saved to your account" : BE.mode === "server" ? "Saved on the server" : "Saved in this browser";
+const savedState = () => BE.mode === "local" ? "local" : "ok";
 function persist(){
+  if (!BE.owner || !BE.ready) return;
   S.savedAt = Date.now();
   clearTimeout(saveTimer); setStatus("busy", "Saving…");
   saveTimer = setTimeout(async () => {
-    const okLocal = lsSet(LS_KEY, S);
-    if (store.db){
-      try { await store.db.doc(store.base + "/plan").set(JSON.parse(JSON.stringify(S))); setStatus("ok", "Saved to your account"); return; }
-      catch (e) { setStatus("local", okLocal ? "Saved in this browser" : "Not saved · export a backup"); return; }
-    }
-    setStatus("local", okLocal ? "Saved in this browser" : "Not saved · export a backup");
+    try {
+      if (BE.mode === "artifact"){ await BE.db.doc(BE.base + "/plan").set(clone(S)); lsSet(LS_KEY, S); }
+      else if (BE.mode === "server") await api("plan", "PUT", {data: S});
+      else if (!lsSet(LS_KEY, S)) throw new Error("quota");
+      setStatus(savedState(), savedText());
+    } catch (e) { setStatus("local", BE.mode !== "server" && lsSet(LS_KEY, S) ? "Storage unreachable · kept in this browser" : "Not saved · export a backup"); }
+    publishConfig();
   }, 900);
 }
 function persistRoster(){
+  if (!BE.owner || !BE.ready) return;
   if (ROS) ROS.savedAt = Date.now();
   clearTimeout(rosTimer); setStatus("busy", "Saving…");
   rosTimer = setTimeout(async () => {
-    const okLocal = lsSet(LS_ROS, ROS);
-    if (!store.db){ setStatus("local", okLocal ? "Saved in this browser" : "Employee file too large for this browser · export a backup"); return; }
     try {
-      const metaRef = store.db.doc(store.base + "/roster");
-      const prev = await metaRef.get();
-      const prevN = prev.exists ? (prev.data().chunks || 0) : 0;
-      const emps = ROS ? ROS.emps : [], n = Math.ceil(emps.length / ROSTER_CHUNK);
-      for (let c = 0; c < n; c++) await store.db.doc(`${store.base}/roster-${c}`).set({c, emps: emps.slice(c * ROSTER_CHUNK, (c + 1) * ROSTER_CHUNK)});
-      for (let c = n; c < prevN; c++) await store.db.doc(`${store.base}/roster-${c}`).delete();
-      await metaRef.set(ROS ? {chunks: n, fileName: ROS.fileName || "", importedAt: ROS.importedAt || 0, savedAt: ROS.savedAt, groupBy: ROS.groupBy || "", sample: !!ROS.sample} : {chunks: 0, savedAt: Date.now(), cleared: true});
-      setStatus("ok", "Saved to your account");
-    } catch (e) { setStatus("local", okLocal ? "Saved in this browser" : "Not saved · export a backup"); }
+      if (BE.mode === "artifact"){
+        const metaRef = BE.db.doc(BE.base + "/roster");
+        const prev = await metaRef.get();
+        const prevN = prev.exists ? (prev.data().chunks || 0) : 0;
+        const emps = ROS ? ROS.emps : [], n = Math.ceil(emps.length / ROSTER_CHUNK);
+        for (let c = 0; c < n; c++) await BE.db.doc(`${BE.base}/roster-${c}`).set({c, emps: emps.slice(c * ROSTER_CHUNK, (c + 1) * ROSTER_CHUNK)});
+        for (let c = n; c < prevN; c++) await BE.db.doc(`${BE.base}/roster-${c}`).delete();
+        await metaRef.set(ROS ? {chunks: n, fileName: ROS.fileName || "", importedAt: ROS.importedAt || 0, savedAt: ROS.savedAt, groupBy: ROS.groupBy || "", sample: !!ROS.sample} : {chunks: 0, savedAt: Date.now(), cleared: true});
+        lsSet(LS_ROS, ROS);
+      } else if (BE.mode === "server") await api("roster", "PUT", {data: ROS});
+      else if (!lsSet(LS_ROS, ROS)) throw new Error("quota");
+      setStatus(savedState(), savedText());
+    } catch (e) { setStatus("local", BE.mode !== "server" && lsSet(LS_ROS, ROS) ? "Storage unreachable · kept in this browser" : "Employee file not saved · export a backup"); }
   }, 1200);
 }
 function changed(){ recalc(); persist(); }
 function rosterChanged(){ rosVer++; recalc(); persistRoster(); }
 
-async function initStore(){
-  if (!(window.claude && window.claude.use)){ setStatus("local", "Saved in this browser"); updateStorageNote(); return; }
-  try {
-    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
-    const id = user ? await user.id() : null;
-    if (db && id){
-      store.db = db; store.base = "data/users/" + id; store.mode = "account";
-      const [pSnap, mSnap] = await Promise.all([db.doc(store.base + "/plan").get(), db.doc(store.base + "/roster").get()]);
-      let redraw = false;
-      if (pSnap.exists){ const remote = normalise(pSnap.data()); if ((remote.savedAt || 0) >= (S.savedAt || 0)){ S = remote; lsSet(LS_KEY, S); redraw = true; } else persist(); }
-      if (mSnap.exists){
-        const meta = mSnap.data();
-        if ((meta.savedAt || 0) >= ((ROS && ROS.savedAt) || 0)){
-          if (meta.cleared || !meta.chunks) ROS = S.sample ? sampleRoster(S) : null;
-          else {
-            const parts = await Promise.all(Array.from({length: meta.chunks}, (_, c) => db.doc(`${store.base}/roster-${c}`).get()));
-            const emps = parts.flatMap(p => p.exists ? (p.data().emps || []) : []);
-            ROS = {sample: !!meta.sample, fileName: meta.fileName, importedAt: meta.importedAt, savedAt: meta.savedAt, groupBy: meta.groupBy, emps};
-          }
-          lsSet(LS_ROS, ROS); rosVer++; redraw = true;
-        } else if (ROS && !ROS.sample) persistRoster();
+async function detectBackend(){
+  if (window.claude && window.claude.use){
+    try {
+      const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+      const id = user ? await user.id() : null;
+      if (db && id){
+        BE.mode = "artifact"; BE.db = db; BE.uid = id; BE.user = user; BE.base = "data/users/" + id;
+        BE.owner = await user.isOwner().catch(() => false);
+      }
+    } catch {}
+    return;
+  }
+  if (/^https?:$/.test(location.protocol)){
+    try {
+      const h = await fetch("api/health", {cache: "no-store"}).then(r => r.ok ? r.json() : null);
+      if (h && h.app === "manpower-planner"){ BE.mode = "server"; BE.pin = !!h.pin; }
+    } catch {}
+  }
+}
+async function loadPlannerData(){
+  if (BE.mode === "artifact"){
+    const [pSnap, mSnap] = await Promise.all([BE.db.doc(BE.base + "/plan").get(), BE.db.doc(BE.base + "/roster").get()]);
+    if (pSnap.exists){ const remote = normalise(pSnap.data()); if ((remote.savedAt || 0) >= (S.savedAt || 0)){ S = remote; lsSet(LS_KEY, S); } else persist(); }
+    if (mSnap.exists){
+      const meta = mSnap.data();
+      if ((meta.savedAt || 0) >= ((ROS && ROS.savedAt) || 0)){
+        if (meta.cleared || !meta.chunks) ROS = S.sample ? sampleRoster(S) : null;
+        else {
+          const parts = await Promise.all(Array.from({length: meta.chunks}, (_, c) => BE.db.doc(`${BE.base}/roster-${c}`).get()));
+          const emps = parts.flatMap(p => p.exists ? (p.data().emps || []) : []);
+          ROS = {sample: !!meta.sample, fileName: meta.fileName, importedAt: meta.importedAt, savedAt: meta.savedAt, groupBy: meta.groupBy, emps};
+        }
+        lsSet(LS_ROS, ROS);
       } else if (ROS && !ROS.sample) persistRoster();
-      if (redraw) renderAll();
-      setStatus("ok", "Saved to your account");
-    } else setStatus("local", "Saved in this browser");
-  } catch { setStatus("local", "Saved in this browser"); }
-  updateStorageNote();
+    } else if (ROS && !ROS.sample) persistRoster();
+  } else if (BE.mode === "server"){
+    const [p, r] = await Promise.all([api("plan"), api("roster")]);
+    S = p.data ? normalise(p.data) : sampleState();
+    ROS = r.data && Array.isArray(r.data.emps) ? r.data : (S.sample ? sampleRoster(S) : null);
+  }
+  rosVer++;
 }
 function updateStorageNote(){
-  $("#storageNote").textContent = store.mode === "account"
-    ? "Your plan and employee file are saved privately to your account: nobody you share this page with can see them. Changes save automatically. Export a .json backup before major changes."
-    : "Your plan is saved in this browser only. Clearing site data or switching device loses it, so export a .json backup regularly.";
+  $("#storageNote").textContent = BE.mode === "artifact"
+    ? "Your plan and employee file are saved privately to your account: nobody you share this page with can see them. Department heads you share it with see only the request form. Export a .json backup before major changes."
+    : BE.mode === "server"
+    ? "Your plan and employee file are saved on the planner server (in its data folder), with a daily backup copy. Export a .json backup before major changes."
+    : "Your plan is saved in this browser only. Clearing site data or switching device loses it, so export a .json backup regularly. Run the localhost server to share the request form with department heads.";
+}
+
+/* ---------- Shared request-form config & requests ---------- */
+let lastCfg = "";
+function publicConfig(){
+  const a = S.a;
+  return {fy: S.fy, org: S.org, open: S.reqOpen !== false, deadline: S.reqDeadline || "", note: S.reqNote || "", sample: !!S.sample,
+    depts: S.depts.map(d => ({id: d.id, name: d.name, ot: num(d.ot)})),
+    a: {incPct: a.incPct, incMonth: a.incMonth, bonusMonths: a.bonusMonths, omSI: a.omSI, exSI: a.exSI, siBase: a.siBase, eosbPct: a.eosbPct, ticket: a.ticket, medO: a.medO, medE: a.medE, training: a.training, recO: a.recO, recE: a.recE}};
+}
+async function publishConfig(force){
+  if (!BE.owner || BE.mode === "local") return;
+  const cfg = publicConfig(), s = JSON.stringify(cfg);
+  if (s === lastCfg && !force) return;
+  try { if (BE.mode === "artifact") await BE.db.doc("config/public").set(cfg); else await api("config", "PUT", cfg); lastCfg = s; } catch {}
+}
+async function loadConfig(){
+  if (BE.mode === "artifact"){ const snap = await BE.db.doc("config/public").get(); return snap.exists ? snap.data() : null; }
+  if (BE.mode === "server") return (await api("config")).data;
+  return publicConfig();
+}
+function requesterToken(){
+  if (BE.mode === "artifact") return BE.uid;
+  let t = lsGet(LS_TOKEN); if (!t){ t = "r-" + uid() + uid(); lsSet(LS_TOKEN, t); } return t;
+}
+let REQ = [], reqUnsub = null, reqPoll = null;
+async function loadRequests(){
+  try {
+    if (BE.mode === "artifact"){
+      if (reqUnsub) return;
+      reqUnsub = BE.db.collection("requests").onSnapshot(snap => { REQ = snap.docs.flatMap(d => (d.data().items || []).map(it => ({...it, owner: d.id}))); onRequests(); }, () => {});
+    } else if (BE.mode === "server"){
+      REQ = (await api("requests")).items || []; onRequests();
+      if (!reqPoll) reqPoll = setInterval(async () => { try { REQ = (await api("requests")).items || []; onRequests(); } catch {} }, 30000);
+    } else { REQ = lsGet(LS_REQ) || []; onRequests(); }
+  } catch { onRequests(); }
+}
+async function myRequests(){
+  const tok = requesterToken();
+  if (BE.mode === "artifact"){ const snap = await BE.db.doc("requests/" + tok).get(); return snap.exists ? (snap.data().items || []) : []; }
+  if (BE.mode === "server") return (await api("requests?mine=" + encodeURIComponent(tok))).items || [];
+  return (lsGet(LS_REQ) || []).filter(r => r.owner === tok);
+}
+async function saveRequest(item){
+  item.updatedAt = Date.now();
+  if (item.example) return item;
+  if (BE.mode === "artifact"){
+    const owner = item.owner || BE.uid, ref = BE.db.doc("requests/" + owner);
+    const snap = await ref.get(), items = snap.exists ? (snap.data().items || []) : [];
+    const {owner: _o, ...clean} = item, i = items.findIndex(x => x.id === item.id);
+    if (i >= 0) items[i] = clean; else items.push(clean);
+    await ref.set({items, updatedAt: Date.now()});
+    return {...clean, owner};
+  }
+  if (BE.mode === "server") return (await api("requests", "POST", item)).item;
+  const all = lsGet(LS_REQ) || [], i = all.findIndex(x => x.id === item.id);
+  if (i >= 0) all[i] = item; else all.push(item);
+  lsSet(LS_REQ, all); REQ = all;
+  return item;
 }
 
 /* ---------- Tooltip ---------- */
@@ -805,6 +988,8 @@ function renderAlerts(){
     if (con) out.push(["info", "Contracts", `${f0(con)} contracts end in FY${S.fy} with no decision recorded. Mark the ones that will not be renewed on the Employees tab.`]);
   } else S.lines.forEach(l => { if (num(l.hc) + num(l.hires) > 0 && num(l.basic) <= 0) out.push(["bad", "Missing pay", `${l.role || "Unnamed line"} (${deptName(l.dept)}) has no basic salary.`]); });
   S.lines.forEach(l => { const r = R.lineRes.get(l.id); if (r && num(l.exits) > r.open - r.named + r.hires) out.push(["warn", "Exits", `${l.role} (${deptName(l.dept)}) has more exits than people.`]); });
+  const pendReq = allRequests().filter(r => r.status === "pending");
+  if (pendReq.length) out.push(["info", "Requests", `${f0(pendReq.length)} department request${pendReq.length > 1 ? "s" : ""} (${f0(pendReq.reduce((s, r) => s + num(r.count), 0))} positions) waiting for your decision on the Requests tab.`]);
   const order = {bad:0, warn:1, info:2};
   out.sort((a, b) => order[a[0]] - order[b[0]]);
   $("#alerts").innerHTML = out.length ? out.slice(0, 12).map(([c, tag, txt]) => `<li><span class="pill ${c}">${tag}</span><span>${esc(txt)}</span></li>`).join("") + (out.length > 12 ? `<li class="note">+ ${out.length - 12} more</li>` : "")
@@ -943,7 +1128,7 @@ function renderPlan(){
       <td class="cell-in"><input class="w-m" type="number" min="0" step="10" data-k="basic" value="${l.basic}" aria-label="Basic salary per month"></td>
       <td class="cell-in"><input class="w-m" type="number" min="0" step="10" data-k="allow" value="${l.allow}" aria-label="Allowances per month"></td>
       <td class="n" data-c="close"></td><td class="n" data-c="cost"></td>
-      <td>${hasEmp ? "" : `<button class="icon" data-del="${l.id}" title="Delete line" aria-label="Delete line">×</button>`}</td></tr>`;
+      <td>${l.req ? '<span class="pill info" title="Added from an approved department request">Request</span>' : ""}${hasEmp ? "" : `<button class="icon" data-del="${l.id}" title="Delete line" aria-label="Delete line">×</button>`}</td></tr>`;
   }
   $("#tblPlan tbody").innerHTML = html || `<tr><td colspan="${cols}" class="muted" style="padding:20px">No lines match. Add a line or clear the filter.</td></tr>`;
   updatePlanComputed();
@@ -967,7 +1152,7 @@ $("#tblPlan").addEventListener("input", e => {
 $("#tblPlan").addEventListener("change", e => { if (e.target.dataset.k === "dept") renderPlan(); });
 $("#tblPlan").addEventListener("click", e => {
   const id = e.target.dataset && e.target.dataset.del; if (!id) return;
-  S.lines = S.lines.filter(l => l.id !== id); changed(); renderPlan();
+  const gone = lineById(id); S.lines = S.lines.filter(l => l.id !== id); if (gone && gone.req) releaseRequestLine(id); changed(); renderPlan();
 });
 $("#btnAddLine").addEventListener("click", () => {
   const dept = planFilter.dept || (S.depts[0] && S.depts[0].id); if (!dept) return;
@@ -1082,7 +1267,7 @@ $("#btnAddDept").addEventListener("click", () => { S.depts.push({id: "d" + uid()
 /* ---------- File reading ---------- */
 function parseCSV(text){
   const first = text.split("\n")[0];
-  const delim = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ";" : first.includes("\t") ? "\t" : ",";
+  const delim = first.includes("\t") ? "\t" : (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ";" : ",";
   const rows = []; let row = [], cell = "", q = false;
   for (let i = 0; i < text.length; i++){
     const c = text[i];
@@ -1095,11 +1280,34 @@ function parseCSV(text){
   if (cell || row.length){ row.push(cell); rows.push(row); }
   return rows.filter(r => r.some(x => String(x).trim() !== ""));
 }
+let xlsxLoading = null;
+function ensureXLSX(){
+  if (window.XLSX) return Promise.resolve(true);
+  if (!xlsxLoading) xlsxLoading = new Promise(res => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    const t = setTimeout(() => res(!!window.XLSX), 15000);
+    sc.onload = () => { clearTimeout(t); res(!!window.XLSX); };
+    sc.onerror = () => { clearTimeout(t); res(false); };
+    document.head.appendChild(sc);
+  });
+  return xlsxLoading.then(ok => { updateXlsxStatus(); return ok; });
+}
+function updateXlsxStatus(){
+  const el = $("#xlsxStatus"); if (!el) return;
+  el.innerHTML = window.XLSX ? '<span class="pill good">✓ Excel reader ready</span>' : '<span class="pill warn">Excel reader not loaded</span> Import a CSV or paste from Excel instead.';
+}
 async function readSheets(file){
   const name = file.name.toLowerCase();
-  if (name.endsWith(".csv")) return {"Sheet1": parseCSV((await file.text()).replace(/^﻿/, ""))};
-  if (!window.XLSX) throw new Error("Excel reading is unavailable here. Save the sheet as CSV (UTF-8) and import that instead.");
-  const wb = XLSX.read(await file.arrayBuffer(), {type: "array", cellDates: true});
+  if (/\.(csv|tsv|txt)$/.test(name)) return {"Sheet1": parseCSV((await file.text()).replace(/^\ufeff/, ""))};
+  if (!(await ensureXLSX())) throw new Error("The Excel reader could not be loaded on this network. In Excel, use File → Save As → CSV UTF-8 and import the CSV, or use “Paste from Excel” below.");
+  let wb;
+  try { wb = XLSX.read(await file.arrayBuffer(), {type: "array", cellDates: true}); }
+  catch (e) {
+    const m = String(e && e.message || e);
+    if (/password|encrypt|ECMA-376|CFB/i.test(m)) throw new Error("This workbook is password-protected or encrypted (HR exports often are). Open it in Excel, remove the protection or use File → Save As → CSV UTF-8, then import the copy.");
+    throw new Error("This file could not be read as Excel (" + m + "). Save it as .xlsx or CSV and try again.");
+  }
   const out = {};
   for (const n of wb.SheetNames) out[n] = XLSX.utils.sheet_to_json(wb.Sheets[n], {header: 1, defval: "", raw: true, blankrows: false});
   return out;
@@ -1168,15 +1376,16 @@ function guessMap(headers){
   else norm.forEach((h, i) => { if (!used.has(i) && ALLOW_RX.test(h) && !/total|gross|net|deduct/.test(h)) allow.add(i); });
   return {map, allow};
 }
-async function startWizard(file){
+async function startWizard(file, preSheets){
+  if (!preSheets && $("#wizMsg")) $("#wizMsg").innerHTML = `<p class="note" style="margin-top:12px">Reading ${esc(file.name)}…</p>`;
   try {
-    const sheets = await readSheets(file);
+    const sheets = preSheets || await readSheets(file);
     const names = Object.keys(sheets).filter(n => sheets[n].length > 1);
     if (!names.length) throw new Error("The file has no rows of data.");
     const best = names.slice().sort((a, b) => sheets[b].length - sheets[a].length)[0];
-    W = {fileName: file.name, sheets, sheet: best, groupBy: "grade", vacantHires: true, keepNames: true, keepOther: false};
+    W = {fileName: preSheets ? "Pasted from Excel" : file.name, sheets, sheet: best, groupBy: "grade", vacantHires: true, keepNames: true, keepOther: false};
     loadSheet();
-  } catch (err){ resetWizard(); $("#wizMsg").innerHTML = `<div class="confirm">${esc(err.message || "That file could not be read.")}</div>`; }
+  } catch (err){ resetWizard(); $("#wizMsg").innerHTML = `<div class="confirm" style="margin-top:12px">${esc(err.message || "That file could not be read.")}</div>`; }
 }
 function loadSheet(){
   const rows = W.sheets[W.sheet], hr = findHeaderRow(rows);
@@ -1287,9 +1496,16 @@ function applyRoster(){
       basic: Math.round(nb), allow: Math.round(na)};
     lines.push(l); lineByKey.set(key, l);
   }
+  // Positions added from approved department requests always survive a re-import.
+  for (const l of oldLines){
+    if (!l.req || lines.some(x => x.id === l.id)) continue;
+    const od = oldDepts.find(x => x.id === l.dept); if (!od) continue;
+    let d = deptByName.get(dKey(od.name)); if (!d){ d = {...od}; depts.push(d); deptByName.set(dKey(od.name), d); }
+    lines.push({...l, dept: d.id, hc: 0});
+  }
   if (W.keepOther && !wasSample){
     for (const l of oldLines){
-      if (lines.some(x => x.id === l.id)) continue;
+      if (l.req || lines.some(x => x.id === l.id)) continue;
       const od = oldDepts.find(x => x.id === l.dept); if (!od) continue;
       let d = deptByName.get(dKey(od.name)); if (!d){ d = {...od}; depts.push(d); deptByName.set(dKey(od.name), d); }
       lines.push({...l, dept: d.id, hc: 0});
@@ -1307,17 +1523,35 @@ function resetWizard(msg){
   $("#wizBody").innerHTML = `
     <div class="dropzone" id="dropEmp">
       <p style="margin:0 0 10px">Drop your employee file here, or</p>
-      <label class="btn primary" for="fileEmp">Choose file</label>
-      <input id="fileEmp" type="file" accept=".xlsx,.xls,.xlsm,.csv" class="sr">
+      <button class="btn primary" type="button" data-pick="fileEmp">Choose file</button>
+      <input id="fileEmp" type="file" accept=".xlsx,.xls,.xlsm,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/vnd.ms-excel.sheet.macroEnabled.12,text/csv" class="sr" tabindex="-1">
       <p class="note" style="margin-top:12px">Any column layout works: you match the columns in the next step. Typical columns are Employee ID, Name, Department, Section, Job title, Grade, Nationality, Gender, Date of birth, Joining date, Contract end, Basic, and each allowance.</p>
     </div>
     <div id="wizMsg">${msg ? `<div class="callout" style="margin-top:12px">${esc(msg)}</div>` : ""}</div>
+    <p class="note" id="xlsxStatus" style="margin-top:10px"></p>
+    <details style="margin-top:10px">
+      <summary style="cursor:pointer;font-weight:600;font-size:13px">Can't upload the file? Paste from Excel instead</summary>
+      <div class="stack" style="gap:8px;margin-top:8px">
+        <p class="note">In Excel, click any cell in the employee sheet, press <b>Ctrl+A</b> then <b>Ctrl+C</b>. Click in the box below and press <b>Ctrl+V</b>. Include the header row.</p>
+        <label class="sr" for="pasteEmp">Pasted employee data</label>
+        <textarea id="pasteEmp" rows="5" spellcheck="false" placeholder="Paste the employee sheet here (header row first)"></textarea>
+        <div class="toolbar"><button class="btn" type="button" id="btnPasteEmp">Use pasted data</button></div>
+      </div>
+    </details>
     <div class="toolbar" style="margin-top:12px">
       <button class="btn" id="btnEmpTemplate" type="button">Download employee file template</button>
       <button class="btn danger" id="btnDropRoster" type="button" hidden>Remove employee file</button>
     </div>
     <p class="note" id="rosterInfo" style="margin-top:10px"></p>`;
-  $("#fileEmp").addEventListener("change", e => { const f = e.target.files[0]; if (f) startWizard(f); e.target.value = ""; });
+  $("#fileEmp").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if (f) startWizard(f); e.target.value = ""; });
+  $("#btnPasteEmp").addEventListener("click", () => {
+    const t = $("#pasteEmp").value;
+    if (!t.trim()){ $("#wizMsg").innerHTML = `<div class="confirm" style="margin-top:12px">Paste the employee sheet into the box first.</div>`; return; }
+    const rows = parseCSV(t);
+    if (rows.length < 2){ $("#wizMsg").innerHTML = `<div class="confirm" style="margin-top:12px">Only one row was pasted. Include the header row and the employee rows.</div>`; return; }
+    startWizard(null, {"Pasted": rows});
+  });
+  updateXlsxStatus();
   bindDrop($("#dropEmp"), startWizard);
   $("#btnEmpTemplate").addEventListener("click", empTemplate);
   $("#btnDropRoster").addEventListener("click", dropRosterAsk);
@@ -1362,6 +1596,8 @@ function empTemplate(){
   if (window.XLSX){ const wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(rows); ws["!cols"] = rows[0].map(h => ({wch: Math.max(12, h.length + 2)})); XLSX.utils.book_append_sheet(wb, ws, "Employees"); saveFile("Employee-master-template.xlsx", new Blob([XLSX.write(wb, {bookType: "xlsx", type: "array"})])); }
   else saveFile("Employee-master-template.csv", toCSV(rows));
 }
+
+document.addEventListener("click", e => { const id = e.target.dataset && e.target.dataset.pick; if (id){ const inp = document.getElementById(id); if (inp) inp.click(); } });
 
 /* ---------- Summary import ---------- */
 const HDR = {
@@ -1438,7 +1674,7 @@ async function handleFile(file){
     showPreview(buildImport(rows));
   } catch (err) { box.innerHTML = `<div class="confirm">${esc(err.message || "That file could not be read.")}</div>`; }
 }
-$("#fileIn").addEventListener("change", e => { const f = e.target.files[0]; if (f) handleFile(f); e.target.value = ""; });
+$("#fileIn").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if (f) handleFile(f); e.target.value = ""; });
 bindDrop($("#drop"), handleFile);
 
 /* ---------- Export ---------- */
@@ -1497,7 +1733,7 @@ const toCSV = rows => rows.map(r => r.map(v => { const s = String(v ?? ""); retu
 $("#btnExportXlsx").addEventListener("click", exportXlsx);
 $("#btnExportXlsx2").addEventListener("click", exportXlsx);
 $("#btnExportCsv").addEventListener("click", () => saveFile(fileStem() + "-plan.csv", "﻿" + toCSV(planRows())));
-$("#btnExportJson").addEventListener("click", () => saveFile(fileStem() + "-backup.json", JSON.stringify({plan: S, roster: ROS && !ROS.sample ? ROS : null})));
+$("#btnExportJson").addEventListener("click", () => saveFile(fileStem() + "-backup.json", JSON.stringify({plan: S, roster: ROS && !ROS.sample ? ROS : null, requests: REQ})));
 $("#btnTemplate").addEventListener("click", () => {
   const rows = [["Department","Position","Nationality","Current HC","New hires","Start month","Exits","Last month","Basic","Allowances"],
     ["Flight Operations","First Officers","Omani",190,20,"Mar",6,"Jul",2100,1100],["Cabin Services","Cabin Crew","Expatriate",180,0,"",25,"Jun",560,380]];
@@ -1518,10 +1754,261 @@ function askConfirm(label, fn){
   $("#cfNo").onclick = () => { area.innerHTML = prev; bindReset(); };
 }
 function bindReset(){
-  $("#btnReset").onclick = () => askConfirm("Reset to example data?", () => { S = sampleState(); ROS = sampleRoster(S); rosVer++; changed(); persistRoster(); updateHeader(); updateRosterInfo(); });
+  $("#btnReset").onclick = () => askConfirm("Reset to example data?", () => { exampleReqs = null; S = sampleState(); ROS = sampleRoster(S); rosVer++; changed(); persistRoster(); updateHeader(); updateRosterInfo(); });
   $("#btnBlank").onclick = () => askConfirm("Start a blank plan?", () => { S = blankState(); ROS = null; rosVer++; changed(); persistRoster(); updateHeader(); updateRosterInfo(); });
 }
 bindReset();
+
+/* ---------- Requests: planner review ---------- */
+const PRIO = {critical: ["bad", "Critical"], high: ["warn", "High"], normal: ["info", "Normal"]};
+const RTYPE = {new: "New position", replacement: "Replacement for a leaver", omanisation: "Omani replacing an expatriate"};
+const RSTAT = {pending: ["warn", "Waiting for decision"], approved: ["good", "✓ Approved"], rejected: ["bad", "Rejected"], changes: ["info", "Changes requested"], withdrawn: ["", "Withdrawn"]};
+const rqFilter = {status: "open", dept: ""};
+let exampleReqs = null;
+function sampleRequests(){
+  const t = Date.now() - 864e5;
+  const mk = (i, dept, by, title, grade, nat, count, startM, type, prio, basic, allow, why) => ({id: "ex" + i, example: true, owner: "example", dept, deptName: deptName(dept), by, title, grade, nat, count, startM, type, prio, basic, allow, why, status: "pending", note: "", createdAt: t - i * 36e5, updatedAt: t - i * 36e5});
+  return [
+    mk(1, "d3", "Head of Line Maintenance (example)", "Licensed Engineer B1", "T3", "O", 6, 4, "new", "critical", 1350, 650, "Two additional aircraft enter service in Q2. Line maintenance at the new outstation needs six more B1 engineers to meet the approved maintenance programme."),
+    mk(2, "d2", "Cabin Services Manager (example)", "Cabin Crew Member", "C1", "O", 25, 5, "new", "high", 520, 380, "The summer schedule adds about 1,900 block hours a month. Without these hires the crew-to-aircraft ratio falls below the approved minimum."),
+    mk(3, "d10", "IT Director (example)", "Cyber Security Analyst", "G3", "E", 2, 7, "new", "normal", 0, 0, "An audit finding requires a 24/7 security monitoring function. Omani analysts are in training; two experienced hires cover the first two years."),
+    mk(4, "d1", "Chief Pilot (example)", "First Officer", "P2", "O", 4, 9, "omanisation", "high", 2100, 1100, "Cadet programme graduates replace four expatriate first officers whose contracts end in FY2027."),
+  ].filter(r => S.depts.some(d => d.id === r.dept));
+}
+function allRequests(){
+  if (REQ.length) return REQ;
+  if (S.sample){ if (!exampleReqs) exampleReqs = sampleRequests(); return exampleReqs; }
+  return [];
+}
+function estReq(rq, a = S.a, ot){
+  const d = S.depts.find(x => x.id === rq.dept), r = newAcc(), n = num(rq.count), m = clampM(rq.startM);
+  costHeads(r, Array.from({length: 12}, (_, i) => i + 1 >= m ? n : 0), num(rq.basic), num(rq.allow), rq.nat === "O", num(ot ?? d?.ot) / 100, a, {}, a.incPct, m, n);
+  return finish(r).total;
+}
+const fDate = ms => ms ? new Date(ms).toLocaleDateString("en-GB", {day: "numeric", month: "short"}) : "";
+function onRequests(){
+  const pend = allRequests().filter(r => r.status === "pending").length, b = $("#reqBadge");
+  b.hidden = !pend; b.textContent = pend;
+  if (tab === "req") renderReq(); else if (tab === "overview") renderAlerts();
+}
+function renderReq(){
+  const all = allRequests();
+  const waiting = all.filter(r => r.status === "pending"), appr = all.filter(r => r.status === "approved");
+  const heads = l => l.reduce((s, r) => s + num(r.count), 0), cost = l => l.reduce((s, r) => s + estReq(r), 0);
+  const deptsIn = new Set(all.filter(r => r.status !== "withdrawn").map(r => r.dept));
+  $("#reqKpis").innerHTML = [
+    ["Waiting for decision", f0(waiting.length), `${f0(heads(waiting))} positions requested`],
+    ["Cost of waiting requests", "OMR " + fM(cost(waiting)), `FY${S.fy} estimate incl. on-costs`],
+    ["Approved into the plan", f0(heads(appr)) + " positions", `OMR ${fM(cost(appr))} in the budget`],
+    ["Departments that submitted", `${deptsIn.size} of ${S.depts.length}`, all[0]?.example ? "Example requests shown" : (S.reqDeadline ? "Deadline " + new Date(S.reqDeadline + "T00:00").toLocaleDateString("en-GB", {day: "numeric", month: "short"}) : "No deadline set")],
+  ].map(([l, v, d]) => `<div class="kpi"><span class="l">${l}</span><span class="v">${v}</span><span class="d">${d}</span></div>`).join("");
+  if (document.activeElement !== $("#rqNote")) $("#rqNote").value = S.reqNote || "";
+  if (document.activeElement !== $("#rqDeadline")) $("#rqDeadline").value = S.reqDeadline || "";
+  $("#rqOpen").checked = S.reqOpen !== false;
+  const link = location.origin + "/request";
+  $("#rqShare").innerHTML = BE.mode === "artifact"
+    ? "<b>How department heads get the form:</b> share this page from the Share menu and give them <b>Contributor</b> access. When they open it they see only the request form, never your plan, salaries or employee file."
+    : BE.mode === "server"
+    ? `<b>Form link for department heads:</b><br><code id="rqLink">${esc(link)}</code> <button class="btn sm" type="button" id="btnCopyLink">Copy link</button>${/localhost|127\.0\.0\.1/.test(location.hostname) ? `<br><span class="note">This address only works on this computer. To let colleagues open it, start the server with network sharing on (see the README) and share the link it prints.</span>` : ""}`
+    : "<b>This copy saves to this browser only,</b> so requests can only be tried out here. Run the localhost server (see the README) to let department heads submit from their own computers.";
+  // by department
+  const byD = new Map(S.depts.map(d => [d.id, {d, wh: 0, wc: 0, ah: 0, ac: 0}]));
+  for (const r of all){ const x = byD.get(r.dept); if (!x) continue; if (r.status === "pending"){ x.wh += num(r.count); x.wc += estReq(r); } if (r.status === "approved"){ x.ah += num(r.count); x.ac += estReq(r); } }
+  const rows = [...byD.values()].filter(x => x.wh || x.ah);
+  $("#tblReqDept").innerHTML = rows.length ? `<thead><tr><th>Department</th><th class="n">Waiting</th><th class="n">Waiting cost</th><th class="n">Approved</th><th class="n">Budget now</th><th class="n">Room under ceiling</th></tr></thead><tbody>${rows.map(x => {
+    const g = R.depts.find(y => y.d.id === x.d.id), ceil = num(x.d.ceiling), room = ceil ? ceil - (g ? g.total : 0) : null;
+    return `<tr><td>${esc(x.d.name)}</td><td class="n">${f0(x.wh)}</td><td class="n">${f0(x.wc)}</td><td class="n">${f0(x.ah)}</td><td class="n">${f0(g?.total)}</td><td class="n">${room === null ? '<span class="muted">No ceiling</span>' : room - x.wc >= 0 ? `<span class="pill good">✓ ${f0(room)}</span>` : `<span class="pill bad" title="Approving all waiting requests would exceed the ceiling">${f0(room)} · short ${f0(x.wc - room)}</span>`}</td></tr>`;
+  }).join("")}</tbody>` : `<tbody><tr><td class="muted" style="padding:16px">No requests yet.</td></tr></tbody>`;
+  $("#rqFDept").innerHTML = `<option value="">All departments</option>` + S.depts.map(d => `<option value="${d.id}"${d.id === rqFilter.dept ? " selected" : ""}>${esc(d.name)}</option>`).join("");
+  $("#rqFStatus").value = rqFilter.status;
+  const list = all.filter(r => (rqFilter.status === "open" ? r.status === "pending" || r.status === "changes" : !rqFilter.status || r.status === rqFilter.status) && (!rqFilter.dept || r.dept === rqFilter.dept))
+    .sort((a, b) => (PRIO_ORDER[a.prio] ?? 3) - (PRIO_ORDER[b.prio] ?? 3) || (a.createdAt || 0) - (b.createdAt || 0));
+  $("#rqSync").textContent = BE.mode === "server" ? "Refreshes every 30 seconds" : BE.mode === "artifact" ? "New requests appear automatically" : "";
+  $("#reqList").innerHTML = list.length ? list.map(reqCard).join("") : `<p class="note">${all.length ? "No requests match these filters." : "No requests yet. Share the form with department heads to start collecting them."}</p>`;
+}
+const PRIO_ORDER = {critical: 0, high: 1, normal: 2};
+function reqCard(r){
+  const st = RSTAT[r.status] || RSTAT.pending, pr = PRIO[r.prio] || PRIO.normal, open = r.status === "pending" || r.status === "changes";
+  const est = estReq(r);
+  return `<div class="req" data-rid="${esc(r.id)}">
+    <div class="req-top"><h3>${f0(r.count)} × ${esc(r.title)}</h3><span class="pill ${st[0]}">${st[1]}</span><span class="pill ${pr[0]}">${pr[1]}</span>${r.example ? '<span class="pill info">Example</span>' : ""}</div>
+    <div class="req-meta"><span><b>${esc(r.deptName || deptName(r.dept))}</b></span>${r.grade ? `<span>Grade ${esc(r.grade)}</span>` : ""}<span>${r.nat === "O" ? "Omani" : "Expatriate"}</span><span>Starts ${MONTHS[clampM(r.startM) - 1]}</span><span>${RTYPE[r.type] || "New position"}</span><span>From ${esc(r.by)}</span><span>Sent ${fDate(r.createdAt)}</span><span data-rest>${num(r.basic) > 0 ? `Est. FY cost OMR ${f0(est)}` : "No salary given"}</span></div>
+    <div class="req-why">${esc(r.why)}</div>
+    ${r.note ? `<div class="note"><b>Your note:</b> ${esc(r.note)}</div>` : ""}
+    <div class="req-act">${open ? `
+      <label class="note" for="b-${esc(r.id)}">Basic</label><input id="b-${esc(r.id)}" type="number" min="0" step="10" data-rf="basic" value="${num(r.basic) || ""}" placeholder="OMR / mo">
+      <label class="note" for="a-${esc(r.id)}">Allow.</label><input id="a-${esc(r.id)}" type="number" min="0" step="10" data-rf="allow" value="${num(r.allow) || ""}" placeholder="OMR / mo">
+      <label class="sr" for="n-${esc(r.id)}">Note to requester</label><input id="n-${esc(r.id)}" type="text" data-rf="note" maxlength="500" placeholder="Note to the requester (needed to reject or ask for changes)">
+      <button class="btn sm primary" type="button" data-ra="approve">Approve and add to plan</button><button class="btn sm" type="button" data-ra="changes">Ask for changes</button><button class="btn sm danger" type="button" data-ra="reject">Reject</button>`
+      : r.status === "approved" ? `<span class="note">Added to the Headcount plan as a new line.</span><button class="btn sm" type="button" data-ra="undo">Undo approval</button>`
+      : r.status === "rejected" ? `<button class="btn sm" type="button" data-ra="reopen">Reopen</button>` : ""}
+      <span class="note" data-rmsg role="status" style="color:var(--bad)"></span></div>
+  </div>`;
+}
+$("#reqList").addEventListener("input", e => {
+  const k = e.target.dataset.rf; if (k !== "basic" && k !== "allow") return;
+  const card = e.target.closest("[data-rid]"), r = allRequests().find(x => x.id === card.dataset.rid); if (!r) return;
+  r[k] = num(e.target.value);
+  card.querySelector("[data-rest]").textContent = num(r.basic) > 0 ? `Est. FY cost OMR ${f0(estReq(r))}` : "No salary given";
+});
+$("#reqList").addEventListener("click", async e => {
+  const act = e.target.dataset && e.target.dataset.ra; if (!act) return;
+  const card = e.target.closest("[data-rid]"), r = allRequests().find(x => x.id === card.dataset.rid); if (!r) return;
+  const msg = card.querySelector("[data-rmsg]"), noteEl = card.querySelector('[data-rf="note"]'), note = noteEl ? noteEl.value.trim() : "";
+  if (act === "approve"){
+    if (!(num(r.basic) > 0)){ msg.textContent = "Enter the basic salary before approving."; card.querySelector('[data-rf="basic"]').focus(); return; }
+    const d = S.depts.find(x => x.id === r.dept) || S.depts.find(x => x.name.toLowerCase() === String(r.deptName || "").toLowerCase());
+    if (!d){ msg.textContent = "This department is not in the plan any more. Add it on Assumptions first."; return; }
+    const l = {id: uid(), dept: d.id, role: r.title + (r.grade ? " · " + r.grade : ""), nat: r.nat === "E" ? "E" : "O", hc: 0, hires: Math.max(1, Math.round(num(r.count))), hireM: clampM(r.startM), exits: 0, exitM: 12, basic: num(r.basic), allow: num(r.allow), req: r.id};
+    S.lines.push(l); r.status = "approved"; r.lineId = l.id; if (note) r.note = note; r.decidedAt = Date.now(); changed();
+  } else if (act === "reject" || act === "changes"){
+    if (!note){ msg.textContent = "Add a note telling the requester why."; noteEl.focus(); return; }
+    r.status = act === "reject" ? "rejected" : "changes"; r.note = note; r.decidedAt = Date.now();
+  } else if (act === "undo"){
+    S.lines = S.lines.filter(l => l.id !== r.lineId); r.lineId = null; r.status = "pending"; changed();
+  } else if (act === "reopen") r.status = "pending";
+  e.target.disabled = true;
+  try { const saved = await saveRequest(r); if (saved && !r.example) Object.assign(r, saved); renderReq(); onRequests(); }
+  catch (err){ e.target.disabled = false; msg.textContent = "The decision was not saved: " + err.message; }
+});
+$("#rqFStatus").addEventListener("change", e => { rqFilter.status = e.target.value; renderReq(); });
+$("#rqFDept").addEventListener("change", e => { rqFilter.dept = e.target.value; renderReq(); });
+$("#rqOpen").addEventListener("change", e => { S.reqOpen = e.target.checked; persist(); });
+$("#rqDeadline").addEventListener("change", e => { S.reqDeadline = e.target.value; persist(); renderReq(); });
+$("#rqNote").addEventListener("input", e => { S.reqNote = e.target.value; persist(); });
+$("#v-req").addEventListener("click", async e => {
+  if (e.target.id === "btnPreviewForm") startForm(true);
+  if (e.target.id === "btnCopyLink"){ try { await navigator.clipboard.writeText($("#rqLink").textContent); e.target.textContent = "Copied"; } catch { const rg = document.createRange(); rg.selectNodeContents($("#rqLink")); getSelection().removeAllRanges(); getSelection().addRange(rg); e.target.textContent = "Press Ctrl+C"; } }
+});
+function releaseRequestLine(lineId){
+  const r = allRequests().find(x => x.lineId === lineId); if (!r) return;
+  r.status = "pending"; r.lineId = null; r.note = (r.note ? r.note + " " : "") + "(Removed from the plan.)";
+  saveRequest(r).catch(() => {}); onRequests();
+}
+
+/* ---------- Requests: department head form ---------- */
+let FCFG = null, fEditing = null;
+async function startForm(preview){
+  document.body.classList.add("form-mode"); $("#formApp").hidden = false; window.scrollTo(0, 0);
+  $("#btnBackPlanner").hidden = !preview;
+  $("#f-start").innerHTML = monthOpts(4);
+  $("#fIntro").textContent = "Loading the request form…";
+  if (!$("#f-by").value) $("#f-by").value = lsGet("manpower-planner-v1:by") || "";
+  try { FCFG = preview || BE.mode === "local" ? publicConfig() : await loadConfig(); } catch { FCFG = null; }
+  if (BE.mode === "artifact" && BE.user && !$("#f-by").value){ try { const me = await BE.user.me(); if (me && me.name) $("#f-by").value = me.name; } catch {} }
+  renderFormIntro(); renderMyReqs(); updateEst();
+}
+function renderFormIntro(){
+  const c = FCFG;
+  if (!c || !Array.isArray(c.depts) || !c.depts.length){ $("#fIntro").textContent = "The request form is not open yet. The planner needs to open the planner once to publish the department list. Try again later."; $("#reqForm").hidden = true; return; }
+  $("#fEyebrow").textContent = `${c.org ? c.org + " · " : ""}Manpower request · FY${c.fy}`;
+  const cur = $("#f-dept").value;
+  $("#f-dept").innerHTML = `<option value="">Choose your department</option>` + c.depts.map(d => `<option value="${esc(d.id)}"${d.id === cur ? " selected" : ""}>${esc(d.name)}</option>`).join("");
+  const parts = [c.open === false ? "<b>Requests are closed.</b> The planner is no longer accepting new requests for this budget." : `Request the positions your department needs in <b>FY${c.fy}</b>, one request per position type. The planner reviews each one and adds approved positions to the budget.`];
+  if (c.deadline) parts.push(`Deadline: <b>${new Date(c.deadline + "T00:00").toLocaleDateString("en-GB", {day: "numeric", month: "long", year: "numeric"})}</b>.`);
+  let html = parts.join(" ");
+  if (c.note) html += `<br><span style="white-space:pre-wrap">${esc(c.note)}</span>`;
+  $("#fIntro").innerHTML = html;
+  $("#reqForm").hidden = c.open === false && !fEditing;
+}
+function formItem(){
+  const v = id => $("#f-" + id).value.trim();
+  return {dept: v("dept"), by: v("by"), title: v("title"), grade: v("grade"), nat: v("nat"), count: Math.round(num(v("count"))), startM: +v("start") || 4, type: v("type"), prio: v("prio"), basic: num(v("basic")), allow: num(v("allow")), why: v("why")};
+}
+function updateEst(){
+  if (!FCFG || !FCFG.a){ $("#fEst").textContent = ""; return; }
+  const it = formItem(), d = (FCFG.depts || []).find(x => x.id === it.dept);
+  if (!(it.basic > 0) || !(it.count > 0)){ $("#fEst").innerHTML = "Add the expected basic salary to see an estimated cost for the budget year. You can leave it blank and the planner will set it."; return; }
+  const a = {...sampleState().a, ...FCFG.a}, cost = estReq(it, a, d ? d.ot : 0);
+  $("#fEst").innerHTML = `<b>Estimated FY${FCFG.fy} cost: OMR ${f0(cost)}</b> for ${f0(it.count)} position${it.count > 1 ? "s" : ""} from ${MONTHS[it.startM - 1]}, including allowances, social protection, benefits and recruitment.`;
+}
+$("#reqForm").addEventListener("input", updateEst);
+$("#reqForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const it = formItem(), miss = [];
+  if (!it.dept) miss.push("your department"); if (!it.by) miss.push("your name"); if (!it.title) miss.push("the position title");
+  if (!(it.count >= 1)) miss.push("the number of positions"); if (it.why.length < 15) miss.push("a justification of at least one sentence");
+  if (miss.length){ $("#fMsg").textContent = "Please add " + miss.join(", ") + "."; return; }
+  const d = FCFG.depts.find(x => x.id === it.dept);
+  const base = fEditing || {id: "rq-" + uid() + uid(), createdAt: Date.now(), owner: requesterToken(), note: ""};
+  const item = {...base, ...it, deptName: d.name, status: "pending"};
+  $("#fSubmit").disabled = true; $("#fMsg").textContent = "Sending…";
+  try {
+    await saveRequest(item); lsSet("manpower-planner-v1:by", it.by);
+    $("#fMsg").textContent = fEditing ? "Request updated." : "Request sent. Its status appears on the right.";
+    resetReqForm(true); renderMyReqs();
+    if (BE.mode === "local") { REQ = lsGet(LS_REQ) || []; onRequests(); }
+  } catch (err){
+    $("#fMsg").textContent = /invalid_argument|not_granted/.test(err.code || "") ? "Your access to this page is view-only. Ask the planner for Contributor access, then submit again." : "The request was not sent: " + (err.message || "try again") + ".";
+  }
+  $("#fSubmit").disabled = false;
+});
+function resetReqForm(keep){
+  ["title","grade","basic","allow","why"].forEach(k => $("#f-" + k).value = "");
+  $("#f-count").value = 1; fEditing = null;
+  $("#fTitle").textContent = "New request"; $("#fSubmit").textContent = "Submit request"; $("#fCancel").hidden = true;
+  if (!keep) $("#fMsg").textContent = "";
+  renderFormIntro(); updateEst();
+}
+$("#fCancel").addEventListener("click", () => resetReqForm());
+let myCache = [];
+async function renderMyReqs(){
+  const box = $("#myReqs");
+  try { myCache = (await myRequests()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)); }
+  catch { box.innerHTML = `<p class="note">Your earlier requests could not be loaded.</p>`; return; }
+  box.innerHTML = myCache.length ? myCache.map(r => {
+    const st = RSTAT[r.status] || RSTAT.pending, editable = r.status === "pending" || r.status === "changes";
+    return `<div class="req" data-mid="${esc(r.id)}"><div class="req-top"><h3>${f0(r.count)} × ${esc(r.title)}</h3><span class="pill ${st[0]}">${st[1]}</span></div>
+      <div class="req-meta"><span>${esc(r.deptName)}</span><span>${r.nat === "O" ? "Omani" : "Expatriate"}</span><span>Starts ${MONTHS[clampM(r.startM) - 1]}</span><span>Sent ${fDate(r.createdAt)}</span></div>
+      ${r.note ? `<div class="note"><b>Planner's note:</b> ${esc(r.note)}</div>` : ""}
+      ${editable ? `<div class="req-act"><button class="btn sm" type="button" data-ma="edit">Edit</button><button class="btn sm danger" type="button" data-ma="withdraw">Withdraw</button></div>` : ""}</div>`;
+  }).join("") : `<p class="note">Requests you send appear here with their status and any note from the planner.</p>`;
+}
+$("#myReqs").addEventListener("click", async e => {
+  const act = e.target.dataset && e.target.dataset.ma; if (!act) return;
+  const r = myCache.find(x => x.id === e.target.closest("[data-mid]").dataset.mid); if (!r) return;
+  if (act === "edit"){
+    fEditing = r; $("#reqForm").hidden = false;
+    $("#f-dept").value = r.dept; ["by","title","grade","nat","count","type","prio","why"].forEach(k => $("#f-" + k).value = r[k] ?? "");
+    $("#f-start").value = r.startM; $("#f-basic").value = r.basic || ""; $("#f-allow").value = r.allow || "";
+    $("#fTitle").textContent = "Edit request"; $("#fSubmit").textContent = "Save changes"; $("#fCancel").hidden = false; $("#fMsg").textContent = "";
+    updateEst(); $("#f-title").focus();
+  } else if (act === "withdraw"){
+    if (e.target.dataset.sure !== "1"){ e.target.dataset.sure = "1"; e.target.textContent = "Confirm withdraw"; return; }
+    try { await saveRequest({...r, status: "withdrawn"}); renderMyReqs(); if (BE.mode === "local"){ REQ = lsGet(LS_REQ) || []; onRequests(); } }
+    catch (err){ e.target.textContent = "Not withdrawn: " + err.message; }
+  }
+});
+$("#btnBackPlanner").addEventListener("click", () => {
+  document.body.classList.remove("form-mode"); $("#formApp").hidden = true;
+  if (location.hash === "#request") history.replaceState(null, "", location.pathname);
+  loadRequests(); switchTab("req");
+});
+
+/* ---------- Boot ---------- */
+const wantsForm = () => location.hash === "#request" || /\/request\/?$/.test(location.pathname);
+function showGate(wrong){
+  document.body.classList.add("gated"); $("#gate").hidden = false;
+  $("#gateMsg").textContent = wrong ? "That PIN is not correct." : "";
+  setStatus("local", "Locked"); setTimeout(() => $("#gatePin").focus(), 0);
+}
+$("#gate").addEventListener("submit", e => { e.preventDefault(); pinStore.set($("#gatePin").value); boot(true); });
+async function boot(retry){
+  if (wantsForm()){ document.body.classList.add("form-mode"); $("#formApp").hidden = false; }
+  if (!retry) await detectBackend();
+  if (wantsForm() || (BE.mode === "artifact" && !BE.owner)){
+    if (BE.mode !== "local" && !(BE.mode === "artifact" && BE.owner)) BE.owner = false;
+    startForm(BE.owner); return;
+  }
+  if (BE.mode === "server" && BE.pin && !pinStore.get()){ showGate(false); return; }
+  try { await loadPlannerData(); }
+  catch (e){ if (e.code === "pin"){ showGate(!!pinStore.get()); return; } setStatus("local", "Could not load the saved plan"); return; }
+  document.body.classList.remove("gated"); $("#gate").hidden = true;
+  BE.ready = true;
+  renderAll(); updateRosterInfo(); updateStorageNote();
+  setStatus(savedState(), savedText());
+  publishConfig(true); loadRequests();
+}
 
 /* ---------- Tabs & render ---------- */
 let tab = "overview";
@@ -1541,6 +2028,7 @@ function renderTab(){
   else if (tab === "budget") renderBudget();
   else if (tab === "scen") renderScen();
   else if (tab === "assump") renderAssump();
+  else if (tab === "req") renderReq();
   else if (tab === "data") updateRosterInfo();
 }
 function updateHeader(){
@@ -1559,7 +2047,7 @@ resetWizard();
 try { const t = localStorage.getItem(LS_KEY + ":tab"); if (t && document.getElementById("v-" + t)) tab = t; } catch {}
 updateHeader(); switchTab(tab);
 setStatus("local", "Saved in this browser");
-initStore();
+boot();
 if (window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => renderTab());
 })();
 </script>

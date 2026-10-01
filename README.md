@@ -30,19 +30,13 @@ A dual-deck DJ mixer for YouTube, at **`/mixer`**. Paste any YouTube link on eac
 
 Playback uses the official YouTube IFrame Player API — nothing is downloaded or re-hosted.
 
-## Bonus: Manpower Budget Planner (`/manpower-planner.html`)
+## Bonus: Manpower Budget Planner (`manpower-planner/`)
 
-A self-contained manpower planning and budgeting tool at **`/manpower-planner.html`** (no build step, no backend):
+A standalone manpower planning and budgeting tool with a request form for department heads. It runs on localhost with plain Node.js (no dependencies, no database). See [`manpower-planner/README.md`](manpower-planner/README.md).
 
-- **Headcount plan** by department × position/grade × nationality (Omani / expatriate): current HC, new hires with start month, exits with last month, average basic and allowances
-- **Monthly cost engine** (OMR): increment from its effective month, overtime per department, bonus, employer social protection, expatriate end-of-service, air tickets, medical, training, recruitment and contingency
-- **Overview**: budget bridge (run-rate → increment → exits → hires → contingency), budget by department vs ceilings, Omanisation vs target, monthly phasing, and a pre-submission checklist
-- **Scenarios**: hires filled %, hiring delay, increment, overtime and bonus levers compared against the base plan
-- **Employee master file**: upload the full HR export (one row per employee, any column layout). A 3-step wizard matches columns, sums allowance columns, skips leavers, turns vacant posts into planned hires and validates the file before import
-- **Employees tab**: every employee is costed individually; retirements (by date of birth) and contract ends in the budget year are flagged and can be marked as exits in bulk or one by one; personal increments; workforce profile by department (Omani %, women, age, service, payroll) and age profile
-- **Import** a summary plan or JSON backup, and **export** a multi-sheet budget workbook (including an Employees sheet), plan CSV or full JSON backup
-
-Data stays in the browser (localStorage). Statutory rates are editable defaults; confirm them with Payroll.
+```bash
+cd manpower-planner && node server.js   # http://localhost:4000, request form at /request
+```
 
 ## Quick start (demo mode)
 
