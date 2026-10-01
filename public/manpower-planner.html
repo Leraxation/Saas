@@ -14,7 +14,7 @@
   --fg:#141824; --fg-2:#4a5163; --fg-3:#737a8c;
   --accent:#3140b8; --accent-soft:#e6e8fa; --accent-fg:#ffffff;
   --good:#0f7b4b; --good-soft:#e2f4ea; --warn:#9a5b00; --warn-soft:#fdf0d8; --bad:#b42323; --bad-soft:#fbe6e4;
-  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --neutral-bar:#9aa1b1;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4;
   --up:#c24a3a; --down:#1f7a55;
   --f-display:"Schibsted Grotesk","Segoe UI",system-ui,sans-serif;
   --f-body:"Public Sans","Segoe UI",system-ui,-apple-system,sans-serif;
@@ -25,7 +25,7 @@
   --fg:#eef0f5; --fg-2:#b4b9c6; --fg-3:#8a90a0;
   --accent:#8e9bff; --accent-soft:#262c55; --accent-fg:#0f1226;
   --good:#5fd39a; --good-soft:#15352a; --warn:#f0b54a; --warn-soft:#3a2d12; --bad:#ff8b80; --bad-soft:#3d1c1b;
-  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --neutral-bar:#5d6475;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181;
   --up:#ef7b6b; --down:#4cc28e; color-scheme:dark;
 }}
 :root[data-theme="dark"]{
@@ -33,7 +33,7 @@
   --fg:#eef0f5; --fg-2:#b4b9c6; --fg-3:#8a90a0;
   --accent:#8e9bff; --accent-soft:#262c55; --accent-fg:#0f1226;
   --good:#5fd39a; --good-soft:#15352a; --warn:#f0b54a; --warn-soft:#3a2d12; --bad:#ff8b80; --bad-soft:#3d1c1b;
-  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --neutral-bar:#5d6475;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181;
   --up:#ef7b6b; --down:#4cc28e; color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -43,12 +43,11 @@ h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:
 h1{font-size:20px;font-weight:700}
 h2{font-size:17px;font-weight:700}
 h3{font-size:14px;font-weight:600}
-.num,td.n,th.n{font-variant-numeric:tabular-nums}
+td.n,th.n{font-variant-numeric:tabular-nums}
 .wrap{max-width:1320px;margin:0 auto;padding-inline:16px}
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
 .top-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding-block:12px}
 .brand{display:flex;flex-direction:column;min-width:0;flex:1 1 260px}
-.brand small{color:var(--fg-3);font-size:12px}
 .eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);font-weight:600}
 .status{font-size:12px;color:var(--fg-2);display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--surface-2)}
 .status i{width:8px;height:8px;border-radius:50%;background:var(--fg-3);display:inline-block}
@@ -59,6 +58,7 @@ nav.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:va
 nav.tabs button:hover{color:var(--fg)}
 main{padding-block:20px 60px}
 section.view{display:flex;flex-direction:column;gap:18px}
+.stack{display:flex;flex-direction:column;gap:18px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
 .panel-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px;margin-bottom:12px}
 .panel-head p{margin:0;color:var(--fg-3);font-size:12.5px}
@@ -68,12 +68,12 @@ section.view{display:flex;flex-direction:column;gap:18px}
 .kpi{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .kpi .v{font-family:var(--f-display);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
 .kpi .l{font-size:12px;color:var(--fg-3)}
-.kpi .d{font-size:12px;color:var(--fg-2)}
+.kpi .d{font-size:12px;color:var(--fg-2);overflow-wrap:anywhere}
 .pill{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
 .pill.good{background:var(--good-soft);color:var(--good)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.info{background:var(--accent-soft);color:var(--accent)}
 .alerts{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
 .alerts li{display:flex;gap:10px;align-items:flex-start;font-size:13px}
-.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
 table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
 th{font-size:11.5px;color:var(--fg-3);font-weight:600;letter-spacing:.02em;background:var(--surface-2);position:sticky;top:0;z-index:1}
@@ -81,20 +81,21 @@ td.n,th.n{text-align:right}
 tr.total td{font-weight:700;background:var(--surface-2);border-bottom:0}
 tr.grp td{background:var(--surface-2);font-weight:600;font-size:12px;color:var(--fg-2)}
 tbody tr:hover td{background:color-mix(in srgb,var(--accent-soft) 45%,transparent)}
-td.muted{color:var(--fg-3)}
+td.muted,.muted{color:var(--fg-3)}
 input,select,textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line-2);border-radius:6px;padding:5px 8px;min-width:0}
 input[type=number]{text-align:right;font-variant-numeric:tabular-nums}
-input:focus-visible,select:focus-visible,button:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input:focus-visible,select:focus-visible,button:focus-visible,textarea:focus-visible,label.btn:focus-within{outline:2px solid var(--accent);outline-offset:1px}
 table input,table select{padding:4px 6px;border-color:transparent;background:transparent;width:100%}
 table input:hover,table select:hover{border-color:var(--line-2)}
 table input:focus,table select:focus{border-color:var(--accent);background:var(--surface)}
 td.cell-in{padding:2px 4px}
 .w-xs{width:64px}.w-s{width:84px}.w-m{width:110px}.w-l{width:190px}
-button.btn{appearance:none;font:600 13px var(--f-body);border-radius:6px;padding:7px 12px;border:1px solid var(--line-2);background:var(--surface);color:var(--fg);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
-button.btn:hover{border-color:var(--fg-3)}
-button.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
-button.btn.danger{color:var(--bad)}
-button.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn{appearance:none;font:600 13px var(--f-body);border-radius:6px;padding:7px 12px;border:1px solid var(--line-2);background:var(--surface);color:var(--fg);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--fg-3)}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:4px 9px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
 button.icon{appearance:none;border:0;background:none;color:var(--fg-3);cursor:pointer;padding:4px 6px;border-radius:4px;font-size:15px;line-height:1}
 button.icon:hover{color:var(--bad);background:var(--bad-soft)}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -108,7 +109,7 @@ button.icon:hover{color:var(--bad);background:var(--bad-soft)}
 .chart text{fill:var(--fg-2);font-family:var(--f-body);font-size:11px}
 .chart .axis{stroke:var(--line-2)} .chart .grid{stroke:var(--line);stroke-dasharray:2 3}
 .chart-scroll{overflow-x:auto}
-.chart-scroll .chart{min-width:560px}
+.chart-scroll .chart{min-width:520px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--fg-2);margin-bottom:8px}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
@@ -120,13 +121,36 @@ button.icon:hover{color:var(--bad);background:var(--bad-soft)}
 .scen{border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
 .scen.base{border-color:var(--accent)}
 .scen .res{font-family:var(--f-display);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
-.bar-inline{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden}
-.bar-inline>i{display:block;height:100%;background:var(--accent)}
 .dropzone{border:2px dashed var(--line-2);border-radius:var(--r);padding:22px;text-align:center;color:var(--fg-2);background:var(--surface-2)}
 .dropzone.over{border-color:var(--accent);background:var(--accent-soft)}
-code{font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-@media (prefers-reduced-motion:no-preference){.bar-inline>i{transition:width .3s}}
+.steps{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--fg-3);margin:0 0 12px;padding:0;list-style:none;counter-reset:st}
+.steps li{counter-increment:st;display:flex;gap:6px;align-items:center}
+.steps li::before{content:counter(st);display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--surface-2);font-weight:700;font-size:11px;color:var(--fg-2)}
+.steps li.on{color:var(--fg);font-weight:600}
+.steps li.on::before{background:var(--accent);color:var(--accent-fg)}
+.map-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px 20px}
+.map-row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:4px 8px;align-items:center;font-size:13px}
+.map-row label{font-weight:600;color:var(--fg-2)}
+.map-row label b{color:var(--bad)}
+.map-row .smp{grid-column:2;font-size:11.5px;color:var(--fg-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-2);border-radius:999px;padding:3px 10px;font-size:12.5px;cursor:pointer;background:var(--surface)}
+.chip:has(input:checked){background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.chip input{margin:0}
+.checks{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px}
+.checks label{display:inline-flex;gap:6px;align-items:center}
+.vstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.vstat{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.vstat b{display:block;font-family:var(--f-display);font-size:20px;font-variant-numeric:tabular-nums}
+.vstat span{font-size:12px;color:var(--fg-3)}
+.vstat.warn{border-color:var(--warn);background:var(--warn-soft)}
+.vstat.bad{border-color:var(--bad);background:var(--bad-soft)}
+.pager{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end;font-size:12.5px;color:var(--fg-2);margin-top:10px}
+.flagrow{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
+.flagrow:last-of-type{border-bottom:0}
+.flagrow .t{font-size:13px;min-width:0;flex:1 1 260px}
+.flagrow .t b{font-family:var(--f-display);font-size:18px;margin-right:6px;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -135,13 +159,14 @@ code{font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4p
     <div class="top-row">
       <div class="brand">
         <span class="eyebrow" id="hdrEyebrow">Manpower plan · FY2027 · OMR</span>
-        <h1 id="hdrTitle">Manpower Budget Planner</h1>
+        <h1>Manpower Budget Planner</h1>
       </div>
       <span class="status" id="saveStatus" data-s="local"><i></i><span>Loading…</span></span>
       <button class="btn primary" id="btnExportXlsx" type="button">Export to Excel</button>
     </div>
     <nav class="tabs" role="tablist" aria-label="Sections">
       <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+      <button role="tab" data-tab="emp" aria-selected="false">Employees</button>
       <button role="tab" data-tab="plan" aria-selected="false">Headcount plan</button>
       <button role="tab" data-tab="budget" aria-selected="false">Budget detail</button>
       <button role="tab" data-tab="scen" aria-selected="false">Scenarios</button>
@@ -155,7 +180,7 @@ code{font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4p
   <!-- OVERVIEW -->
   <section class="view" id="v-overview">
     <div id="sampleBanner" class="callout" hidden>
-      You are looking at <b>example data</b> (3,100 staff across 11 departments) so every screen shows how the tool works. Replace it with your own figures on the <b>Import &amp; export</b> tab, or edit lines directly in <b>Headcount plan</b>.
+      You are looking at <b>example data</b>: a generated file of 3,100 employees across 11 departments, with no real people in it. Load your own employee master file on the <b>Import &amp; export</b> tab and every screen recalculates from it.
     </div>
     <div class="kpis" id="kpis"></div>
     <div class="grid2">
@@ -185,12 +210,51 @@ code{font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4p
     </div>
   </section>
 
+  <!-- EMPLOYEES -->
+  <section class="view" id="v-emp" hidden>
+    <div class="panel" id="empEmpty">
+      <div class="panel-head"><h2>No employee file loaded</h2></div>
+      <p class="note" style="max-width:75ch;margin-bottom:12px">The plan is currently built from summary lines. Load your employee master file (one row per employee, with department, nationality and pay) to cost every person individually, find retirements and contract ends in the budget year, and see the workforce profile of each department.</p>
+      <button class="btn primary" type="button" data-goto="data">Load employee file</button>
+    </div>
+    <div class="stack" id="empBody">
+      <div class="kpis" id="empKpis"></div>
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-head"><h2>Known leavers in FY</h2><p>Found from dates of birth and contract end dates</p></div>
+          <div id="empFlags"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Age profile</h2><p>Employees by age at the start of the budget year</p></div>
+          <div class="legend"><span><i style="background:var(--s1)"></i>Omani</span><span><i style="background:var(--s2)"></i>Expatriate</span></div>
+          <div class="chart-scroll" id="chAge"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Workforce by department</h2><p id="profileSub">From the employee file</p></div>
+        <div class="tbl-wrap"><table id="tblProfile"></table></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Employee list</h2><p>Set a planned exit month or a personal increment. Budget figures update straight away.</p></div>
+        <div class="toolbar" style="margin-bottom:12px">
+          <label class="sr" for="eDept">Department</label><select id="eDept"></select>
+          <label class="sr" for="eNat">Nationality</label><select id="eNat"><option value="">Omani &amp; expat</option><option value="1">Omani</option><option value="0">Expatriate</option></select>
+          <label class="sr" for="eFlag">Show</label><select id="eFlag"><option value="">All employees</option><option value="ret">Retiring in FY</option><option value="con">Contract ends in FY</option><option value="exit">Planned exits</option><option value="pay">Missing pay</option></select>
+          <label class="sr" for="eSort">Sort</label><select id="eSort"><option value="id">Sort: Employee ID</option><option value="cost">Sort: FY cost, highest first</option><option value="age">Sort: Age, oldest first</option><option value="svc">Sort: Service, longest first</option></select>
+          <label class="sr" for="eSearch">Search</label><input id="eSearch" type="search" placeholder="Search ID, name, job, grade">
+        </div>
+        <div class="tbl-wrap" style="max-height:70vh"><table id="tblEmp"></table></div>
+        <div class="pager" id="empPager"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- PLAN -->
   <section class="view" id="v-plan" hidden>
     <div class="panel">
       <div class="panel-head">
         <h2>Headcount plan</h2>
-        <p>One line per department × position/grade × nationality. Salaries are monthly averages in OMR.</p>
+        <p id="planSub">One line per department × position/grade × nationality. Salaries are monthly averages in OMR.</p>
       </div>
       <div class="toolbar" style="margin-bottom:12px">
         <label class="sr" for="fDept">Filter by department</label>
@@ -202,18 +266,12 @@ code{font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4p
       </div>
       <div class="tbl-wrap" style="max-height:70vh">
         <table id="tblPlan">
-          <thead><tr>
-            <th>Department</th><th>Position / grade</th><th>Nat.</th>
-            <th class="n">Current HC</th><th class="n">New hires</th><th>Start</th>
-            <th class="n">Exits</th><th>Last month</th>
-            <th class="n">Basic / mo</th><th class="n">Allow. / mo</th>
-            <th class="n">Closing HC</th><th class="n">FY cost (OMR)</th><th></th>
-          </tr></thead>
+          <thead></thead>
           <tbody></tbody>
           <tfoot></tfoot>
         </table>
       </div>
-      <p class="note" style="margin-top:10px">Nat.: O = Omani, E = Expatriate. “Start” is the month new hires join; “Last month” is the final month leavers are on payroll. Costs update as you type.</p>
+      <p class="note" id="planNote" style="margin-top:10px"></p>
     </div>
   </section>
 
@@ -264,11 +322,12 @@ code{font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4p
     <div class="panel">
       <div class="panel-head"><h2>How the budget is calculated</h2></div>
       <div class="note" style="display:grid;gap:6px;max-width:80ch">
-        <span>Each plan line is costed month by month. Heads in month <i>m</i> = current HC + new hires (from their start month) − exits (after their last month).</span>
-        <span>Basic and allowances rise by the increment from its effective month. Overtime is a % of basic per department; bonus accrues as <i>n</i> months of basic.</span>
+        <span>With an employee file loaded, every employee is costed individually at their own basic and allowances, from January until their planned exit month. Without one, each plan line is costed at its average pay.</span>
+        <span>New hires join from their start month at the line's new-hire pay. Other exits (unnamed attrition) leave after their last month at the line's average pay.</span>
+        <span>Basic and allowances rise by the increment from its effective month; an employee's personal increment overrides the company rate. Overtime is a % of basic per department; bonus accrues as <i>n</i> months of basic.</span>
         <span>Social protection applies to Omani and expatriate staff at their own rates, on basic or gross pay. End-of-service accrues on expatriate basic. Air tickets apply to expatriates; medical and training apply per head per year.</span>
         <span>Recruitment cost is charged in each new hire's start month. Contingency is a % on each department's total.</span>
-        <span>The run-rate is today's headcount at today's pay for 12 months with no increment, hires or exits; the bridge shows what each change adds.</span>
+        <span>The run-rate is today's staff at today's pay for 12 months with no increment, hires or exits; the bridge shows what each change adds.</span>
       </div>
     </div>
   </section>
@@ -276,21 +335,20 @@ code{font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4p
   <!-- DATA -->
   <section class="view" id="v-data" hidden>
     <div class="panel">
-      <div class="panel-head"><h2>Import your data</h2><p>Excel (.xlsx) or CSV. Employee-level or summarised files both work.</p></div>
+      <div class="panel-head"><h2>Employee master file</h2><p>One row per employee, exported from your HR or payroll system (.xlsx or .csv)</p></div>
+      <ol class="steps" id="wizSteps"><li class="on">Choose file</li><li>Match columns</li><li>Check &amp; import</li></ol>
+      <div id="wizBody"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Summary plan or backup</h2><p>Already-summarised headcount lines (.xlsx/.csv), or a planner backup (.json)</p></div>
       <div class="dropzone" id="drop">
         <p style="margin:0 0 10px">Drop a file here, or</p>
-        <label class="btn primary" for="fileIn" style="display:inline-flex;cursor:pointer">Choose file</label>
+        <label class="btn" for="fileIn">Choose file</label>
         <input id="fileIn" type="file" accept=".xlsx,.xls,.csv,.json" class="sr">
       </div>
       <div id="importPreview" style="margin-top:14px"></div>
-      <div class="note" style="margin-top:14px;display:grid;gap:6px;max-width:90ch">
-        <span><b>Columns recognised</b> (header names are matched loosely): Department, Position (or Grade / Job title), Nationality, Current HC, New hires, Start month, Exits, Last month, Basic, Allowances.</span>
-        <span><b>Employee-level export</b> from your HR system: leave out “Current HC”. Each row counts as one person, and rows are grouped by department, position and nationality with average pay.</span>
-        <span>Nationality accepts Omani / O / OM / Local; anything else is treated as Expatriate. Months accept 1–12 or Jan–Dec.</span>
-      </div>
-      <div class="toolbar" style="margin-top:12px">
-        <button class="btn" id="btnTemplate" type="button">Download import template</button>
-      </div>
+      <p class="note" style="margin-top:12px;max-width:90ch">Columns recognised: Department, Position (or Grade), Nationality, Current HC, New hires, Start month, Exits, Last month, Basic, Allowances. Importing a summary plan with “Replace” removes any loaded employee file.</p>
+      <div class="toolbar" style="margin-top:12px"><button class="btn" id="btnTemplate" type="button">Download summary template</button></div>
     </div>
     <div class="panel">
       <div class="panel-head"><h2>Export &amp; backup</h2><p>Take the budget to Finance, or keep a copy of the whole plan</p></div>
@@ -326,7 +384,8 @@ const GROUPS = [
   {k:"ben", label:"Tickets, medical & training", c:"--s4"},
   {k:"rec", label:"Recruitment", c:"--s5"},
 ];
-const LS_KEY = "manpower-planner-v1";
+const LS_KEY = "manpower-planner-v1", LS_ROS = "manpower-planner-v1:roster";
+const ROSTER_CHUNK = 400;
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -335,11 +394,13 @@ const nf1 = new Intl.NumberFormat("en-GB", {maximumFractionDigits:1, minimumFrac
 const f0 = v => nf0.format(Math.round(v || 0));
 const fM = v => { const a = Math.abs(v); return a >= 1e6 ? (v/1e6).toFixed(2) + "m" : a >= 1e3 ? (v/1e3).toFixed(0) + "k" : f0(v); };
 const fPct = v => isFinite(v) ? nf1.format(v) + "%" : "—";
-const sgn = v => (v > 0 ? "+" : v < 0 ? "−" : "") ;
+const sgn = v => (v > 0 ? "+" : v < 0 ? "−" : "");
 const fDelta = (v, fmt = fM) => sgn(v) + fmt(Math.abs(v));
 const num = v => { const n = parseFloat(String(v ?? "").replace(/[, ]/g, "")); return isFinite(n) ? n : 0; };
 const clampM = v => Math.min(12, Math.max(1, Math.round(num(v)) || 1));
-const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const trunc = (s, n) => { s = String(s); return s.length > n ? s.slice(0, n - 1) + "…" : s; };
+const pad2 = n => String(n).padStart(2, "0");
+const ymd = (y, m, d) => (y > 1900 && y < 2200 && m >= 1 && m <= 12 && d >= 1 && d <= 31) ? `${y}-${pad2(m)}-${pad2(d)}` : "!";
 
 /* ---------- Example data ---------- */
 function sampleState(){
@@ -361,19 +422,19 @@ function sampleState(){
   D.forEach(([name, ot, ls], i) => {
     const id = "d" + (i + 1);
     depts.push({id, name, ot, prior: fy26[i], ceiling: 0});
-    ls.forEach(([role, nat, hc, hires, hireM, exits, exitM, basic, allow]) =>
-      lines.push({id: uid(), dept: id, role, nat, hc, hires, hireM, exits, exitM, basic, allow}));
+    ls.forEach(([role, nat, hc, hires, hireM, exits, exitM, basic, allow], j) =>
+      lines.push({id: `l${i + 1}-${j + 1}`, dept: id, role, nat, hc, hires, hireM, exits, exitM, basic, allow}));
   });
   depts[0].ceiling = 31e6; depts[1].ceiling = 15.5e6;
   return {
-    v: 1, sample: true, savedAt: 0,
+    v: 2, sample: true, savedAt: 0,
     fy: 2027, org: "", baseYear: 2026,
     a: { incPct: 3, incMonth: 1, bonusMonths: 1, omSI: 12.5, exSI: 1, siBase: "gross", eosbPct: 8.33,
-         ticket: 350, medO: 280, medE: 420, training: 220, recO: 400, recE: 1800, contingency: 2, omanTarget: 85 },
+         ticket: 350, medO: 280, medE: 420, training: 220, recO: 400, recE: 1800, contingency: 2, omanTarget: 85, retO: 60, retE: 60 },
     depts, lines,
     scen: [
-      {id: uid(), name: "Hiring slowdown", hirePct: 60, delay: 3, incPct: 3, otPct: 100, bonusMonths: 1},
-      {id: uid(), name: "Growth & retention", hirePct: 100, delay: 0, incPct: 4.5, otPct: 110, bonusMonths: 1.5},
+      {id: "s1", name: "Hiring slowdown", hirePct: 60, delay: 3, incPct: 3, otPct: 100, bonusMonths: 1},
+      {id: "s2", name: "Growth & retention", hirePct: 100, delay: 0, incPct: 4.5, otPct: 110, bonusMonths: 1.5},
     ],
   };
 }
@@ -382,69 +443,114 @@ function blankState(){
   s.sample = false; s.lines = []; s.depts = [{id: "d1", name: "New department", ot: 2, prior: 0, ceiling: 0}];
   s.scen = []; return s;
 }
+function mulberry32(a){ return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function sampleRoster(st){
+  const rnd = mulberry32(20270), emps = [], fy = st.fy; let n = 10001;
+  const r10 = v => Math.round(v / 10) * 10;
+  for (const l of st.lines){
+    const female = /cabin|purser/i.test(l.role) ? 0.5 : /contact|hr|finance|customer|marketing|sales/i.test(l.role) ? 0.4 : 0.12;
+    const ageMin = /captain|manager|instructor|auditor|specialist/i.test(l.role) ? 34 : 22;
+    for (let i = 0; i < l.hc; i++){
+      const age = ageMin + Math.floor(Math.pow(rnd(), 1.25) * (60 - ageMin));
+      const by = fy - 1 - age, bm = 1 + Math.floor(rnd() * 12), bd = 1 + Math.floor(rnd() * 28);
+      const svc = Math.floor(rnd() * Math.min(Math.max(1, age - 21), 30));
+      const f = 0.8 + rnd() * 0.35 + svc * 0.006;
+      const bs = r10(l.basic * f), al = r10(l.allow * (0.9 + rnd() * 0.2));
+      const ce = l.nat === "E" ? `${fy + Math.floor(rnd() * 3)}-${pad2(1 + Math.floor(rnd() * 12))}-${pad2(1 + Math.floor(rnd() * 28))}` : "";
+      const g = bs >= 3000 ? "G1" : bs >= 2000 ? "G2" : bs >= 1300 ? "G3" : bs >= 900 ? "G4" : bs >= 600 ? "G5" : "G6";
+      emps.push({i: "EX" + n++, n: "", k: l.id, s: "", j: l.role, g, o: l.nat === "O" ? 1 : 0, x: rnd() < female ? "F" : "M",
+        dob: `${by}-${pad2(bm)}-${pad2(bd)}`, jd: `${fy - 1 - svc}-${pad2(1 + Math.floor(rnd() * 12))}-01`, ce, bs, al, inc: null, ex: 0});
+    }
+  }
+  return {sample: true, fileName: "Example employee file", importedAt: 0, savedAt: 0, groupBy: "job", emps};
+}
 
 /* ---------- Cost engine ---------- */
-function calcLine(l, dept, A, o = {}){
-  const r = {pay:0, var:0, stat:0, ben:0, rec:0, total:0, m: new Array(12).fill(0), h: new Array(12).fill(0), basic:0, allow:0, ot:0, bonus:0, si:0, eosb:0, ticket:0, med:0, train:0};
-  const isO = l.nat === "O";
-  const inc = (o.incPct ?? A.incPct) / 100;
+const COST_KEYS = ["basic","allow","ot","bonus","si","eosb","ticket","med","train","rec"];
+const newAcc = () => ({basic:0, allow:0, ot:0, bonus:0, si:0, eosb:0, ticket:0, med:0, train:0, rec:0, m: new Array(12).fill(0), h: new Array(12).fill(0)});
+// Adds the cost of h[month] heads (negative = savings) at the given monthly pay into acc.
+function costHeads(acc, h, basic, allow, isO, otR, A, o, incPct, recM, recN){
+  const inc = incPct / 100, bm = o.bonusMonths ?? A.bonusMonths, siR = (isO ? A.omSI : A.exSI) / 100;
+  for (let i = 0; i < 12; i++){
+    const hh = h[i], m = i + 1, rc = m === recM ? recN * (isO ? A.recO : A.recE) : 0;
+    if (!hh && !rc) continue;
+    const rate = o.noInc ? 1 : (m >= A.incMonth ? 1 + inc : 1);
+    const b = hh * basic * rate, a = hh * allow * rate;
+    const ot = b * otR, bo = b * bm / 12;
+    const si = (A.siBase === "basic" ? b : b + a) * siR;
+    const eo = isO ? 0 : b * A.eosbPct / 100;
+    const tk = isO ? 0 : hh * A.ticket / 12;
+    const md = hh * (isO ? A.medO : A.medE) / 12;
+    const tr = hh * A.training / 12;
+    acc.basic += b; acc.allow += a; acc.ot += ot; acc.bonus += bo; acc.si += si; acc.eosb += eo; acc.ticket += tk; acc.med += md; acc.train += tr; acc.rec += rc;
+    acc.m[i] += b + a + ot + bo + si + eo + tk + md + tr + rc; acc.h[i] += hh;
+  }
+}
+function finish(r){
+  r.pay = r.basic + r.allow; r.var = r.ot + r.bonus; r.stat = r.si + r.eosb; r.ben = r.ticket + r.med + r.train;
+  r.total = r.pay + r.var + r.stat + r.ben + r.rec; r.fte = r.h.reduce((s, x) => s + x, 0) / 12; return r;
+}
+const H_ONE = last => Array.from({length: 12}, (_, i) => i + 1 <= last ? 1 : 0);
+function calcLine(l, dept, A, o = {}, emps = null){
+  const r = newAcc(), isO = l.nat === "O";
+  const lineInc = o.incPct ?? A.incPct;
   const hiresPlan = o.noHires ? 0 : num(l.hires) * (o.hirePct ?? 100) / 100;
   const hireM = clampM(l.hireM) + (o.delay || 0);
   const hires = hireM <= 12 ? hiresPlan : 0;
   const exits = o.noExits ? 0 : num(l.exits);
   const exitM = clampM(l.exitM || 12);
   const otR = num(dept?.ot) / 100 * (o.otPct ?? 100) / 100;
-  const bm = o.bonusMonths ?? A.bonusMonths;
-  const siR = (isO ? A.omSI : A.exSI) / 100;
-  const basic = num(l.basic), allow = num(l.allow), hc = num(l.hc);
-  for (let m = 1; m <= 12; m++){
-    const h = Math.max(0, hc + (m >= hireM ? hires : 0) - (m > exitM ? exits : 0));
-    const rate = o.noInc ? 1 : (m >= A.incMonth ? 1 + inc : 1);
-    const b = h * basic * rate, a = h * allow * rate;
-    const ot = b * otR, bo = b * bm / 12;
-    const si = (A.siBase === "basic" ? b : b + a) * siR;
-    const eo = isO ? 0 : b * A.eosbPct / 100;
-    const tk = isO ? 0 : h * A.ticket / 12;
-    const md = h * (isO ? A.medO : A.medE) / 12;
-    const tr = h * A.training / 12;
-    const rc = m === hireM ? hires * (isO ? A.recO : A.recE) : 0;
-    r.basic += b; r.allow += a; r.ot += ot; r.bonus += bo; r.si += si; r.eosb += eo; r.ticket += tk; r.med += md; r.train += tr;
-    r.pay += b + a; r.var += ot + bo; r.stat += si + eo; r.ben += tk + md + tr; r.rec += rc;
-    r.m[m-1] = b + a + ot + bo + si + eo + tk + md + tr + rc; r.h[m-1] = h;
+  const basic = num(l.basic), allow = num(l.allow);
+  if (emps){
+    let named = 0;
+    for (const e of emps){
+      const ex = (!o.noExits && e.ex) ? e.ex : 12;
+      if (!o.noExits && e.ex) named++;
+      costHeads(r, H_ONE(ex), e.bs, e.al, isO, otR, A, o, e.inc ?? lineInc, 0, 0);
+    }
+    const h = Array.from({length: 12}, (_, i) => (i + 1 >= hireM ? hires : 0) - (i + 1 > exitM ? exits : 0));
+    costHeads(r, h, basic, allow, isO, otR, A, o, lineInc, hireM, hires);
+    r.open = emps.length; r.named = named; r.hires = hires; r.exits = named + exits;
+    r.close = Math.max(0, emps.length - named + hires - exits);
+  } else {
+    const hc = num(l.hc);
+    const h = Array.from({length: 12}, (_, i) => Math.max(0, hc + (i + 1 >= hireM ? hires : 0) - (i + 1 > exitM ? exits : 0)));
+    costHeads(r, h, basic, allow, isO, otR, A, o, lineInc, hireM, hires);
+    r.open = hc; r.named = 0; r.hires = hires; r.exits = Math.min(exits, hc + hires); r.close = Math.max(0, hc + hires - exits);
   }
-  r.total = r.pay + r.var + r.stat + r.ben + r.rec;
-  r.open = hc; r.hires = hires; r.exits = Math.min(exits, hc + hires); r.close = Math.max(0, hc + hires - exits);
-  r.fte = r.h.reduce((s, x) => s + x, 0) / 12;
-  return r;
+  return finish(r);
 }
-const COST_KEYS = ["basic","allow","ot","bonus","si","eosb","ticket","med","train","rec"];
-function compute(S, o = {}){
-  const A = S.a, map = new Map(), lineRes = new Map();
-  const blank = () => ({sub:0, cont:0, total:0, open:0, close:0, openO:0, closeO:0, hires:0, exits:0, fte:0, m:new Array(12).fill(0), h:new Array(12).fill(0), pay:0, var:0, stat:0, ben:0, rec:0, ...Object.fromEntries(COST_KEYS.map(k => [k, 0]))});
-  S.depts.forEach(d => map.set(d.id, {d, ...blank()}));
-  for (const l of S.lines){
+function empCost(e){
+  const l = lineById(e.k); if (!l) return 0;
+  const d = S.depts.find(x => x.id === l.dept), r = newAcc();
+  costHeads(r, H_ONE(e.ex || 12), e.bs, e.al, l.nat === "O", num(d?.ot) / 100, S.a, {}, e.inc ?? S.a.incPct, 0, 0);
+  return finish(r).total;
+}
+function compute(st, o = {}){
+  const A = st.a, map = new Map(), lineRes = new Map(), idx = rosterIndex();
+  const blank = () => ({sub:0, cont:0, total:0, open:0, close:0, openO:0, closeO:0, hires:0, exits:0, named:0, fte:0, m:new Array(12).fill(0), h:new Array(12).fill(0), pay:0, var:0, stat:0, ben:0, ...Object.fromEntries(COST_KEYS.map(k => [k, 0]))});
+  st.depts.forEach(d => map.set(d.id, {d, ...blank()}));
+  for (const l of st.lines){
     const g = map.get(l.dept); if (!g) continue;
-    const r = calcLine(l, g.d, A, o); lineRes.set(l.id, r);
-    for (const k of ["pay","var","stat","ben","rec","open","close","hires","exits","fte", ...COST_KEYS]) g[k] += r[k] || 0;
+    const r = calcLine(l, g.d, A, o, idx ? (idx.get(l.id) || []) : null); lineRes.set(l.id, r);
+    for (const k of ["pay","var","stat","ben","open","close","hires","exits","named","fte", ...COST_KEYS]) g[k] += r[k] || 0;
     g.sub += r.total;
     if (l.nat === "O"){ g.openO += r.open; g.closeO += r.close; }
     r.m.forEach((v, i) => { g.m[i] += v; g.h[i] += r.h[i]; });
   }
-  const depts = [...map.values()];
-  const tot = blank();
+  const depts = [...map.values()], tot = blank(), cf = o.noCont ? 0 : A.contingency / 100;
   for (const g of depts){
-    g.cont = o.noCont ? 0 : g.sub * A.contingency / 100;
-    g.total = g.sub + g.cont;
+    g.cont = g.sub * cf; g.total = g.sub + g.cont;
     for (const k of Object.keys(tot)) if (typeof tot[k] === "number") tot[k] += g[k];
-    g.m.forEach((v, i) => { tot.m[i] += v * (1 + (o.noCont ? 0 : A.contingency / 100)); tot.h[i] += g.h[i]; });
+    g.m.forEach((v, i) => { tot.m[i] += v * (1 + cf); tot.h[i] += g.h[i]; });
   }
   return {depts, tot, lineRes};
 }
-function bridge(S){
-  const rr = compute(S, {noHires:true, noExits:true, noInc:true, noCont:true}).tot.sub;
-  const wInc = compute(S, {noHires:true, noExits:true, noCont:true}).tot.sub;
-  const wExit = compute(S, {noHires:true, noCont:true}).tot.sub;
-  const full = compute(S);
+function bridge(st){
+  const rr = compute(st, {noHires:true, noExits:true, noInc:true, noCont:true}).tot.sub;
+  const wInc = compute(st, {noHires:true, noExits:true, noCont:true}).tot.sub;
+  const wExit = compute(st, {noHires:true, noCont:true}).tot.sub;
+  const full = compute(st);
   return [
     {label:"Run-rate", v:rr, kind:"total"},
     {label:"Increment", v:wInc - rr},
@@ -455,12 +561,32 @@ function bridge(S){
   ];
 }
 
+/* ---------- Roster helpers ---------- */
+let ROS = null, rosVer = 0, idxCache = {ver: -1, idx: null};
+const rosterOn = () => !!(ROS && ROS.emps && ROS.emps.length);
+function rosterIndex(){
+  if (!rosterOn()) return null;
+  if (idxCache.ver !== rosVer){ const m = new Map(); for (const e of ROS.emps){ if (!m.has(e.k)) m.set(e.k, []); m.get(e.k).push(e); } idxCache = {ver: rosVer, idx: m}; }
+  return idxCache.idx;
+}
+const lineById = id => S.lines.find(l => l.id === id);
+const empDept = e => { const l = lineById(e.k); return l ? l.dept : null; };
+function ageAt(e){ if (!e.dob) return null; const [y, m, d] = e.dob.split("-").map(Number); return S.fy - 1 - y + ((m === 1 && d === 1) ? 1 : 0); }
+function svcAt(e){ if (!e.jd) return null; const [y, m] = e.jd.split("-").map(Number); return Math.max(0, S.fy - y - (m > 1 ? 1 : 0)); }
+function empFlags(e){
+  const f = {};
+  if (e.dob){ const [y, m] = e.dob.split("-").map(Number); const ra = e.o ? S.a.retO : S.a.retE; if (ra > 0){ const t = S.fy - y; if (t === ra) f.ret = m; else if (t > ra) f.ret = 1; } }
+  if (e.ce){ const [y, m] = e.ce.split("-").map(Number); if (y === S.fy) f.con = m; else if (y < S.fy) f.con = 1; }
+  if (!(e.bs > 0)) f.pay = 1;
+  return f;
+}
+
 /* ---------- State & persistence ---------- */
 let S = null, R = null;
-let store = {db:null, ref:null, mode:"local"};
-let saveTimer = null;
-function loadLocal(){ try { const t = localStorage.getItem(LS_KEY); return t ? JSON.parse(t) : null; } catch { return null; } }
-function saveLocal(){ try { localStorage.setItem(LS_KEY, JSON.stringify(S)); return true; } catch { return false; } }
+let store = {db:null, base:null, mode:"local"};
+let saveTimer = null, rosTimer = null;
+const lsGet = k => { try { const t = localStorage.getItem(k); return t ? JSON.parse(t) : null; } catch { return null; } };
+const lsSet = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
 function setStatus(s, text){ const el = $("#saveStatus"); el.dataset.s = s; el.lastElementChild.textContent = text; }
 function normalise(s){
   const d = sampleState();
@@ -471,33 +597,60 @@ function normalise(s){
 }
 function persist(){
   S.savedAt = Date.now();
-  clearTimeout(saveTimer);
-  setStatus("busy", "Saving…");
+  clearTimeout(saveTimer); setStatus("busy", "Saving…");
   saveTimer = setTimeout(async () => {
-    const okLocal = saveLocal();
-    if (store.ref){
-      try { await store.ref.set(JSON.parse(JSON.stringify(S))); setStatus("ok", "Saved to your account"); return; }
-      catch (e) { if (e && e.code === "quota_exceeded") setStatus("local", "Plan too large for account storage · saved in this browser"); else setStatus("local", okLocal ? "Saved in this browser" : "Not saved"); return; }
+    const okLocal = lsSet(LS_KEY, S);
+    if (store.db){
+      try { await store.db.doc(store.base + "/plan").set(JSON.parse(JSON.stringify(S))); setStatus("ok", "Saved to your account"); return; }
+      catch (e) { setStatus("local", okLocal ? "Saved in this browser" : "Not saved · export a backup"); return; }
     }
     setStatus("local", okLocal ? "Saved in this browser" : "Not saved · export a backup");
   }, 900);
 }
+function persistRoster(){
+  if (ROS) ROS.savedAt = Date.now();
+  clearTimeout(rosTimer); setStatus("busy", "Saving…");
+  rosTimer = setTimeout(async () => {
+    const okLocal = lsSet(LS_ROS, ROS);
+    if (!store.db){ setStatus("local", okLocal ? "Saved in this browser" : "Employee file too large for this browser · export a backup"); return; }
+    try {
+      const metaRef = store.db.doc(store.base + "/roster");
+      const prev = await metaRef.get();
+      const prevN = prev.exists ? (prev.data().chunks || 0) : 0;
+      const emps = ROS ? ROS.emps : [], n = Math.ceil(emps.length / ROSTER_CHUNK);
+      for (let c = 0; c < n; c++) await store.db.doc(`${store.base}/roster-${c}`).set({c, emps: emps.slice(c * ROSTER_CHUNK, (c + 1) * ROSTER_CHUNK)});
+      for (let c = n; c < prevN; c++) await store.db.doc(`${store.base}/roster-${c}`).delete();
+      await metaRef.set(ROS ? {chunks: n, fileName: ROS.fileName || "", importedAt: ROS.importedAt || 0, savedAt: ROS.savedAt, groupBy: ROS.groupBy || "", sample: !!ROS.sample} : {chunks: 0, savedAt: Date.now(), cleared: true});
+      setStatus("ok", "Saved to your account");
+    } catch (e) { setStatus("local", okLocal ? "Saved in this browser" : "Not saved · export a backup"); }
+  }, 1200);
+}
 function changed(){ recalc(); persist(); }
+function rosterChanged(){ rosVer++; recalc(); persistRoster(); }
 
 async function initStore(){
-  const use = window.claude && window.claude.use;
-  if (!use) { setStatus("local", "Saved in this browser"); updateStorageNote(); return; }
+  if (!(window.claude && window.claude.use)){ setStatus("local", "Saved in this browser"); updateStorageNote(); return; }
   try {
     const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
     const id = user ? await user.id() : null;
     if (db && id){
-      store.db = db; store.ref = db.doc("data/users/" + id + "/plan"); store.mode = "account";
-      const snap = await store.ref.get();
-      if (snap.exists){
-        const remote = normalise(snap.data());
-        if ((remote.savedAt || 0) >= (S.savedAt || 0)) { S = remote; saveLocal(); renderAll(); }
-        else persist();
-      }
+      store.db = db; store.base = "data/users/" + id; store.mode = "account";
+      const [pSnap, mSnap] = await Promise.all([db.doc(store.base + "/plan").get(), db.doc(store.base + "/roster").get()]);
+      let redraw = false;
+      if (pSnap.exists){ const remote = normalise(pSnap.data()); if ((remote.savedAt || 0) >= (S.savedAt || 0)){ S = remote; lsSet(LS_KEY, S); redraw = true; } else persist(); }
+      if (mSnap.exists){
+        const meta = mSnap.data();
+        if ((meta.savedAt || 0) >= ((ROS && ROS.savedAt) || 0)){
+          if (meta.cleared || !meta.chunks) ROS = S.sample ? sampleRoster(S) : null;
+          else {
+            const parts = await Promise.all(Array.from({length: meta.chunks}, (_, c) => db.doc(`${store.base}/roster-${c}`).get()));
+            const emps = parts.flatMap(p => p.exists ? (p.data().emps || []) : []);
+            ROS = {sample: !!meta.sample, fileName: meta.fileName, importedAt: meta.importedAt, savedAt: meta.savedAt, groupBy: meta.groupBy, emps};
+          }
+          lsSet(LS_ROS, ROS); rosVer++; redraw = true;
+        } else if (ROS && !ROS.sample) persistRoster();
+      } else if (ROS && !ROS.sample) persistRoster();
+      if (redraw) renderAll();
       setStatus("ok", "Saved to your account");
     } else setStatus("local", "Saved in this browser");
   } catch { setStatus("local", "Saved in this browser"); }
@@ -505,7 +658,7 @@ async function initStore(){
 }
 function updateStorageNote(){
   $("#storageNote").textContent = store.mode === "account"
-    ? "Your plan is saved privately to your account: nobody you share this page with can see your figures. Changes save automatically. Export a .json backup before major changes."
+    ? "Your plan and employee file are saved privately to your account: nobody you share this page with can see them. Changes save automatically. Export a .json backup before major changes."
     : "Your plan is saved in this browser only. Clearing site data or switching device loses it, so export a .json backup regularly.";
 }
 
@@ -524,7 +677,7 @@ document.addEventListener("mousemove", e => {
 document.addEventListener("scroll", () => tip.hidden = true, true);
 
 /* ---------- Charts ---------- */
-function niceMax(v){ if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))); const n = v / p; return ([1,1.2,1.6,2,2.4,3,4,5,6,8,10].find(x => n <= x)) * p; }
+function niceMax(v){ if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))); const n = v / p; return [1,1.2,1.6,2,2.4,3,4,5,6,8,10].find(x => n <= x) * p; }
 function chartDept(){
   const rows = [...R.depts].filter(g => g.total > 0 || g.open > 0).sort((a, b) => b.total - a.total);
   const W = 760, L = 190, RP = 70, rowH = 28, T = 8, B = 26, H = T + rows.length * rowH + B;
@@ -539,8 +692,7 @@ function chartDept(){
     GROUPS.forEach(gr => {
       const v = g[gr.k] * (1 + S.a.contingency / 100); if (v <= 0) return;
       const x0 = x(acc), x1 = x(acc + v); acc += v;
-      const w = Math.max(0, x1 - x0 - 1.5);
-      s += `<rect x="${x0}" y="${y}" width="${w}" height="${bh}" rx="2" fill="var(${gr.c})" data-tip="<b>${esc(g.d.name)}</b><br>${gr.label}: OMR ${f0(v)}<br>${fPct(v / g.total * 100)} of department"/>`;
+      s += `<rect x="${x0}" y="${y}" width="${Math.max(0, x1 - x0 - 1.5)}" height="${bh}" rx="2" fill="var(${gr.c})" data-tip="<b>${esc(g.d.name)}</b><br>${gr.label}: OMR ${f0(v)}<br>${fPct(v / g.total * 100)} of department"/>`;
     });
     if (g.d.ceiling > 0){ const cx = x(g.d.ceiling); s += `<line x1="${cx}" x2="${cx}" y1="${y - 3}" y2="${y + bh + 3}" stroke="var(--fg)" stroke-width="2" data-tip="Ceiling OMR ${f0(g.d.ceiling)}"/>`; }
     s += `<text x="${x(g.total) + 6}" y="${y + bh / 2 + 4}" style="fill:var(--fg);font-weight:600">${fM(g.total)}</text>`;
@@ -550,14 +702,14 @@ function chartDept(){
   $("#chDept").innerHTML = s;
   $("#lgDept").innerHTML = GROUPS.map(g => `<span><i style="background:var(${g.c})"></i>${g.label}</span>`).join("") + `<span><i style="background:var(--fg);width:2px;height:12px"></i>Budget ceiling</span>`;
 }
-function trunc(s, n){ s = String(s); return s.length > n ? s.slice(0, n - 1) + "…" : s; }
 function chartBridge(){
   const steps = bridge(S);
   const W = 640, H = 260, L = 56, T = 20, B = 36, RP = 10;
   const tops = []; let run = 0;
   steps.forEach(st => { if (st.kind === "total"){ st.a = 0; st.b = st.v; run = st.v; } else { st.a = run; st.b = run + st.v; run += st.v; } tops.push(st.a, st.b); });
-  const vmax = Math.max(...tops), vmin = Math.min(...tops.filter(v => v > 0).concat([vmax])) ;
-  const lo = Math.max(0, Math.floor((vmin * 0.9) / niceMax(vmax / 10)) * niceMax(vmax / 10));
+  const vmax = Math.max(...tops, 1), pos = tops.filter(v => v > 0), vmin = pos.length ? Math.min(...pos) : 0;
+  const step = niceMax(vmax / 10);
+  const lo = Math.max(0, Math.floor((vmin * 0.9) / step) * step);
   const hi = vmax + (vmax - lo) * 0.08;
   const y = v => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
   const bw = (W - L - RP) / steps.length;
@@ -573,14 +725,12 @@ function chartBridge(){
     s += `<text x="${x0 + w / 2}" y="${H - 14}" text-anchor="middle">${st.label}</text>`;
     if (i < steps.length - 1){ const nx = L + (i + 1) * bw + bw * 0.18; s += `<line x1="${x0 + w}" x2="${nx}" y1="${y(st.b)}" y2="${y(st.b)}" stroke="var(--line-2)" stroke-dasharray="3 3"/>`; }
   });
-  s += `</svg>`;
-  $("#chBridge").innerHTML = s;
+  $("#chBridge").innerHTML = s + `</svg>`;
 }
 function chartOman(){
   const rows = R.depts.filter(g => g.close > 0).map(g => ({n: g.d.name, p: g.closeO / g.close * 100, g})).sort((a, b) => a.p - b.p);
   const W = 560, L = 190, RP = 60, rowH = 24, T = 18, B = 8, H = T + rows.length * rowH + B;
-  const x = v => L + v / 100 * (W - L - RP);
-  const tgt = S.a.omanTarget;
+  const x = v => L + v / 100 * (W - L - RP), tgt = S.a.omanTarget;
   let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Omanisation by department">`;
   [0, 50, 100].forEach(v => s += `<line class="grid" x1="${x(v)}" x2="${x(v)}" y1="${T}" y2="${H - B}"/><text x="${x(v)}" y="${T - 6}" text-anchor="middle">${v}%</text>`);
   rows.forEach((r, i) => {
@@ -589,35 +739,46 @@ function chartOman(){
     s += `<rect x="${L}" y="${y}" width="${Math.max(1, x(r.p) - L)}" height="${bh}" rx="2" fill="${below ? "var(--warn)" : "var(--s3)"}" data-tip="<b>${esc(r.n)}</b><br>Omani ${f0(r.g.closeO)} of ${f0(r.g.close)} (${fPct(r.p)})<br>Target ${fPct(tgt)}${below ? " · short by " + f0(Math.ceil(tgt / 100 * r.g.close - r.g.closeO)) + " Omani staff" : ""}"/>`;
     s += `<text x="${x(r.p) + 6}" y="${y + bh / 2 + 4}" style="fill:var(--fg)">${fPct(r.p)}${below ? " ▼" : ""}</text>`;
   });
-  s += `<line x1="${x(tgt)}" x2="${x(tgt)}" y1="${T - 2}" y2="${H - B}" stroke="var(--fg)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
-  s += `</svg>`;
+  s += `<line x1="${x(tgt)}" x2="${x(tgt)}" y1="${T - 2}" y2="${H - B}" stroke="var(--fg)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>`;
   $("#chOman").innerHTML = s;
   $("#omanSub").textContent = `Closing Omani share vs ${fPct(tgt)} target (dashed line). ▼ marks departments below target.`;
 }
 function chartMonth(){
   const m = R.tot.m, h = R.tot.h;
   const W = 560, H = 240, L = 50, T = 24, B = 40, RP = 8;
-  const max = niceMax(Math.max(...m) * 1.05);
-  const y = v => T + (1 - v / max) * (H - T - B);
-  const bw = (W - L - RP) / 12;
+  const max = niceMax(Math.max(1, ...m) * 1.05), y = v => T + (1 - v / max) * (H - T - B), bw = (W - L - RP) / 12;
   let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly phasing">`;
   for (let i = 0; i <= 4; i++){ const v = max * i / 4; s += `<line class="grid" x1="${L}" x2="${W - RP}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${fM(v)}</text>`; }
   m.forEach((v, i) => {
     const x0 = L + i * bw + bw * 0.15, w = bw * 0.7;
-    s += `<rect x="${x0}" y="${y(v)}" width="${w}" height="${y(0) - y(v)}" rx="3" fill="var(--s1)" data-tip="<b>${MONTHS[i]} ${S.fy}</b><br>Cost OMR ${f0(v)}<br>Headcount ${f0(h[i])}"/>`;
-    s += `<text x="${x0 + w / 2}" y="${H - 22}" text-anchor="middle">${MONTHS[i]}</text>`;
-    s += `<text x="${x0 + w / 2}" y="${H - 8}" text-anchor="middle" style="font-size:10px;fill:var(--fg-3)">${f0(h[i])}</text>`;
+    s += `<rect x="${x0}" y="${y(v)}" width="${w}" height="${Math.max(0, y(0) - y(v))}" rx="3" fill="var(--s1)" data-tip="<b>${MONTHS[i]} ${S.fy}</b><br>Cost OMR ${f0(v)}<br>Headcount ${f0(h[i])}"/>`;
+    s += `<text x="${x0 + w / 2}" y="${H - 22}" text-anchor="middle">${MONTHS[i]}</text><text x="${x0 + w / 2}" y="${H - 8}" text-anchor="middle" style="font-size:10px;fill:var(--fg-3)">${f0(h[i])}</text>`;
   });
-  s += `<text x="${L - 6}" y="${H - 8}" text-anchor="end" style="font-size:10px;fill:var(--fg-3)">HC</text></svg>`;
-  $("#chMonth").innerHTML = s;
+  $("#chMonth").innerHTML = s + `<text x="${L - 6}" y="${H - 8}" text-anchor="end" style="font-size:10px;fill:var(--fg-3)">HC</text></svg>`;
+}
+function chartAge(){
+  const bands = ["<25","25–29","30–34","35–39","40–44","45–49","50–54","55–59","60+"];
+  const O = new Array(9).fill(0), E = new Array(9).fill(0);
+  for (const e of ROS.emps){ const a = ageAt(e); if (a == null) continue; const b = a < 25 ? 0 : a >= 60 ? 8 : Math.floor((a - 20) / 5); (e.o ? O : E)[b]++; }
+  const W = 560, H = 230, L = 44, T = 18, B = 26, RP = 8, max = niceMax(Math.max(1, ...O.map((v, i) => v + E[i])));
+  const y = v => T + (1 - v / max) * (H - T - B), bw = (W - L - RP) / 9;
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Age profile">`;
+  for (let i = 0; i <= 4; i++){ const v = max * i / 4; s += `<line class="grid" x1="${L}" x2="${W - RP}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${f0(v)}</text>`; }
+  bands.forEach((b, i) => {
+    const x0 = L + i * bw + bw * 0.16, w = bw * 0.68, o = O[i], ex = E[i];
+    const tipTxt = `<b>Age ${b}</b><br>Omani ${f0(o)} · Expatriate ${f0(ex)}`;
+    s += `<rect x="${x0}" y="${y(o)}" width="${w}" height="${Math.max(0, y(0) - y(o))}" fill="var(--s1)" data-tip="${tipTxt}"/>`;
+    if (ex) s += `<rect x="${x0}" y="${y(o + ex)}" width="${w}" height="${Math.max(0, y(o) - y(o + ex) - 2)}" rx="3" fill="var(--s2)" data-tip="${tipTxt}"/>`;
+    s += `<text x="${x0 + w / 2}" y="${y(o + ex) - 5}" text-anchor="middle" style="fill:var(--fg)">${o + ex ? f0(o + ex) : ""}</text><text x="${x0 + w / 2}" y="${H - 8}" text-anchor="middle">${b}</text>`;
+  });
+  $("#chAge").innerHTML = s + `</svg>`;
 }
 
 /* ---------- Overview ---------- */
 function renderOverview(){
   const t = R.tot, A = S.a;
   const oman = t.close ? t.closeO / t.close * 100 : 0, omanOpen = t.open ? t.openO / t.open * 100 : 0;
-  const prior = S.depts.reduce((s, d) => s + num(d.prior), 0);
-  const perFte = t.fte ? t.total / t.fte : 0;
+  const prior = S.depts.reduce((s, d) => s + num(d.prior), 0), perFte = t.fte ? t.total / t.fte : 0;
   const k = [
     {l:`FY${S.fy} manpower budget`, v:"OMR " + fM(t.total), d: prior ? `${fDelta(t.total - prior)} (${sgn(t.total - prior)}${fPct(Math.abs(t.total / prior - 1) * 100)}) vs FY${S.baseYear}` : "Enter prior-year budgets to compare"},
     {l:"Headcount: opening → closing", v:`${f0(t.open)} → ${f0(t.close)}`, d:`+${f0(t.hires)} hires, −${f0(t.exits)} exits (${sgn(t.close - t.open)}${f0(Math.abs(t.close - t.open))} net)`},
@@ -636,7 +797,14 @@ function renderAlerts(){
     if (num(g.d.prior) > 0){ const ch = g.total / g.d.prior - 1; if (ch > 0.1) out.push(["warn", "Growth", `${g.d.name} is up ${fPct(ch * 100)} on FY${S.baseYear}; prepare the justification.`]); }
     if (!S.lines.some(l => l.dept === g.d.id)) out.push(["info", "Empty", `${g.d.name} has no plan lines.`]);
   });
-  S.lines.forEach(l => { if (num(l.hc) + num(l.hires) > 0 && num(l.basic) <= 0) out.push(["bad", "Missing pay", `${l.role || "Unnamed line"} (${deptName(l.dept)}) has no basic salary.`]); if (num(l.exits) > num(l.hc) + num(l.hires)) out.push(["warn", "Exits", `${l.role} (${deptName(l.dept)}) has more exits than people.`]); });
+  if (rosterOn()){
+    let ret = 0, con = 0, pay = 0;
+    for (const e of ROS.emps){ const f = empFlags(e); if (f.ret && !e.ex) ret++; if (f.con && !e.ex) con++; if (f.pay) pay++; }
+    if (pay) out.push(["bad", "Missing pay", `${f0(pay)} employees in the employee file have no basic salary.`]);
+    if (ret) out.push(["warn", "Retirements", `${f0(ret)} employees reach retirement age in FY${S.fy} but are still costed for the full year. Review them on the Employees tab.`]);
+    if (con) out.push(["info", "Contracts", `${f0(con)} contracts end in FY${S.fy} with no decision recorded. Mark the ones that will not be renewed on the Employees tab.`]);
+  } else S.lines.forEach(l => { if (num(l.hc) + num(l.hires) > 0 && num(l.basic) <= 0) out.push(["bad", "Missing pay", `${l.role || "Unnamed line"} (${deptName(l.dept)}) has no basic salary.`]); });
+  S.lines.forEach(l => { const r = R.lineRes.get(l.id); if (r && num(l.exits) > r.open - r.named + r.hires) out.push(["warn", "Exits", `${l.role} (${deptName(l.dept)}) has more exits than people.`]); });
   const order = {bad:0, warn:1, info:2};
   out.sort((a, b) => order[a[0]] - order[b[0]]);
   $("#alerts").innerHTML = out.length ? out.slice(0, 12).map(([c, tag, txt]) => `<li><span class="pill ${c}">${tag}</span><span>${esc(txt)}</span></li>`).join("") + (out.length > 12 ? `<li class="note">+ ${out.length - 12} more</li>` : "")
@@ -644,34 +812,140 @@ function renderAlerts(){
 }
 const deptName = id => (S.depts.find(d => d.id === id) || {}).name || "—";
 
+/* ---------- Employees ---------- */
+const empView = {dept: "", nat: "", flag: "", sort: "id", q: "", page: 0};
+const EMP_PAGE = 100;
+function renderEmp(){
+  const on = rosterOn();
+  $("#empEmpty").hidden = on; $("#empBody").hidden = !on;
+  if (!on) return;
+  const E = ROS.emps;
+  let om = 0, fe = 0, ages = 0, na = 0, svc = 0, ns = 0, gross = 0;
+  for (const e of E){ if (e.o) om++; if (e.x === "F") fe++; const a = ageAt(e); if (a != null){ ages += a; na++; } const s = svcAt(e); if (s != null){ svc += s; ns++; } gross += e.bs + e.al; }
+  const k = [
+    ["Employees on file", f0(E.length), ROS.sample ? "Example file" : esc(ROS.fileName || "")],
+    ["Omanisation today", fPct(om / E.length * 100), `${f0(om)} Omani · ${f0(E.length - om)} expatriate`],
+    ["Women", fPct(fe / E.length * 100), `${f0(fe)} employees`],
+    ["Average age", na ? nf1.format(ages / na) : "—", `at 1 Jan ${S.fy}`],
+    ["Average service", ns ? nf1.format(svc / ns) + " yrs" : "—", "since joining date"],
+    ["Monthly gross payroll", "OMR " + fM(gross), "basic + allowances, today"],
+  ];
+  $("#empKpis").innerHTML = k.map(([l, v, d]) => `<div class="kpi"><span class="l">${l}</span><span class="v">${v}</span><span class="d">${d}</span></div>`).join("");
+  renderEmpFlags(); chartAge(); renderProfile(); renderEmpTable();
+}
+function renderEmpFlags(){
+  let ret = 0, retM = 0, con = 0, conM = 0, marked = 0;
+  for (const e of ROS.emps){ const f = empFlags(e); if (f.ret){ ret++; if (e.ex) retM++; } if (f.con){ con++; if (e.ex) conM++; } if (e.ex) marked++; }
+  let namedSave = 0; for (const e of ROS.emps) if (e.ex) namedSave += empCostWith(e, 12) - empCost(e);
+  $("#empFlags").innerHTML = `
+    <div class="flagrow"><div class="t"><b>${f0(ret)}</b>reach retirement age (${S.a.retO} Omani / ${S.a.retE} expat) in FY${S.fy} · ${f0(retM)} marked as exits</div><button class="btn sm" data-bulk="ret" type="button"${ret - retM ? "" : " disabled"}>Mark as exits in birth month</button></div>
+    <div class="flagrow"><div class="t"><b>${f0(con)}</b>contracts end in FY${S.fy} · ${f0(conM)} marked as exits</div><button class="btn sm" data-bulk="con" type="button"${con - conM ? "" : " disabled"}>Mark as exits at contract end</button></div>
+    <div class="flagrow"><div class="t"><b>${f0(marked)}</b>named exits planned · saving OMR ${fM(namedSave)} this year</div><button class="btn sm danger" data-bulk="clear" type="button"${marked ? "" : " disabled"}>Clear named exits</button></div>
+    <p class="note" style="margin-top:8px">Filter the list below by “Retiring in FY” or “Contract ends in FY” to decide person by person. Unnamed attrition stays on the Headcount plan as “Other exits”.</p>`;
+}
+function empCostWith(e, last){ const ex = e.ex; e.ex = last === 12 ? 0 : last; const c = empCost(e); e.ex = ex; return c; }
+$("#empFlags").addEventListener("click", e => {
+  const b = e.target.dataset && e.target.dataset.bulk; if (!b) return;
+  for (const emp of ROS.emps){ const f = empFlags(emp); if (b === "clear") emp.ex = 0; else if (b === "ret" && f.ret && !emp.ex) emp.ex = f.ret; else if (b === "con" && f.con && !emp.ex) emp.ex = f.con; }
+  rosterChanged(); renderEmp();
+});
+function renderProfile(){
+  const P = new Map(S.depts.map(d => [d.id, {d, n:0, o:0, f:0, age:0, na:0, svc:0, ns:0, gross:0, ret:0, con:0}]));
+  for (const e of ROS.emps){
+    const p = P.get(empDept(e)); if (!p) continue;
+    p.n++; if (e.o) p.o++; if (e.x === "F") p.f++;
+    const a = ageAt(e); if (a != null){ p.age += a; p.na++; } const s = svcAt(e); if (s != null){ p.svc += s; p.ns++; }
+    p.gross += e.bs + e.al; const fl = empFlags(e); if (fl.ret) p.ret++; if (fl.con) p.con++;
+  }
+  const rows = [...P.values()].filter(p => p.n);
+  const T = rows.reduce((t, p) => { for (const k of ["n","o","f","age","na","svc","ns","gross","ret","con"]) t[k] += p[k]; return t; }, {n:0, o:0, f:0, age:0, na:0, svc:0, ns:0, gross:0, ret:0, con:0});
+  const row = (name, p, cls = "") => `<tr class="${cls}"><td>${esc(name)}</td><td class="n">${f0(p.n)}</td><td class="n">${f0(p.o)}</td><td class="n">${f0(p.n - p.o)}</td><td class="n"><span class="pill ${p.o / p.n * 100 >= S.a.omanTarget ? "good" : "warn"}">${fPct(p.o / p.n * 100)}</span></td><td class="n">${fPct(p.f / p.n * 100)}</td><td class="n">${p.na ? nf1.format(p.age / p.na) : "—"}</td><td class="n">${p.ns ? nf1.format(p.svc / p.ns) : "—"}</td><td class="n">${f0(p.gross / p.n)}</td><td class="n">${f0(p.gross)}</td><td class="n">${p.ret || "—"}</td><td class="n">${p.con || "—"}</td></tr>`;
+  $("#tblProfile").innerHTML = `<thead><tr><th>Department</th><th class="n">Employees</th><th class="n">Omani</th><th class="n">Expat</th><th class="n">Omani %</th><th class="n">Women</th><th class="n">Avg age</th><th class="n">Avg service (yrs)</th><th class="n">Avg gross / mo</th><th class="n">Monthly payroll</th><th class="n">Retiring</th><th class="n">Contracts ending</th></tr></thead><tbody>${rows.sort((a, b) => b.n - a.n).map(p => row(p.d.name, p)).join("")}</tbody><tfoot>${T.n ? row("Total", T, "total") : ""}</tfoot>`;
+  $("#profileSub").textContent = `${ROS.sample ? "Example file" : ROS.fileName || "Employee file"} · retirements and contract ends counted for FY${S.fy}`;
+}
+function filteredEmps(){
+  const q = empView.q.toLowerCase();
+  let list = ROS.emps.filter(e => {
+    if (empView.dept && empDept(e) !== empView.dept) return false;
+    if (empView.nat !== "" && String(e.o) !== empView.nat) return false;
+    if (empView.flag){ const f = empFlags(e); if (empView.flag === "exit" ? !e.ex : !f[empView.flag]) return false; }
+    if (q && !`${e.i} ${e.n} ${e.j} ${e.g} ${e.s}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const s = empView.sort;
+  if (s === "cost") list = list.map(e => [empCost(e), e]).sort((a, b) => b[0] - a[0]).map(x => x[1]);
+  else if (s === "age") list.sort((a, b) => (ageAt(b) ?? -1) - (ageAt(a) ?? -1));
+  else if (s === "svc") list.sort((a, b) => (svcAt(b) ?? -1) - (svcAt(a) ?? -1));
+  else list.sort((a, b) => String(a.i).localeCompare(String(b.i), undefined, {numeric: true}));
+  return list;
+}
+function renderEmpTable(){
+  $("#eDept").innerHTML = `<option value="">All departments</option>` + S.depts.map(d => `<option value="${d.id}"${d.id === empView.dept ? " selected" : ""}>${esc(d.name)}</option>`).join("");
+  const list = filteredEmps(), pages = Math.max(1, Math.ceil(list.length / EMP_PAGE));
+  empView.page = Math.min(empView.page, pages - 1);
+  const slice = list.slice(empView.page * EMP_PAGE, (empView.page + 1) * EMP_PAGE);
+  const hasNames = ROS.emps.some(e => e.n);
+  const exitOpts = sel => `<option value="0"${!sel ? " selected" : ""}>Stays</option>` + MONTHS.map((m, i) => `<option value="${i + 1}"${i + 1 === sel ? " selected" : ""}>Leaves end ${m}</option>`).join("");
+  let h = `<thead><tr><th>Employee ID</th>${hasNames ? "<th>Name</th>" : ""}<th>Department</th><th>Job title</th><th>Grade</th><th>Nat.</th><th>Gender</th><th class="n">Age</th><th class="n">Service</th><th class="n">Basic</th><th class="n">Allowances</th><th class="n">FY cost</th><th>Flags</th><th>Planned exit</th><th class="n">Increment %</th></tr></thead><tbody>`;
+  for (const e of slice){
+    const f = empFlags(e), a = ageAt(e), s = svcAt(e);
+    const flags = [f.ret ? `<span class="pill warn" title="Reaches retirement age">Retires ${MONTHS[f.ret - 1]}</span>` : "", f.con ? `<span class="pill info" title="Contract end date">Contract ${MONTHS[f.con - 1]}</span>` : "", f.pay ? `<span class="pill bad">No pay</span>` : ""].join(" ");
+    h += `<tr data-eid="${esc(e.i)}"><td>${esc(e.i)}</td>${hasNames ? `<td>${esc(e.n)}</td>` : ""}<td>${esc(trunc(deptName(empDept(e)), 26))}</td><td>${esc(trunc(e.j, 30))}</td><td>${esc(e.g)}</td><td>${e.o ? "O" : "E"}</td><td>${esc(e.x)}</td><td class="n">${a ?? "—"}</td><td class="n">${s ?? "—"}</td><td class="n">${f0(e.bs)}</td><td class="n">${f0(e.al)}</td><td class="n" data-c="cost">${f0(empCost(e))}</td><td>${flags}</td>
+      <td class="cell-in"><select data-ek="ex" aria-label="Planned exit for ${esc(e.i)}" style="width:140px">${exitOpts(e.ex)}</select></td>
+      <td class="cell-in"><input data-ek="inc" type="number" min="0" step="0.5" value="${e.inc ?? ""}" placeholder="${S.a.incPct}" aria-label="Personal increment percent for ${esc(e.i)}" style="width:80px"></td></tr>`;
+  }
+  $("#tblEmp").innerHTML = h + (slice.length ? "" : `<tr><td colspan="15" class="muted" style="padding:20px">No employees match these filters.</td></tr>`) + "</tbody>";
+  $("#empPager").innerHTML = `<span>${f0(list.length)} employees${list.length > EMP_PAGE ? ` · showing ${f0(empView.page * EMP_PAGE + 1)}–${f0(Math.min(list.length, (empView.page + 1) * EMP_PAGE))}` : ""}</span>
+    <button class="btn sm" data-pg="-1" type="button"${empView.page ? "" : " disabled"}>‹ Previous</button><button class="btn sm" data-pg="1" type="button"${empView.page < pages - 1 ? "" : " disabled"}>Next ›</button>`;
+}
+const empFind = id => ROS.emps.find(e => String(e.i) === id);
+$("#tblEmp").addEventListener("change", e => {
+  const tr = e.target.closest("tr[data-eid]"), k = e.target.dataset.ek; if (!tr || !k) return;
+  const emp = empFind(tr.dataset.eid); if (!emp) return;
+  if (k === "ex") emp.ex = +e.target.value;
+  else emp.inc = e.target.value === "" ? null : Math.max(0, num(e.target.value));
+  tr.querySelector('[data-c="cost"]').textContent = f0(empCost(emp));
+  rosterChanged(); renderEmpFlags();
+});
+$("#empPager").addEventListener("click", e => { const d = e.target.dataset && e.target.dataset.pg; if (!d) return; empView.page += +d; renderEmpTable(); $("#tblEmp").closest(".tbl-wrap").scrollTop = 0; });
+[["eDept","dept"],["eNat","nat"],["eFlag","flag"],["eSort","sort"]].forEach(([id, k]) => $("#" + id).addEventListener("change", e => { empView[k] = e.target.value; empView.page = 0; renderEmpTable(); }));
+$("#eSearch").addEventListener("input", e => { empView.q = e.target.value; empView.page = 0; renderEmpTable(); });
+
 /* ---------- Headcount plan ---------- */
 const planFilter = {dept: "", q: ""};
 function monthOpts(sel){ return MONTHS.map((m, i) => `<option value="${i + 1}"${i + 1 === +sel ? " selected" : ""}>${m}</option>`).join(""); }
 function renderPlan(){
+  const ros = rosterOn();
+  $("#tblPlan thead").innerHTML = `<tr><th>Department</th><th>Position / grade</th><th>Nat.</th><th class="n">${ros ? "Employees" : "Current HC"}</th>${ros ? '<th class="n">Named exits</th>' : ""}<th class="n">New hires</th><th>Start</th><th class="n">${ros ? "Other exits" : "Exits"}</th><th>Last month</th><th class="n">${ros ? "New-hire basic" : "Basic / mo"}</th><th class="n">${ros ? "New-hire allow." : "Allow. / mo"}</th><th class="n">Closing HC</th><th class="n">FY cost (OMR)</th><th></th></tr>`;
+  $("#planSub").textContent = ros ? "Current staff come from the employee file. Plan new hires and unnamed attrition per line." : "One line per department × position/grade × nationality. Salaries are monthly averages in OMR.";
+  $("#planNote").textContent = ros
+    ? "Employees and named exits come from the employee file (set named exits on the Employees tab). New hires are paid the line's new-hire salary. Other exits are unnamed attrition at the line's pay."
+    : "Nat.: O = Omani, E = Expatriate. “Start” is the month new hires join; “Last month” is the final month leavers are on payroll. Costs update as you type.";
   $("#fDept").innerHTML = `<option value="">All departments</option>` + S.depts.map(d => `<option value="${d.id}"${d.id === planFilter.dept ? " selected" : ""}>${esc(d.name)}</option>`).join("");
-  const q = planFilter.q.toLowerCase();
-  const order = new Map(S.depts.map((d, i) => [d.id, i]));
+  const q = planFilter.q.toLowerCase(), order = new Map(S.depts.map((d, i) => [d.id, i]));
   const rows = S.lines.filter(l => (!planFilter.dept || l.dept === planFilter.dept) && (!q || (l.role || "").toLowerCase().includes(q)))
     .sort((a, b) => (order.get(a.dept) ?? 999) - (order.get(b.dept) ?? 999));
   const deptOpts = sel => S.depts.map(d => `<option value="${d.id}"${d.id === sel ? " selected" : ""}>${esc(d.name)}</option>`).join("");
+  const cols = ros ? 14 : 13;
   let html = "", cur = null;
   for (const l of rows){
-    if (l.dept !== cur){ cur = l.dept; const g = R.depts.find(x => x.d.id === cur); html += `<tr class="grp"><td colspan="3">${esc(deptName(cur))}</td><td class="n">${f0(g?.open)}</td><td class="n">${f0(g?.hires)}</td><td></td><td class="n">${f0(g?.exits)}</td><td colspan="3"></td><td class="n">${f0(g?.close)}</td><td class="n">${f0(g?.sub)}</td><td></td></tr>`; }
+    if (l.dept !== cur){ cur = l.dept; const g = R.depts.find(x => x.d.id === cur); html += `<tr class="grp"><td colspan="3">${esc(deptName(cur))}</td><td class="n">${f0(g?.open)}</td>${ros ? `<td class="n">${f0(g?.named)}</td>` : ""}<td class="n">${f0(g?.hires)}</td><td></td><td class="n">${f0((g?.exits || 0) - (g?.named || 0))}</td><td colspan="3"></td><td class="n">${f0(g?.close)}</td><td class="n">${f0(g?.sub)}</td><td></td></tr>`; }
+    const r = R.lineRes.get(l.id) || {}, hasEmp = ros && r.open > 0;
     html += `<tr data-id="${l.id}">
       <td class="cell-in"><select class="w-l" data-k="dept" aria-label="Department">${deptOpts(l.dept)}</select></td>
       <td class="cell-in"><input class="w-l" data-k="role" value="${esc(l.role)}" aria-label="Position or grade"></td>
-      <td class="cell-in"><select class="w-xs" data-k="nat" aria-label="Nationality"><option value="O"${l.nat === "O" ? " selected" : ""}>O</option><option value="E"${l.nat !== "O" ? " selected" : ""}>E</option></select></td>
-      <td class="cell-in"><input class="w-s" type="number" min="0" step="1" data-k="hc" value="${l.hc}" aria-label="Current headcount"></td>
+      <td class="cell-in">${hasEmp ? `<span style="padding-inline:6px">${l.nat}</span>` : `<select class="w-xs" data-k="nat" aria-label="Nationality"><option value="O"${l.nat === "O" ? " selected" : ""}>O</option><option value="E"${l.nat !== "O" ? " selected" : ""}>E</option></select>`}</td>
+      ${ros ? `<td class="n" data-tip="From the employee file">${f0(r.open)}</td><td class="n">${f0(r.named)}</td>` : `<td class="cell-in"><input class="w-s" type="number" min="0" step="1" data-k="hc" value="${l.hc}" aria-label="Current headcount"></td>`}
       <td class="cell-in"><input class="w-s" type="number" min="0" step="1" data-k="hires" value="${l.hires}" aria-label="New hires"></td>
       <td class="cell-in"><select class="w-xs" data-k="hireM" aria-label="Hire start month">${monthOpts(l.hireM)}</select></td>
       <td class="cell-in"><input class="w-s" type="number" min="0" step="1" data-k="exits" value="${l.exits}" aria-label="Exits"></td>
       <td class="cell-in"><select class="w-xs" data-k="exitM" aria-label="Last month for leavers">${monthOpts(l.exitM)}</select></td>
-      <td class="cell-in"><input class="w-m" type="number" min="0" step="10" data-k="basic" value="${l.basic}" aria-label="Average basic salary per month"></td>
-      <td class="cell-in"><input class="w-m" type="number" min="0" step="10" data-k="allow" value="${l.allow}" aria-label="Average allowances per month"></td>
+      <td class="cell-in"><input class="w-m" type="number" min="0" step="10" data-k="basic" value="${l.basic}" aria-label="Basic salary per month"></td>
+      <td class="cell-in"><input class="w-m" type="number" min="0" step="10" data-k="allow" value="${l.allow}" aria-label="Allowances per month"></td>
       <td class="n" data-c="close"></td><td class="n" data-c="cost"></td>
-      <td><button class="icon" data-del="${l.id}" title="Delete line" aria-label="Delete line">×</button></td></tr>`;
+      <td>${hasEmp ? "" : `<button class="icon" data-del="${l.id}" title="Delete line" aria-label="Delete line">×</button>`}</td></tr>`;
   }
-  $("#tblPlan tbody").innerHTML = html || `<tr><td colspan="13" class="muted" style="padding:20px">No lines match. Add a line or clear the filter.</td></tr>`;
+  $("#tblPlan tbody").innerHTML = html || `<tr><td colspan="${cols}" class="muted" style="padding:20px">No lines match. Add a line or clear the filter.</td></tr>`;
   updatePlanComputed();
 }
 function updatePlanComputed(){
@@ -680,12 +954,12 @@ function updatePlanComputed(){
     tr.querySelector('[data-c="close"]').textContent = f0(r.close);
     tr.querySelector('[data-c="cost"]').textContent = f0(r.total);
   });
-  const t = R.tot;
-  $("#tblPlan tfoot").innerHTML = `<tr class="total"><td colspan="3">Total (${S.lines.length} lines, before contingency)</td><td class="n">${f0(t.open)}</td><td class="n">${f0(t.hires)}</td><td></td><td class="n">${f0(t.exits)}</td><td colspan="3"></td><td class="n">${f0(t.close)}</td><td class="n">${f0(t.sub)}</td><td></td></tr>`;
+  const t = R.tot, ros = rosterOn();
+  $("#tblPlan tfoot").innerHTML = `<tr class="total"><td colspan="3">Total (${S.lines.length} lines, before contingency)</td><td class="n">${f0(t.open)}</td>${ros ? `<td class="n">${f0(t.named)}</td>` : ""}<td class="n">${f0(t.hires)}</td><td></td><td class="n">${f0(t.exits - t.named)}</td><td colspan="3"></td><td class="n">${f0(t.close)}</td><td class="n">${f0(t.sub)}</td><td></td></tr>`;
 }
 $("#tblPlan").addEventListener("input", e => {
   const tr = e.target.closest("tr[data-id]"), k = e.target.dataset.k; if (!tr || !k) return;
-  const l = S.lines.find(x => x.id === tr.dataset.id); if (!l) return;
+  const l = lineById(tr.dataset.id); if (!l) return;
   l[k] = ["role","nat","dept"].includes(k) ? e.target.value : ["hireM","exitM"].includes(k) ? +e.target.value : Math.max(0, num(e.target.value));
   S.sample = false;
   recalc(false); updatePlanComputed(); persist();
@@ -714,32 +988,21 @@ function renderBudget(){
     return `<tr class="${cls}"><td>${esc(name)}</td>${COST_COLS.map(c => `<td class="n">${f0(g[c[0]])}</td>`).join("")}<td class="n">${f0(g.cont)}</td><td class="n"><b>${f0(g.total)}</b></td><td class="n">${pr ? f0(pr) : "—"}</td><td class="n">${ch === null ? "—" : `${fDelta(ch, f0)} <span class="muted">(${sgn(ch)}${fPct(Math.abs(ch / pr) * 100)})</span>`}</td><td class="n">${ceil ? (g.total > ceil ? `<span class="pill bad">Over ${f0(g.total - ceil)}</span>` : `<span class="pill good">✓ ${f0(ceil)}</span>`) : "—"}</td></tr>`;
   };
   rows.forEach(g => h += line(g.d.name, {...g, prior: g.d.prior, ceiling: g.d.ceiling}));
-  const prior = S.depts.reduce((s, d) => s + num(d.prior), 0), ceil = S.depts.reduce((s, d) => s + num(d.ceiling), 0);
-  h += `</tbody><tfoot>${line("Total", {...R.tot, prior, ceiling: 0}, "total")}</tfoot>`;
-  $("#tblBudget").innerHTML = h;
-
+  const prior = S.depts.reduce((s, d) => s + num(d.prior), 0);
+  $("#tblBudget").innerHTML = h + `</tbody><tfoot>${line("Total", {...R.tot, prior, ceiling: 0}, "total")}</tfoot>`;
   let hc = `<thead><tr><th>Department</th><th class="n">Opening HC</th><th class="n">New hires</th><th class="n">Exits</th><th class="n">Closing HC</th><th class="n">Net change</th><th class="n">Avg FTE</th><th class="n">Omani (open)</th><th class="n">Omani (close)</th><th class="n">Omanisation</th><th class="n">Cost / FTE</th></tr></thead><tbody>`;
   const hl = (name, g, cls = "") => { const p = g.close ? g.closeO / g.close * 100 : 0; return `<tr class="${cls}"><td>${esc(name)}</td><td class="n">${f0(g.open)}</td><td class="n">${f0(g.hires)}</td><td class="n">${f0(g.exits)}</td><td class="n">${f0(g.close)}</td><td class="n">${fDelta(g.close - g.open, f0)}</td><td class="n">${f0(g.fte)}</td><td class="n">${f0(g.openO)}</td><td class="n">${f0(g.closeO)}</td><td class="n"><span class="pill ${p >= S.a.omanTarget ? "good" : "warn"}">${fPct(p)}</span></td><td class="n">${g.fte ? f0(g.total / g.fte) : "—"}</td></tr>`; };
   rows.forEach(g => hc += hl(g.d.name, g));
-  hc += `</tbody><tfoot>${hl("Total", R.tot, "total")}</tfoot>`;
-  $("#tblHC").innerHTML = hc;
-
-  let m = `<thead><tr><th>Department</th>${MONTHS.map(x => `<th class="n">${x}</th>`).join("")}<th class="n">Total</th></tr></thead><tbody>`;
+  $("#tblHC").innerHTML = hc + `</tbody><tfoot>${hl("Total", R.tot, "total")}</tfoot>`;
   const cf = 1 + S.a.contingency / 100;
+  let m = `<thead><tr><th>Department</th>${MONTHS.map(x => `<th class="n">${x}</th>`).join("")}<th class="n">Total</th></tr></thead><tbody>`;
   rows.forEach(g => m += `<tr><td>${esc(g.d.name)}</td>${g.m.map(v => `<td class="n">${f0(v * cf)}</td>`).join("")}<td class="n"><b>${f0(g.total)}</b></td></tr>`);
-  m += `</tbody><tfoot><tr class="total"><td>Total cost</td>${R.tot.m.map(v => `<td class="n">${f0(v)}</td>`).join("")}<td class="n">${f0(R.tot.total)}</td></tr><tr class="total"><td>Headcount</td>${R.tot.h.map(v => `<td class="n">${f0(v)}</td>`).join("")}<td></td></tr></tfoot>`;
-  $("#tblMonth").innerHTML = m;
+  $("#tblMonth").innerHTML = m + `</tbody><tfoot><tr class="total"><td>Total cost</td>${R.tot.m.map(v => `<td class="n">${f0(v)}</td>`).join("")}<td class="n">${f0(R.tot.total)}</td></tr><tr class="total"><td>Headcount</td>${R.tot.h.map(v => `<td class="n">${f0(v)}</td>`).join("")}<td></td></tr></tfoot>`;
 }
 
 /* ---------- Scenarios ---------- */
-const SCEN_FIELDS = [
-  ["hirePct","Hires filled (% of plan)",0,200,5],
-  ["delay","Hiring delay (months)",0,12,1],
-  ["incPct","Salary increment (%)",0,20,0.5],
-  ["otPct","Overtime (% of plan)",0,300,5],
-  ["bonusMonths","Bonus (months of basic)",0,6,0.25],
-];
-function scenOpts(sc){ return {hirePct: sc.hirePct, delay: sc.delay, incPct: sc.incPct, otPct: sc.otPct, bonusMonths: sc.bonusMonths}; }
+const SCEN_FIELDS = [["hirePct","Hires filled (% of plan)",0,200,5],["delay","Hiring delay (months)",0,12,1],["incPct","Salary increment (%)",0,20,0.5],["otPct","Overtime (% of plan)",0,300,5],["bonusMonths","Bonus (months of basic)",0,6,0.25]];
+const scenOpts = sc => ({hirePct: sc.hirePct, delay: sc.delay, incPct: sc.incPct, otPct: sc.otPct, bonusMonths: sc.bonusMonths});
 function renderScen(){
   const base = R.tot;
   const cards = [`<div class="scen base"><div><span class="eyebrow">Base plan</span><h3>As entered</h3></div><div class="res">OMR ${fM(base.total)}</div><div class="note">Closing HC ${f0(base.close)} · Omanisation ${fPct(base.close ? base.closeO / base.close * 100 : 0)}</div><div class="note">Increment ${S.a.incPct}% · bonus ${S.a.bonusMonths} mo · all hires on plan</div></div>`];
@@ -755,9 +1018,8 @@ function renderScen(){
   renderScenTable();
 }
 function renderScenTable(){
-  const base = R.tot;
+  const base = R.tot, om = t => t.close ? t.closeO / t.close * 100 : 0;
   const all = [{name:"Base plan", t: base}, ...S.scen.map(sc => ({name: sc.name, t: compute(S, scenOpts(sc)).tot}))];
-  const om = t => t.close ? t.closeO / t.close * 100 : 0;
   let h = `<thead><tr><th>Scenario</th><th class="n">FY budget</th><th class="n">vs base</th><th class="n">Closing HC</th><th class="n">vs base</th><th class="n">Avg FTE</th><th class="n">Omanisation</th><th class="n">Recruitment</th><th class="n">Overtime</th></tr></thead><tbody>`;
   all.forEach((s, i) => h += `<tr${i === 0 ? ' class="total"' : ""}><td>${esc(s.name)}</td><td class="n">${f0(s.t.total)}</td><td class="n">${i ? fDelta(s.t.total - base.total, f0) : "—"}</td><td class="n">${f0(s.t.close)}</td><td class="n">${i ? fDelta(s.t.close - base.close, f0) : "—"}</td><td class="n">${f0(s.t.fte)}</td><td class="n">${fPct(om(s.t))}</td><td class="n">${f0(s.t.rec)}</td><td class="n">${f0(s.t.ot)}</td></tr>`);
   $("#tblScen").innerHTML = h + "</tbody>";
@@ -775,13 +1037,9 @@ $("#scenGrid").addEventListener("click", e => { const id = e.target.dataset && e
 $("#btnAddScen").addEventListener("click", () => { S.scen.push({id: uid(), name: "New scenario", hirePct: 100, delay: 0, incPct: S.a.incPct, otPct: 100, bonusMonths: S.a.bonusMonths}); persist(); renderScen(); });
 
 /* ---------- Assumptions ---------- */
-const PLAN_FIELDS = [
-  ["org","Organisation name","text",null,"Shown on exports"],
-  ["fy","Budget year","number",1,"Fiscal year being planned"],
-  ["baseYear","Comparison year","number",1,"Prior year used for variance"],
-];
+const PLAN_FIELDS = [["org","Organisation name","text",null,"Shown on exports"],["fy","Budget year","number",1,"Fiscal year being planned"],["baseYear","Comparison year","number",1,"Prior year used for variance"]];
 const RATE_FIELDS = [
-  ["incPct","Annual increment (%)",0.1,"Applied to basic and allowances"],
+  ["incPct","Annual increment (%)",0.1,"Applied to basic and allowances; employees can have their own"],
   ["incMonth","Increment effective month","month",""],
   ["bonusMonths","Bonus / incentive (months of basic)",0.25,"Accrued evenly across the year"],
   ["omSI","Employer social protection, Omani (%)",0.1,"Default 12.5%. Check the current Social Protection Fund schedule"],
@@ -796,6 +1054,8 @@ const RATE_FIELDS = [
   ["recE","Recruitment cost, expatriate hire (OMR)",50,"Agency, visa, medical, relocation"],
   ["contingency","Contingency (% of department total)",0.5,""],
   ["omanTarget","Omanisation target (%)",1,"Company-wide closing target"],
+  ["retO","Retirement age, Omani",1,"Used to flag retirements in the employee file"],
+  ["retE","Retirement age, expatriate",1,"Set 0 to switch off"],
 ];
 function renderAssump(){
   $("#formPlan").innerHTML = PLAN_FIELDS.map(([k, lab, type, st, hint]) => `<div class="field"><label for="p-${k}">${lab}</label><input id="p-${k}" data-pk="${k}" type="${type}"${st ? ` step="${st}"` : ""} value="${esc(S[k])}"${k === "org" ? ' placeholder="Company name"' : ""}><span class="hint">${hint}</span></div>`).join("");
@@ -811,15 +1071,299 @@ function renderAssump(){
 function renderDeptTable(){
   const cnt = id => S.lines.filter(l => l.dept === id).length;
   $("#tblDepts").innerHTML = `<thead><tr><th>Department</th><th class="n">Overtime (% of basic)</th><th class="n">FY${S.baseYear} budget (OMR)</th><th class="n">FY${S.fy} ceiling (OMR)</th><th class="n">Lines</th><th></th></tr></thead><tbody>` +
-    S.depts.map(d => `<tr data-did="${d.id}"><td class="cell-in"><input class="w-l" data-dk="name" value="${esc(d.name)}" aria-label="Department name" style="width:260px"></td><td class="cell-in"><input class="w-s" type="number" min="0" step="0.5" data-dk="ot" value="${d.ot}" aria-label="Overtime percent"></td><td class="cell-in"><input class="w-m" type="number" min="0" step="1000" data-dk="prior" value="${d.prior || ""}" placeholder="—" aria-label="Prior year budget" style="width:130px"></td><td class="cell-in"><input class="w-m" type="number" min="0" step="1000" data-dk="ceiling" value="${d.ceiling || ""}" placeholder="None" aria-label="Budget ceiling" style="width:130px"></td><td class="n">${cnt(d.id)}</td><td>${cnt(d.id) ? "" : `<button class="icon" data-ddel="${d.id}" title="Delete department" aria-label="Delete department">×</button>`}</td></tr>`).join("") + "</tbody>";
+    S.depts.map(d => `<tr data-did="${d.id}"><td class="cell-in"><input data-dk="name" value="${esc(d.name)}" aria-label="Department name" style="width:260px"></td><td class="cell-in"><input class="w-s" type="number" min="0" step="0.5" data-dk="ot" value="${d.ot}" aria-label="Overtime percent"></td><td class="cell-in"><input type="number" min="0" step="1000" data-dk="prior" value="${d.prior || ""}" placeholder="—" aria-label="Prior year budget" style="width:130px"></td><td class="cell-in"><input type="number" min="0" step="1000" data-dk="ceiling" value="${d.ceiling || ""}" placeholder="None" aria-label="Budget ceiling" style="width:130px"></td><td class="n">${cnt(d.id)}</td><td>${cnt(d.id) ? "" : `<button class="icon" data-ddel="${d.id}" title="Delete department" aria-label="Delete department">×</button>`}</td></tr>`).join("") + "</tbody>";
 }
-$("#formPlan").addEventListener("input", e => { const k = e.target.dataset.pk; if (!k) return; S[k] = k === "org" ? e.target.value : Math.round(num(e.target.value)); changed(); updateHeader(); });
+$("#formPlan").addEventListener("input", e => { const k = e.target.dataset.pk; if (!k) return; S[k] = k === "org" ? e.target.value : Math.round(num(e.target.value)); changed(); });
 $("#formRates").addEventListener("input", e => { const k = e.target.dataset.ak; if (!k) return; S.a[k] = k === "siBase" ? e.target.value : k === "incMonth" ? +e.target.value : Math.max(0, num(e.target.value)); changed(); });
 $("#tblDepts").addEventListener("input", e => { const tr = e.target.closest("[data-did]"), k = e.target.dataset.dk; if (!tr || !k) return; const d = S.depts.find(x => x.id === tr.dataset.did); d[k] = k === "name" ? e.target.value : Math.max(0, num(e.target.value)); changed(); });
 $("#tblDepts").addEventListener("click", e => { const id = e.target.dataset && e.target.dataset.ddel; if (!id) return; S.depts = S.depts.filter(d => d.id !== id); changed(); renderDeptTable(); });
 $("#btnAddDept").addEventListener("click", () => { S.depts.push({id: "d" + uid(), name: "New department", ot: 2, prior: 0, ceiling: 0}); changed(); renderDeptTable(); });
 
-/* ---------- Import ---------- */
+/* ---------- File reading ---------- */
+function parseCSV(text){
+  const first = text.split("\n")[0];
+  const delim = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ";" : first.includes("\t") ? "\t" : ",";
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (q){ if (c === '"'){ if (text[i + 1] === '"'){ cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === delim){ row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r"){ if (c === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+    else cell += c;
+  }
+  if (cell || row.length){ row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(x => String(x).trim() !== ""));
+}
+async function readSheets(file){
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".csv")) return {"Sheet1": parseCSV((await file.text()).replace(/^﻿/, ""))};
+  if (!window.XLSX) throw new Error("Excel reading is unavailable here. Save the sheet as CSV (UTF-8) and import that instead.");
+  const wb = XLSX.read(await file.arrayBuffer(), {type: "array", cellDates: true});
+  const out = {};
+  for (const n of wb.SheetNames) out[n] = XLSX.utils.sheet_to_json(wb.Sheets[n], {header: 1, defval: "", raw: true, blankrows: false});
+  return out;
+}
+function parseMonth(v){ if (v === "" || v == null) return null; if (v instanceof Date) return v.getMonth() + 1; const s = String(v).trim().toLowerCase(); const i = MONTHS.findIndex(m => s.startsWith(m.toLowerCase())); if (i >= 0) return i + 1; const n = Math.round(num(s)); return n >= 1 && n <= 12 ? n : null; }
+const parseNat = v => /^(o|om|omn|omani|oman|sultanate of oman|local|national|citizen)\b/i.test(String(v || "").trim()) ? "O" : "E";
+function parseDate(v){
+  if (v == null || v === "") return "";
+  if (v instanceof Date) return isNaN(v) ? "!" : ymd(v.getFullYear(), v.getMonth() + 1, v.getDate());
+  if (typeof v === "number"){ if (v > 3000 && v < 80000){ const d = new Date(Date.UTC(1899, 11, 30) + Math.round(v) * 864e5); return ymd(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()); } return "!"; }
+  const s = String(v).trim(); let m;
+  if ((m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/))) return ymd(+m[1], +m[2], +m[3]);
+  if ((m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/))){ let y = +m[3]; if (y < 100) y += y > 40 ? 1900 : 2000; let d = +m[1], mo = +m[2]; if (mo > 12 && d <= 12) [d, mo] = [mo, d]; return ymd(y, mo, d); }
+  if ((m = s.match(/^(\d{1,2})[\s\-\/]([A-Za-z]{3})[A-Za-z]*[\s\-\/,]+(\d{2,4})/))){ const mo = MONTHS.findIndex(x => x.toLowerCase() === m[2].toLowerCase()) + 1; let y = +m[3]; if (y < 100) y += y > 40 ? 1900 : 2000; return mo ? ymd(y, mo, +m[1]) : "!"; }
+  const t = Date.parse(s); if (!isNaN(t)){ const d = new Date(t); return ymd(d.getFullYear(), d.getMonth() + 1, d.getDate()); }
+  return "!";
+}
+function findHeaderRow(rows){
+  for (let i = 0; i < Math.min(15, rows.length); i++){ const r = rows[i].map(c => String(c).toLowerCase()); if (r.filter(c => c.trim()).length >= 3 && r.some(c => /depart|dept|directorate/.test(c))) return i; }
+  return 0;
+}
+function bindDrop(el, fn){
+  ["dragenter","dragover"].forEach(t => el.addEventListener(t, e => { e.preventDefault(); el.classList.add("over"); }));
+  ["dragleave","drop"].forEach(t => el.addEventListener(t, e => { e.preventDefault(); el.classList.remove("over"); }));
+  el.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) fn(f); });
+}
+
+/* ---------- Employee master import wizard ---------- */
+const EMP_FIELDS = [
+  {k:"id", label:"Employee ID", kw:["employee id","emp id","emp no","employee no","employee number","staff id","staff no","staff number","personnel no","emp code","employee code","id"]},
+  {k:"name", label:"Employee name", kw:["employee name","full name","name"]},
+  {k:"dept", label:"Department", req:1, kw:["department","dept","directorate","division"]},
+  {k:"section", label:"Section / unit", kw:["section","sub department","unit","cost centre","cost center"]},
+  {k:"job", label:"Job title", kw:["job title","position title","designation","position","job","title","role"]},
+  {k:"grade", label:"Grade", kw:["grade","band","pay scale","level"]},
+  {k:"nat", label:"Nationality", req:1, kw:["nationality","omani/expat","omani / expat","local/expat","citizenship","national","nat"]},
+  {k:"gender", label:"Gender", kw:["gender","sex"]},
+  {k:"dob", label:"Date of birth", kw:["date of birth","birth date","dob","birth"]},
+  {k:"jd", label:"Joining date", kw:["date of joining","joining date","join date","hire date","doj","date joined","joined"]},
+  {k:"ce", label:"Contract end date", kw:["contract end date","contract end","contract expiry","end of contract","expiry date"]},
+  {k:"basic", label:"Basic salary / mo", req:1, kw:["basic salary","basic pay","basic"]},
+  {k:"gross", label:"Gross salary / mo", kw:["gross salary","gross pay","total salary","gross"]},
+  {k:"inc", label:"Increment % (optional)", kw:["increment %","increment","merit %","merit"]},
+  {k:"exit", label:"Planned exit month (optional)", kw:["planned exit","exit month","leaving month"]},
+  {k:"status", label:"Employment status", kw:["employment status","emp status","status"]},
+];
+const ALLOW_RX = /allow|housing|hra|transport|car\b|telephone|phone|mobile|utilit|cola|living|special pay|shift|flying|meal|fuel|education|remote|hardship|responsib|acting|overseas|outstation/i;
+const rxEsc = s => s.replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&");
+let W = null;
+function guessMap(headers){
+  const norm = headers.map(h => String(h || "").toLowerCase().replace(/\s+/g, " ").trim()), used = new Set(), map = {};
+  for (const pass of ["exact","word"]){
+    for (const f of EMP_FIELDS){
+      if (map[f.k] != null) continue;
+      for (const kw of f.kw){
+        const rx = new RegExp("(^|[^a-z])" + rxEsc(kw) + "([^a-z]|$)");
+        const idx = norm.findIndex((h, i) => !used.has(i) && (pass === "exact" ? h === kw : rx.test(h)));
+        if (idx >= 0){ map[f.k] = idx; used.add(idx); break; }
+      }
+    }
+  }
+  if (map.gross != null && /allow/.test(norm[map.gross])){ used.delete(map.gross); delete map.gross; }
+  const allow = new Set();
+  const total = norm.findIndex((h, i) => !used.has(i) && /total allow/.test(h));
+  if (total >= 0) allow.add(total);
+  else norm.forEach((h, i) => { if (!used.has(i) && ALLOW_RX.test(h) && !/total|gross|net|deduct/.test(h)) allow.add(i); });
+  return {map, allow};
+}
+async function startWizard(file){
+  try {
+    const sheets = await readSheets(file);
+    const names = Object.keys(sheets).filter(n => sheets[n].length > 1);
+    if (!names.length) throw new Error("The file has no rows of data.");
+    const best = names.slice().sort((a, b) => sheets[b].length - sheets[a].length)[0];
+    W = {fileName: file.name, sheets, sheet: best, groupBy: "grade", vacantHires: true, keepNames: true, keepOther: false};
+    loadSheet();
+  } catch (err){ resetWizard(); $("#wizMsg").innerHTML = `<div class="confirm">${esc(err.message || "That file could not be read.")}</div>`; }
+}
+function loadSheet(){
+  const rows = W.sheets[W.sheet], hr = findHeaderRow(rows);
+  W.headers = rows[hr].map((h, i) => String(h || "").trim() || `Column ${i + 1}`);
+  W.rows = rows.slice(hr + 1).filter(r => r.some(c => String(c).trim() !== ""));
+  const g = guessMap(W.headers); W.map = g.map; W.allow = g.allow;
+  W.groupBy = W.map.grade != null ? "grade" : W.map.job != null ? "job" : "section";
+  renderWizard();
+}
+function sampleVals(i){ if (i == null) return ""; const v = []; for (const r of W.rows){ const c = r[i]; if (c !== "" && c != null){ v.push(c instanceof Date ? parseDate(c) : String(c)); if (v.length >= 3) break; } } return v.join(" · "); }
+function setSteps(n){ document.querySelectorAll("#wizSteps li").forEach((li, i) => li.classList.toggle("on", i === n)); }
+function renderWizard(){
+  setSteps(1);
+  const opts = sel => `<option value="">— not in file —</option>` + W.headers.map((h, i) => `<option value="${i}"${i === sel ? " selected" : ""}>${esc(h)}</option>`).join("");
+  const sheetNames = Object.keys(W.sheets);
+  const sheetSel = sheetNames.length > 1 ? `<div class="field" style="max-width:320px"><label for="wSheet">Sheet</label><select id="wSheet">${sheetNames.map(n => `<option${n === W.sheet ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></div>` : "";
+  const mapped = new Set(Object.values(W.map));
+  $("#wizBody").innerHTML = `
+    <div class="stack" style="gap:16px">
+      <div class="toolbar"><b>${esc(W.fileName)}</b><span class="muted">${f0(W.rows.length)} data rows · ${W.headers.length} columns</span><span class="grow"></span><button class="btn sm" id="wCancel" type="button">Choose another file</button></div>
+      ${sheetSel}
+      <div><h3 style="margin-bottom:6px">Match your columns</h3><p class="note" style="margin-bottom:10px">Columns were matched by their headers. Check each one; fields marked <b style="color:var(--bad)">*</b> are required. Sample values from your file appear under each field.</p>
+      <div class="map-grid">${EMP_FIELDS.map(f => `<div class="map-row"><label for="wm-${f.k}">${f.label}${f.req ? " <b>*</b>" : ""}</label><select id="wm-${f.k}" data-wm="${f.k}">${opts(W.map[f.k])}</select><span class="smp">${esc(sampleVals(W.map[f.k])) || "&nbsp;"}</span></div>`).join("")}</div></div>
+      <div><h3 style="margin-bottom:6px">Allowance columns</h3><p class="note" style="margin-bottom:8px">Tick every monthly allowance to add to basic. If none are ticked and a gross column is matched, allowances = gross − basic.</p>
+      <div class="chips">${W.headers.map((h, i) => mapped.has(i) ? "" : `<label class="chip"><input type="checkbox" data-wa="${i}"${W.allow.has(i) ? " checked" : ""}>${esc(h)}</label>`).join("")}</div></div>
+      <div><h3 style="margin-bottom:6px">Options</h3>
+      <div class="checks">
+        <label for="wGroup">Group employees into plan lines by <select id="wGroup"><option value="grade"${W.groupBy === "grade" ? " selected" : ""}>Grade</option><option value="job"${W.groupBy === "job" ? " selected" : ""}>Job title</option><option value="section"${W.groupBy === "section" ? " selected" : ""}>Section</option></select></label>
+        <label><input type="checkbox" id="wVac"${W.vacantHires ? " checked" : ""}> Add vacant posts as planned new hires</label>
+        <label><input type="checkbox" id="wNames"${W.keepNames ? " checked" : ""}> Keep employee names</label>
+        <label><input type="checkbox" id="wKeep"${W.keepOther ? " checked" : ""}> Keep current plan lines that are not in the file</label>
+      </div></div>
+      <div id="wCheck"></div>
+    </div>`;
+  renderWizCheck();
+}
+function parseInc(v){ if (v === "" || v == null) return null; const s = String(v).trim(); const n = num(s.replace("%", "")); if (!s) return null; return n > 0 && n < 1 && !s.includes("%") ? Math.round(n * 1000) / 10 : n; }
+function buildRoster(){
+  const m = W.map, get = (r, k) => m[k] == null ? "" : r[m[k]];
+  const res = {emps: [], vac: new Map(), groups: new Map(), deptNames: [], excluded: 0, vacant: 0, noDept: 0, noBasic: 0, badDate: 0, dup: 0, noNat: 0};
+  const seen = new Set(); let auto = 1;
+  for (const r of W.rows){
+    const dept = String(get(r, "dept") || "").trim();
+    const st = String(get(r, "status") || "").toLowerCase(), nm = String(get(r, "name") || "").trim();
+    const isVac = /vacan/.test(st) || /^vacan/i.test(nm);
+    if (!isVac && /terminat|resign|inactive|left|separat|deceas|retired|exited|end of service/.test(st)){ res.excluded++; continue; }
+    if (!dept){ res.noDept++; continue; }
+    if (!res.deptNames.includes(dept)) res.deptNames.push(dept);
+    const natRaw = String(get(r, "nat") || "").trim();
+    if (m.nat != null && !natRaw && !isVac) res.noNat++;
+    const nat = parseNat(natRaw);
+    const grp = String((W.groupBy === "grade" ? get(r, "grade") : W.groupBy === "section" ? get(r, "section") : get(r, "job")) || get(r, "job") || "General").trim();
+    const key = dept + "\u0001" + grp + "\u0001" + nat;
+    if (!res.groups.has(key)) res.groups.set(key, {dept, grp, nat, n: 0, bs: 0, al: 0, vbs: 0, val: 0});
+    const gg = res.groups.get(key);
+    let bs = num(get(r, "basic")), al = 0;
+    W.allow.forEach(i => al += num(r[i]));
+    if (!W.allow.size && m.gross != null) al = Math.max(0, num(get(r, "gross")) - bs);
+    if (isVac){ res.vacant++; res.vac.set(key, (res.vac.get(key) || 0) + 1); gg.vbs += bs; gg.val += al; continue; }
+    if (!(bs > 0)) res.noBasic++;
+    const dates = ["dob","jd","ce"].map(k => parseDate(get(r, k)));
+    dates.forEach(d => { if (d === "!") res.badDate++; });
+    let id = String(get(r, "id") || "").trim(); if (!id) id = "ROW-" + auto++;
+    if (seen.has(id)){ res.dup++; id = id + "-" + auto++; } seen.add(id);
+    const g = String(get(r, "gender") || "").trim().toUpperCase();
+    res.emps.push({i: id, n: W.keepNames ? nm : "", key, s: String(get(r, "section") || "").trim(), j: String(get(r, "job") || "").trim(), g: String(get(r, "grade") || "").trim(), o: nat === "O" ? 1 : 0,
+      x: g.startsWith("F") ? "F" : g.startsWith("M") ? "M" : "", dob: dates[0] === "!" ? "" : dates[0], jd: dates[1] === "!" ? "" : dates[1], ce: dates[2] === "!" ? "" : dates[2],
+      bs: Math.round(bs * 1000) / 1000, al: Math.round(al * 1000) / 1000, inc: parseInc(get(r, "inc")), ex: parseMonth(get(r, "exit")) || 0});
+    gg.n++; gg.bs += bs; gg.al += al;
+  }
+  return res;
+}
+function renderWizCheck(){
+  const missing = EMP_FIELDS.filter(f => f.req && W.map[f.k] == null);
+  if (missing.length){ W.res = null; $("#wCheck").innerHTML = `<div class="confirm">Match ${missing.map(f => f.label).join(", ")} to continue.</div>`; setSteps(1); return; }
+  const res = buildRoster(); W.res = res;
+  const om = res.emps.filter(e => e.o).length, gross = res.emps.reduce((s, e) => s + e.bs + e.al, 0);
+  const st = (v, l, cls = "") => `<div class="vstat ${v && cls ? cls : ""}"><b>${f0(v)}</b><span>${l}</span></div>`;
+  const byDept = new Map();
+  for (const e of res.emps){ const d = e.key.split("\u0001")[0]; const x = byDept.get(d) || {n: 0, o: 0, g: 0}; x.n++; x.o += e.o; x.g += e.bs + e.al; byDept.set(d, x); }
+  const grpLabel = W.groupBy === "job" ? "job title" : W.groupBy;
+  $("#wCheck").innerHTML = `<h3 style="margin-bottom:8px">Check before importing</h3>
+    <div class="vstats">${st(res.emps.length, "employees to import")}${st(res.deptNames.length, "departments")}${st(res.groups.size, `plan lines (department × ${grpLabel} × nationality)`)}${st(om, `Omani (${fPct(res.emps.length ? om / res.emps.length * 100 : 0)})`)}${st(res.vacant, "vacant posts")}${st(res.excluded, "left or inactive, skipped")}${st(res.noDept, "rows with no department, skipped", "bad")}${st(res.noBasic, "employees with no basic salary", "bad")}${st(res.dup, "duplicate employee IDs", "warn")}${st(res.badDate, "dates not understood", "warn")}${res.noNat ? st(res.noNat, "blank nationality (counted as expatriate)", "warn") : ""}</div>
+    <div class="tbl-wrap" style="margin-top:12px;max-height:320px"><table><thead><tr><th>Department in file</th><th class="n">Employees</th><th class="n">Omani %</th><th class="n">Monthly gross</th><th>Settings</th></tr></thead><tbody>${[...byDept].sort((a, b) => b[1].n - a[1].n).map(([d, x]) => `<tr><td>${esc(d)}</td><td class="n">${f0(x.n)}</td><td class="n">${fPct(x.o / x.n * 100)}</td><td class="n">${f0(x.g)}</td><td>${!S.sample && S.depts.some(dd => dd.name.toLowerCase() === d.toLowerCase()) ? '<span class="pill good">Keeps current settings</span>' : '<span class="pill info">New department</span>'}</td></tr>`).join("")}</tbody><tfoot><tr class="total"><td>Total</td><td class="n">${f0(res.emps.length)}</td><td class="n">${fPct(res.emps.length ? om / res.emps.length * 100 : 0)}</td><td class="n">${f0(gross)}</td><td></td></tr></tfoot></table></div>
+    <div class="toolbar" style="margin-top:12px"><button class="btn primary" id="wImport" type="button"${res.emps.length ? "" : " disabled"}>Import ${f0(res.emps.length)} employees</button><span class="note">Replaces the current employee file${S.sample ? " and the example data" : ". Planned hires and exits on matching lines are kept"}.</span></div>`;
+  setSteps(2);
+}
+function applyRoster(){
+  const res = W && W.res; if (!res) return;
+  const oldLines = S.lines, oldDepts = S.depts, wasSample = S.sample;
+  const dKey = s => String(s).toLowerCase().trim();
+  const depts = [], deptByName = new Map();
+  for (const name of res.deptNames){
+    const old = wasSample ? null : oldDepts.find(d => dKey(d.name) === dKey(name));
+    const d = old ? {...old} : {id: "d" + uid(), name, ot: 2, prior: 0, ceiling: 0};
+    depts.push(d); deptByName.set(dKey(name), d);
+  }
+  const lines = [], lineByKey = new Map();
+  for (const [key, g] of res.groups){
+    const d = deptByName.get(dKey(g.dept));
+    const oldDept = wasSample ? null : oldDepts.find(x => dKey(x.name) === dKey(g.dept));
+    const old = oldDept ? oldLines.find(l => l.dept === oldDept.id && dKey(l.role) === dKey(g.grp) && l.nat === g.nat) : null;
+    const vac = W.vacantHires ? (res.vac.get(key) || 0) : 0;
+    const nb = g.n ? g.bs / g.n : vac ? g.vbs / vac : (old ? old.basic : 0), na = g.n ? g.al / g.n : vac ? g.val / vac : (old ? old.allow : 0);
+    if (!g.n && !vac) continue;
+    const l = {id: old ? old.id : uid(), dept: d.id, role: g.grp, nat: g.nat, hc: g.n,
+      hires: (old ? num(old.hires) : 0) + vac, hireM: old ? old.hireM : 4, exits: old ? num(old.exits) : 0, exitM: old ? old.exitM : 6,
+      basic: Math.round(nb), allow: Math.round(na)};
+    lines.push(l); lineByKey.set(key, l);
+  }
+  if (W.keepOther && !wasSample){
+    for (const l of oldLines){
+      if (lines.some(x => x.id === l.id)) continue;
+      const od = oldDepts.find(x => x.id === l.dept); if (!od) continue;
+      let d = deptByName.get(dKey(od.name)); if (!d){ d = {...od}; depts.push(d); deptByName.set(dKey(od.name), d); }
+      lines.push({...l, dept: d.id, hc: 0});
+    }
+  }
+  S.depts = depts; S.lines = lines; S.sample = false;
+  ROS = {sample: false, fileName: W.fileName, importedAt: Date.now(), savedAt: 0, groupBy: W.groupBy,
+    emps: res.emps.map(({key, ...e}) => ({...e, k: lineByKey.get(key).id}))};
+  rosVer++; changed(); persistRoster();
+  resetWizard(`Imported ${f0(ROS.emps.length)} employees into ${f0(S.lines.length)} plan lines across ${S.depts.length} departments. Next: set overtime rates and prior-year budgets on Assumptions, then review retirements and contract ends on Employees.`);
+  updateHeader();
+}
+function resetWizard(msg){
+  setSteps(0); W = null;
+  $("#wizBody").innerHTML = `
+    <div class="dropzone" id="dropEmp">
+      <p style="margin:0 0 10px">Drop your employee file here, or</p>
+      <label class="btn primary" for="fileEmp">Choose file</label>
+      <input id="fileEmp" type="file" accept=".xlsx,.xls,.xlsm,.csv" class="sr">
+      <p class="note" style="margin-top:12px">Any column layout works: you match the columns in the next step. Typical columns are Employee ID, Name, Department, Section, Job title, Grade, Nationality, Gender, Date of birth, Joining date, Contract end, Basic, and each allowance.</p>
+    </div>
+    <div id="wizMsg">${msg ? `<div class="callout" style="margin-top:12px">${esc(msg)}</div>` : ""}</div>
+    <div class="toolbar" style="margin-top:12px">
+      <button class="btn" id="btnEmpTemplate" type="button">Download employee file template</button>
+      <button class="btn danger" id="btnDropRoster" type="button" hidden>Remove employee file</button>
+    </div>
+    <p class="note" id="rosterInfo" style="margin-top:10px"></p>`;
+  $("#fileEmp").addEventListener("change", e => { const f = e.target.files[0]; if (f) startWizard(f); e.target.value = ""; });
+  bindDrop($("#dropEmp"), startWizard);
+  $("#btnEmpTemplate").addEventListener("click", empTemplate);
+  $("#btnDropRoster").addEventListener("click", dropRosterAsk);
+  updateRosterInfo();
+}
+function updateRosterInfo(){
+  const el = $("#rosterInfo"); if (!el) return;
+  $("#btnDropRoster").hidden = !rosterOn();
+  el.textContent = rosterOn() ? `Loaded: ${ROS.sample ? "example employee file" : ROS.fileName} · ${f0(ROS.emps.length)} employees${ROS.importedAt ? " · imported " + new Date(ROS.importedAt).toLocaleDateString("en-GB") : ""}.` : "No employee file loaded. The plan uses summary lines.";
+}
+function dropRosterAsk(){
+  $("#wizMsg").innerHTML = `<div class="confirm" style="margin-top:12px"><span>Remove the employee file? Plan lines keep their headcount and average pay, and named exits move to “Other exits”.</span><button class="btn danger sm" id="drYes" type="button">Remove it</button><button class="btn sm" id="drNo" type="button">Keep it</button></div>`;
+  $("#drYes").onclick = () => {
+    const idx = rosterIndex();
+    for (const l of S.lines){
+      const em = idx.get(l.id) || []; if (!em.length){ l.hc = 0; continue; }
+      l.hc = em.length; l.basic = Math.round(em.reduce((s, e) => s + e.bs, 0) / em.length); l.allow = Math.round(em.reduce((s, e) => s + e.al, 0) / em.length);
+      const named = em.filter(e => e.ex); if (named.length){ l.exits = num(l.exits) + named.length; l.exitM = Math.round(named.reduce((s, e) => s + e.ex, 0) / named.length); }
+    }
+    ROS = null; S.sample = false; rosVer++; changed(); persistRoster(); updateHeader(); resetWizard("Employee file removed. The plan now uses summary lines.");
+  };
+  $("#drNo").onclick = () => { $("#wizMsg").innerHTML = ""; };
+}
+$("#wizBody").addEventListener("change", e => {
+  if (!W) return;
+  const t = e.target;
+  if (t.id === "wSheet"){ W.sheet = t.value; loadSheet(); return; }
+  if (t.dataset.wm){ const k = t.dataset.wm; if (t.value === "") delete W.map[k]; else { const v = +t.value; for (const kk of Object.keys(W.map)) if (W.map[kk] === v) delete W.map[kk]; W.map[k] = v; W.allow.delete(v); } renderWizard(); return; }
+  if (t.dataset.wa != null){ const i = +t.dataset.wa; if (t.checked) W.allow.add(i); else W.allow.delete(i); }
+  if (t.id === "wGroup") W.groupBy = t.value;
+  if (t.id === "wVac") W.vacantHires = t.checked;
+  if (t.id === "wNames") W.keepNames = t.checked;
+  if (t.id === "wKeep") W.keepOther = t.checked;
+  renderWizCheck();
+});
+$("#wizBody").addEventListener("click", e => { if (e.target.id === "wCancel") resetWizard(); if (e.target.id === "wImport") applyRoster(); });
+function empTemplate(){
+  const rows = [["Employee ID","Employee Name","Department","Section","Job Title","Grade","Nationality","Gender","Date of Birth","Date of Joining","Contract End Date","Basic Salary","Housing Allowance","Transport Allowance","Other Allowances","Status"],
+    ["E0001","Example – delete this row","Flight Operations","Fleet A","First Officer","P2","Omani","M","14/03/1990","01/09/2015","",2100,600,300,200,"Active"],
+    ["E0002","Example – delete this row","Engineering & Maintenance","Line Maintenance","Licensed Engineer B1","T3","Indian","M","02/11/1975","15/01/2012","31/12/2027",1700,450,200,150,"Active"],
+    ["","VACANT","Cabin Services","Cabin Crew","Cabin Crew Member","C1","Omani","","","","",520,200,100,80,"Vacant"]];
+  if (window.XLSX){ const wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(rows); ws["!cols"] = rows[0].map(h => ({wch: Math.max(12, h.length + 2)})); XLSX.utils.book_append_sheet(wb, ws, "Employees"); saveFile("Employee-master-template.xlsx", new Blob([XLSX.write(wb, {bookType: "xlsx", type: "array"})])); }
+  else saveFile("Employee-master-template.csv", toCSV(rows));
+}
+
+/* ---------- Summary import ---------- */
 const HDR = {
   dept: ["department","dept","division","directorate","unit","cost centre","cost center"],
   role: ["position","grade","job","title","role","designation"],
@@ -829,12 +1373,10 @@ const HDR = {
   hireM: ["start month","hire month","joining month","start"],
   exits: ["exit","leaver","separation","attrition"],
   exitM: ["last month","exit month","leaving month"],
-  basic: ["basic"],
-  allow: ["allowance","allow"],
+  basic: ["basic"], allow: ["allowance","allow"],
 };
 function mapHeaders(headers){
   const map = {}, norm = headers.map(h => String(h || "").toLowerCase().trim());
-  // exact-ish passes first, then contains
   for (const [k, keys] of Object.entries(HDR)){
     let idx = norm.findIndex(h => keys.includes(h));
     if (idx < 0) idx = norm.findIndex((h, i) => !Object.values(map).includes(i) && keys.some(kw => h.includes(kw)));
@@ -842,45 +1384,21 @@ function mapHeaders(headers){
   }
   return map;
 }
-const parseMonth = v => { if (v === "" || v == null) return null; const s = String(v).trim().toLowerCase(); const i = MONTHS.findIndex(m => s.startsWith(m.toLowerCase())); if (i >= 0) return i + 1; const n = Math.round(num(s)); return n >= 1 && n <= 12 ? n : null; };
-const parseNat = v => /^(o|om|omani|oman|local|national|citizen)\b/i.test(String(v || "").trim()) ? "O" : "E";
-function parseCSV(text){
-  const rows = []; let row = [], cell = "", q = false;
-  for (let i = 0; i < text.length; i++){
-    const c = text[i];
-    if (q){ if (c === '"'){ if (text[i + 1] === '"'){ cell += '"'; i++; } else q = false; } else cell += c; }
-    else if (c === '"') q = true;
-    else if (c === "," || c === ";" || c === "\t"){ row.push(cell); cell = ""; }
-    else if (c === "\n" || c === "\r"){ if (c === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
-    else cell += c;
-  }
-  if (cell || row.length){ row.push(cell); rows.push(row); }
-  return rows.filter(r => r.some(x => String(x).trim() !== ""));
-}
 let pending = null;
 function buildImport(rows){
   if (rows.length < 2) throw new Error("The file has no data rows under the header.");
   const map = mapHeaders(rows[0]);
   if (map.dept == null) throw new Error("No Department column found. Add a column headed “Department”.");
   if (map.basic == null) throw new Error("No Basic salary column found. Add a column headed “Basic”.");
-  const empLevel = map.hc == null;
+  if (map.hc == null) throw new Error("No “Current HC” column found. For a file with one row per employee, use the Employee master file section above.");
   const get = (r, k) => map[k] == null ? "" : r[map[k]];
-  const groups = new Map(), deptNames = [];
+  const lines = [], deptNames = [];
   for (const r of rows.slice(1)){
     const dept = String(get(r, "dept") || "").trim(); if (!dept) continue;
-    const role = String(get(r, "role") || "General").trim(), nat = parseNat(get(r, "nat"));
     if (!deptNames.includes(dept)) deptNames.push(dept);
-    const key = empLevel ? dept + "|" + role + "|" + nat : dept + "|" + role + "|" + nat + "|" + groups.size;
-    const hc = empLevel ? 1 : num(get(r, "hc"));
-    const g = groups.get(key) || {dept, role, nat, hc:0, hires:0, exits:0, hireM:null, exitM:null, basicSum:0, allowSum:0, w:0};
-    const w = Math.max(hc, empLevel ? 1 : 0) || 1;
-    g.hc += hc; g.hires += num(get(r, "hires")); g.exits += num(get(r, "exits"));
-    g.hireM = g.hireM || parseMonth(get(r, "hireM")); g.exitM = g.exitM || parseMonth(get(r, "exitM"));
-    g.basicSum += num(get(r, "basic")) * w; g.allowSum += num(get(r, "allow")) * w; g.w += w;
-    groups.set(key, g);
+    lines.push({dept, role: String(get(r, "role") || "General").trim(), nat: parseNat(get(r, "nat")), hc: Math.round(num(get(r, "hc"))), hires: Math.round(num(get(r, "hires"))), hireM: parseMonth(get(r, "hireM")) || 4, exits: Math.round(num(get(r, "exits"))), exitM: parseMonth(get(r, "exitM")) || 6, basic: Math.round(num(get(r, "basic"))), allow: Math.round(num(get(r, "allow")))});
   }
-  const lines = [...groups.values()].map(g => ({dept: g.dept, role: g.role, nat: g.nat, hc: Math.round(g.hc), hires: Math.round(g.hires), hireM: g.hireM || 4, exits: Math.round(g.exits), exitM: g.exitM || 6, basic: Math.round(g.basicSum / g.w), allow: Math.round(g.allowSum / g.w)}));
-  return {rows: rows.length - 1, lines, deptNames, empLevel, cols: Object.keys(map)};
+  return {rows: rows.length - 1, lines, deptNames, cols: Object.keys(map)};
 }
 function showPreview(p){
   pending = p;
@@ -888,48 +1406,40 @@ function showPreview(p){
   const missing = ["role","nat","hires","exits","allow"].filter(k => !p.cols.includes(k));
   $("#importPreview").innerHTML = `<div class="callout" style="display:grid;gap:8px">
     <b>Ready to import</b>
-    <span>${f0(p.rows)} rows read${p.empLevel ? " as individual employees" : ""} → ${f0(p.lines.length)} plan lines across ${p.deptNames.length} departments, ${f0(hc)} current staff.</span>
-    ${missing.length ? `<span class="note">Not found in file: ${missing.join(", ")}. Those values start at zero or defaults and can be edited in Headcount plan.</span>` : ""}
+    <span>${f0(p.lines.length)} plan lines across ${p.deptNames.length} departments, ${f0(hc)} current staff.</span>
+    ${missing.length ? `<span class="note">Not found in file: ${missing.join(", ")}. Those values start at zero or defaults.</span>` : ""}
     <div class="toolbar"><button class="btn primary" id="impReplace" type="button">Replace current plan</button><button class="btn" id="impAppend" type="button">Add to current plan</button><button class="btn" id="impCancel" type="button">Cancel</button></div></div>`;
 }
 function applyImport(replace){
   const p = pending; if (!p) return;
-  if (replace){ S.lines = []; S.depts = []; S.sample = false; }
+  if (replace){ S.lines = []; S.depts = []; if (ROS){ ROS = null; rosVer++; persistRoster(); } }
   S.sample = false;
   for (const name of p.deptNames){ if (!S.depts.some(d => d.name.toLowerCase() === name.toLowerCase())) S.depts.push({id: "d" + uid(), name, ot: 2, prior: 0, ceiling: 0}); }
   for (const l of p.lines){ const d = S.depts.find(x => x.name.toLowerCase() === l.dept.toLowerCase()); S.lines.push({...l, id: uid(), dept: d.id}); }
   pending = null; $("#importPreview").innerHTML = `<p class="note">Imported. Review overtime rates and prior-year budgets on the Assumptions tab.</p>`;
-  changed(); renderAll();
+  changed(); updateHeader(); updateRosterInfo();
 }
 $("#importPreview").addEventListener("click", e => { if (e.target.id === "impReplace") applyImport(true); if (e.target.id === "impAppend") applyImport(false); if (e.target.id === "impCancel"){ pending = null; $("#importPreview").innerHTML = ""; } });
 async function handleFile(file){
   const box = $("#importPreview");
   try {
-    const name = file.name.toLowerCase();
-    if (name.endsWith(".json")){
+    if (file.name.toLowerCase().endsWith(".json")){
       const data = JSON.parse(await file.text());
-      if (!data || !Array.isArray(data.lines)) throw new Error("This JSON file is not a planner backup.");
-      S = normalise(data); S.sample = false; changed(); renderAll();
-      box.innerHTML = `<p class="note">Backup restored: ${S.lines.length} lines, ${S.depts.length} departments.</p>`; return;
+      const plan = data && data.plan ? data.plan : data;
+      if (!plan || !Array.isArray(plan.lines)) throw new Error("This JSON file is not a planner backup.");
+      S = normalise(plan); S.sample = false;
+      ROS = data.roster && Array.isArray(data.roster.emps) ? data.roster : null; rosVer++;
+      changed(); persistRoster(); updateHeader(); updateRosterInfo();
+      box.innerHTML = `<p class="note">Backup restored: ${S.lines.length} lines, ${S.depts.length} departments${ROS ? ", " + f0(ROS.emps.length) + " employees" : ""}.</p>`; return;
     }
-    let rows;
-    if (name.endsWith(".csv")) rows = parseCSV(await file.text());
-    else {
-      if (!window.XLSX) throw new Error("Excel reading is unavailable here. Save the sheet as CSV and import that instead.");
-      const wb = XLSX.read(await file.arrayBuffer(), {type: "array"});
-      const sheet = wb.Sheets[wb.SheetNames.find(n => /plan|import|data|staff|employee/i.test(n)) || wb.SheetNames[0]];
-      rows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: "", raw: true});
-      const hi = rows.findIndex(r => r.some(c => /department|dept/i.test(String(c))));
-      if (hi > 0) rows = rows.slice(hi);
-    }
+    const sheets = await readSheets(file);
+    const name = Object.keys(sheets).find(n => /plan|import|data/i.test(n)) || Object.keys(sheets)[0];
+    let rows = sheets[name]; const hi = findHeaderRow(rows); if (hi > 0) rows = rows.slice(hi);
     showPreview(buildImport(rows));
   } catch (err) { box.innerHTML = `<div class="confirm">${esc(err.message || "That file could not be read.")}</div>`; }
 }
 $("#fileIn").addEventListener("change", e => { const f = e.target.files[0]; if (f) handleFile(f); e.target.value = ""; });
-const drop = $("#drop");
-["dragenter","dragover"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add("over"); }));
-["dragleave","drop"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove("over"); }));
-drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) handleFile(f); });
+bindDrop($("#drop"), handleFile);
 
 /* ---------- Export ---------- */
 let downloads;
@@ -948,20 +1458,19 @@ async function saveFile(filename, data){
 }
 const fileStem = () => `Manpower-Budget-FY${S.fy}${S.org ? "-" + S.org.replace(/[^\w-]+/g, "-") : ""}`;
 function planRows(){
-  return [["Department","Position","Nationality","Current HC","New hires","Start month","Exits","Last month","Basic","Allowances","Closing HC","FY cost (OMR)"],
-    ...S.lines.map(l => { const r = R.lineRes.get(l.id) || {}; return [deptName(l.dept), l.role, l.nat === "O" ? "Omani" : "Expatriate", l.hc, l.hires, MONTHS[l.hireM - 1], l.exits, MONTHS[l.exitM - 1], l.basic, l.allow, Math.round(r.close || 0), Math.round(r.total || 0)]; })];
+  return [["Department","Position","Nationality","Current HC","Named exits","New hires","Start month","Other exits","Last month","Basic","Allowances","Closing HC","FY cost (OMR)"],
+    ...S.lines.map(l => { const r = R.lineRes.get(l.id) || {}; return [deptName(l.dept), l.role, l.nat === "O" ? "Omani" : "Expatriate", Math.round(r.open || 0), r.named || 0, l.hires, MONTHS[l.hireM - 1], l.exits, MONTHS[l.exitM - 1], l.basic, l.allow, Math.round(r.close || 0), Math.round(r.total || 0)]; })];
 }
 function deptRows(){
   const head = ["Department", ...COST_COLS.map(c => c[1]), "Contingency", `FY${S.fy} total`, `FY${S.baseYear} budget`, "Change", "Ceiling", "Opening HC", "Hires", "Exits", "Closing HC", "Omanisation %"];
-  const row = (n, g, prior, ceil) => [n, ...COST_COLS.map(c => Math.round(g[c[0]])), Math.round(g.cont), Math.round(g.total), prior || "", prior ? Math.round(g.total - prior) : "", ceil || "", g.open, g.hires, g.exits, g.close, g.close ? +(g.closeO / g.close * 100).toFixed(1) : ""];
+  const row = (n, g, prior, ceil) => [n, ...COST_COLS.map(c => Math.round(g[c[0]])), Math.round(g.cont), Math.round(g.total), prior || "", prior ? Math.round(g.total - prior) : "", ceil || "", g.open, Math.round(g.hires), g.exits, Math.round(g.close), g.close ? +(g.closeO / g.close * 100).toFixed(1) : ""];
   return [head, ...R.depts.map(g => row(g.d.name, g, num(g.d.prior), num(g.d.ceiling))), row("Total", R.tot, S.depts.reduce((s, d) => s + num(d.prior), 0), "")];
 }
 function exportXlsx(){
   if (!window.XLSX){ $("#exportMsg").textContent = "Excel export is unavailable here. Use the CSV export instead."; switchTab("data"); return; }
-  const wb = XLSX.utils.book_new(), cf = 1 + S.a.contingency / 100;
-  const t = R.tot, br = bridge(S);
+  const wb = XLSX.utils.book_new(), cf = 1 + S.a.contingency / 100, t = R.tot, br = bridge(S);
   const summary = [
-    [`${S.org ? S.org + " · " : ""}Manpower budget FY${S.fy}`], [`Generated ${new Date().toLocaleDateString("en-GB")}. Amounts in OMR.`], [],
+    [`${S.org ? S.org + " · " : ""}Manpower budget FY${S.fy}`], [`Generated ${new Date().toLocaleDateString("en-GB")}. Amounts in OMR.${rosterOn() ? ` Built from employee file: ${ROS.sample ? "example data" : ROS.fileName} (${ROS.emps.length} employees).` : ""}`], [],
     ["Total budget", Math.round(t.total)], ["Opening headcount", t.open], ["New hires", Math.round(t.hires)], ["Exits", t.exits], ["Closing headcount", Math.round(t.close)],
     ["Omanisation at year end (%)", t.close ? +(t.closeO / t.close * 100).toFixed(1) : 0], ["Omanisation target (%)", S.a.omanTarget], ["Average cost per FTE", Math.round(t.fte ? t.total / t.fte : 0)], [],
     ["Budget bridge"], ...br.map(b => [b.label, Math.round(b.v)]),
@@ -974,22 +1483,26 @@ function exportXlsx(){
   add(summary, "Summary", [34, 16]);
   add(deptRows(), "Department budget", [30, ...new Array(20).fill(13)]);
   add(monthly, "Monthly phasing", [30, ...new Array(13).fill(11)]);
-  add(planRows(), "Plan lines", [28, 34, 12, ...new Array(9).fill(12)]);
+  add(planRows(), "Plan lines", [28, 34, 12, ...new Array(10).fill(12)]);
+  if (rosterOn()){
+    const er = [["Employee ID","Name","Department","Section","Job title","Grade","Nationality","Gender","Date of birth","Joining date","Contract end","Age","Service (yrs)","Basic","Allowances","Increment %","Planned exit","Retires in FY","Contract ends in FY","FY cost (OMR)"]];
+    for (const e of ROS.emps){ const f = empFlags(e); er.push([e.i, e.n, deptName(empDept(e)), e.s, e.j, e.g, e.o ? "Omani" : "Expatriate", e.x, e.dob, e.jd, e.ce, ageAt(e) ?? "", svcAt(e) ?? "", e.bs, e.al, e.inc ?? S.a.incPct, e.ex ? "End " + MONTHS[e.ex - 1] : "Stays", f.ret ? MONTHS[f.ret - 1] : "", f.con ? MONTHS[f.con - 1] : "", Math.round(empCost(e))]); }
+    add(er, "Employees", [12, 24, 28, 18, 28, 8, 12, 8, 12, 12, 12, 6, 10, 10, 10, 11, 12, 12, 14, 14]);
+  }
   add(scen, "Scenarios", [26, ...new Array(8).fill(14)]);
   add(assump, "Assumptions", [52, 14, 14, 14]);
-  const out = XLSX.write(wb, {bookType: "xlsx", type: "array"});
-  saveFile(fileStem() + ".xlsx", new Blob([out], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+  saveFile(fileStem() + ".xlsx", new Blob([XLSX.write(wb, {bookType: "xlsx", type: "array"})], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
 }
 const toCSV = rows => rows.map(r => r.map(v => { const s = String(v ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(",")).join("\r\n");
 $("#btnExportXlsx").addEventListener("click", exportXlsx);
 $("#btnExportXlsx2").addEventListener("click", exportXlsx);
 $("#btnExportCsv").addEventListener("click", () => saveFile(fileStem() + "-plan.csv", "﻿" + toCSV(planRows())));
-$("#btnExportJson").addEventListener("click", () => saveFile(fileStem() + "-backup.json", JSON.stringify(S, null, 1)));
+$("#btnExportJson").addEventListener("click", () => saveFile(fileStem() + "-backup.json", JSON.stringify({plan: S, roster: ROS && !ROS.sample ? ROS : null})));
 $("#btnTemplate").addEventListener("click", () => {
   const rows = [["Department","Position","Nationality","Current HC","New hires","Start month","Exits","Last month","Basic","Allowances"],
     ["Flight Operations","First Officers","Omani",190,20,"Mar",6,"Jul",2100,1100],["Cabin Services","Cabin Crew","Expatriate",180,0,"",25,"Jun",560,380]];
-  if (window.XLSX){ const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(rows); ws["!cols"] = [28,30,12,12,12,12,10,12,10,12].map(w => ({wch: w})); XLSX.utils.book_append_sheet(wb, ws, "Plan"); saveFile("Manpower-import-template.xlsx", new Blob([XLSX.write(wb, {bookType: "xlsx", type: "array"})])); }
-  else saveFile("Manpower-import-template.csv", toCSV(rows));
+  if (window.XLSX){ const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(rows); ws["!cols"] = [28,30,12,12,12,12,10,12,10,12].map(w => ({wch: w})); XLSX.utils.book_append_sheet(wb, ws, "Plan"); saveFile("Manpower-summary-template.xlsx", new Blob([XLSX.write(wb, {bookType: "xlsx", type: "array"})])); }
+  else saveFile("Manpower-summary-template.csv", toCSV(rows));
 });
 $("#btnCopy").addEventListener("click", async () => {
   const tsv = deptRows().map(r => r.join("\t")).join("\n");
@@ -1000,13 +1513,13 @@ $("#btnCopy").addEventListener("click", async () => {
 /* ---------- Reset ---------- */
 function askConfirm(label, fn){
   const area = $("#resetArea"), prev = area.innerHTML;
-  area.innerHTML = `<div class="confirm"><span>${label} This replaces your current plan and cannot be undone.</span><button class="btn danger" id="cfYes" type="button">Yes, replace it</button><button class="btn" id="cfNo" type="button">Keep my plan</button></div>`;
+  area.innerHTML = `<div class="confirm"><span>${label} This replaces your current plan and employee file and cannot be undone.</span><button class="btn danger" id="cfYes" type="button">Yes, replace it</button><button class="btn" id="cfNo" type="button">Keep my plan</button></div>`;
   $("#cfYes").onclick = () => { fn(); area.innerHTML = prev; bindReset(); };
   $("#cfNo").onclick = () => { area.innerHTML = prev; bindReset(); };
 }
 function bindReset(){
-  $("#btnReset").onclick = () => askConfirm("Reset to example data?", () => { S = sampleState(); changed(); renderAll(); });
-  $("#btnBlank").onclick = () => askConfirm("Start a blank plan?", () => { S = blankState(); changed(); renderAll(); });
+  $("#btnReset").onclick = () => askConfirm("Reset to example data?", () => { S = sampleState(); ROS = sampleRoster(S); rosVer++; changed(); persistRoster(); updateHeader(); updateRosterInfo(); });
+  $("#btnBlank").onclick = () => askConfirm("Start a blank plan?", () => { S = blankState(); ROS = null; rosVer++; changed(); persistRoster(); updateHeader(); updateRosterInfo(); });
 }
 bindReset();
 
@@ -1020,21 +1533,29 @@ function switchTab(t){
   try { localStorage.setItem(LS_KEY + ":tab", t); } catch {}
 }
 document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
+document.addEventListener("click", e => { const g = e.target.dataset && e.target.dataset.goto; if (g) switchTab(g); });
 function renderTab(){
   if (tab === "overview") renderOverview();
+  else if (tab === "emp") renderEmp();
   else if (tab === "plan") renderPlan();
   else if (tab === "budget") renderBudget();
   else if (tab === "scen") renderScen();
   else if (tab === "assump") renderAssump();
+  else if (tab === "data") updateRosterInfo();
 }
 function updateHeader(){
-  $("#hdrEyebrow").textContent = `${S.org ? S.org + " · " : ""}Manpower plan · FY${S.fy} · OMR`;
+  $("#hdrEyebrow").textContent = `${S.org ? S.org + " · " : ""}Manpower plan · FY${S.fy} · OMR${rosterOn() ? ` · ${f0(ROS.emps.length)} employees on file` : ""}`;
 }
-function recalc(render = true){ R = compute(S); if (render && tab !== "plan" && tab !== "assump" && tab !== "scen") renderTab(); }
+function recalc(render = true){ R = compute(S); updateHeader(); if (render && (tab === "overview" || tab === "budget")) renderTab(); }
 function renderAll(){ R = compute(S); updateHeader(); renderTab(); }
 
-S = normalise(loadLocal() || sampleState());
+S = normalise(lsGet(LS_KEY) || sampleState());
+ROS = lsGet(LS_ROS);
+if (ROS && !Array.isArray(ROS.emps)) ROS = null;
+if (!ROS && S.sample) ROS = sampleRoster(S);
+rosVer++;
 R = compute(S);
+resetWizard();
 try { const t = localStorage.getItem(LS_KEY + ":tab"); if (t && document.getElementById("v-" + t)) tab = t; } catch {}
 updateHeader(); switchTab(tab);
 setStatus("local", "Saved in this browser");
