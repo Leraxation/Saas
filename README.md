@@ -18,6 +18,23 @@ The app automatically picks a data source based on which environment variables a
 
 No login screen in any mode — the dashboard opens directly.
 
+## Vehicle collection (`/collection`)
+
+A scroll-driven WebGL showcase at **`/collection`**. One fixed Three.js canvas
+paints every vehicle section: scrolling scrubs a 360 orbit while a tailored
+cover lifts off the car, drawn in the fragment shader so it composites with
+bloom, ACES tone mapping, vignette and grain.
+
+- Momentum scrolling via Lenis, driven through GSAP's ticker so ScrollTrigger
+  and the canvas share one clock
+- Photos are grouped by upload part under `public/vehicles/part-N/source/`; a
+  vehicle declares which part(s) it draws from in `lib/vehicles/manifest.ts`
+- Reveal clips are generated with Higgsfield and extracted to scrubbable frame
+  sequences — see [docs/higgsfield-pipeline.md](docs/higgsfield-pipeline.md)
+- Sections fall back to their source photos before any clip exists, scrub the
+  mp4 instead of a frame sequence on low-memory devices, and drop to poster
+  images with no WebGL
+
 ## Bonus: DJ Mixer (`/mixer`)
 
 A dual-deck DJ mixer for YouTube, at **`/mixer`**. Paste any YouTube link on each deck — regular `watch` URLs, `youtu.be` short links, **Shorts/reels**, embeds, live URLs, or YouTube Music links — and mix:
