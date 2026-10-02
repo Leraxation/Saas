@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { StageApi } from "@/lib/vision2040/useStage";
 import { clamp01, range } from "@/lib/vision2040/useStage";
 import {
@@ -21,8 +21,8 @@ const POSTER = "/vision2040/poster.jpg";
  * The fixed stage behind the whole page.
  *
  * Three layers, back to front:
- *   1. Film   — the cinematic master, played in the overture and the close,
- *               and scrubbed frame-by-frame by scroll through Act II.
+ *   1. Film   — the cinematic master, played in the close, with acts I-IV
+ *               scrubbed frame-by-frame on FilmCanvas.
  *   2. Canvas — every procedural scene. Transparent where the film shows.
  *   3. Finish — vignette and grain, painted onto the canvas last.
  *
@@ -33,13 +33,11 @@ const POSTER = "/vision2040/poster.jpg";
 export default function Stage({ api }: { api: StageApi }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const playRef = useRef<HTMLVideoElement>(null);
-  const motes = useRef<Mote[]>([]);
+  const motes = useMemo(() => makeMotes(320), []);
   const [hasFilm, setHasFilm] = useState(false);
   // The film is owned by FilmCanvas/filmScrub now. Stage only needs to know
   // whether it is painting, so it can hold its own backdrop back.
   const filmCanvas = useRef<HTMLElement | null>(null);
-
-  if (motes.current.length === 0) motes.current = makeMotes(320);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -80,18 +78,15 @@ export default function Stage({ api }: { api: StageApi }) {
 
       // How much of the film is showing right now. The backdrop is held back
       // by exactly this much so the footage is never muddied.
-      // One continuous playhead across the overture and Act II: the presenter
-      // starts on the first frame of the film under the title and arrives at
-      // the last frame as Act II hands over. Every one of the eight shots is
-      // scrolled through, not just the stretch that fits one act.
+      // One continuous playhead across acts I-IV: the presenter starts on the
+      // first scrub frame under the title and arrives at the last as the
+      // scale charts take over.
       // FilmCanvas marks itself ready once its first frame is painted. While
       // it is showing, Stage holds its own backdrop back so the footage is
       // never muddied by a gradient drawn on top of it.
       if (!filmCanvas.current) {
         filmCanvas.current = document.querySelector(".v-filmcanvas");
       }
-      // The film now runs behind every act, so the backdrop stands back for
-      // the whole page and the film's own scrim does the darkening.
       // The film covers acts I-IV only. Past its range it fades out and the
       // procedural backdrop takes the page back.
       const ds = filmCanvas.current?.dataset;
@@ -105,7 +100,7 @@ export default function Stage({ api }: { api: StageApi }) {
 
       ctx.save();
       ctx.globalAlpha = 1 - filmIn * 0.88;
-      paintBackdrop(ctx, s.w, s.h, s.time, warmth, motes.current, s.quality);
+      paintBackdrop(ctx, s.w, s.h, s.time, warmth, motes, s.quality);
       ctx.restore();
 
       if (network > 0.001 && scale < 0.02) {
@@ -143,7 +138,7 @@ export default function Stage({ api }: { api: StageApi }) {
     });
 
     return unsubscribe;
-  }, [api, hasFilm]);
+  }, [api, hasFilm, motes]);
 
   return (
     <div className="v-stage" aria-hidden="true">

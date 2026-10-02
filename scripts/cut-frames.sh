@@ -3,7 +3,7 @@
 # Cut a film into the JPEG sequence the scroll-scrub canvas paints from.
 #
 #   ./scripts/cut-frames.sh path/to/film.mp4
-#   FPS=12 WIDTH=1920 ./scripts/cut-frames.sh path/to/film.mp4
+#   FPS=8 WIDTH=1600 ./scripts/cut-frames.sh path/to/film.mp4
 #
 # Output: public/vision2040/frames/f0000.jpg … + manifest.json
 #
@@ -13,25 +13,32 @@
 # position is the playhead, so the only thing that matters is how far the page
 # scrolls between one frame and the next.
 #
-#   scroll_px_per_frame = total_scroll_px / (duration_s * FPS)
-#   total_scroll_px     = (sum_of_segment_weights_vh / 100) * viewport_h - viewport_h
+#   scroll_px_per_frame = advancing_scroll_px / (duration_s * FPS)
+#   advancing_scroll_px = (sum_of_advancing_segment_weights_vh / 100) * viewport_h
+#                         - viewport_h
 #
-# Below ~6 px/frame you are paying for frames nobody can distinguish.
-# Above ~20 px/frame the picture visibly steps when someone scrolls quickly.
-# The band worth hitting is roughly 8-12 px/frame.
+# Below ~8 px/frame you are paying for frames nobody can distinguish on this
+# footage. Above ~20 px/frame a hard-cut scrub starts to show stepping on an
+# aggressive scroll. This implementation already cross-dissolves neighbours and
+# holds the nearest decoded frame while the rest stream in, so it tolerates a
+# little more spacing than a bare frame-swapper would.
 #
-# For this presentation: 58.04s of film across 570vh of scroll (230vh overture
-# + 340vh Act II). On a 900px-tall viewport that is 5130 - 900 = 4230px of
-# travel; on a 1080p projector, 5076px.
+# For this presentation the film advances across 1206vh of scroll
+# (230vh overture + 340vh nation + 420vh network + 216vh of scale), then HOLDS
+# for the last 144vh of Act IV. The hold takes scroll but no new frames.
+# On a 900px-tall viewport that is 9954px of advancing travel; on a 1080p
+# projector, 11944px.
 #
-#   FPS=4  → 232 frames → 18.2 px/frame → steps on a fast scroll
-#   FPS=8  → 464 frames →  9.1 px/frame → in band, ~50MB at 1600px   ← default
-#   FPS=12 → 696 frames →  6.1 px/frame → ~40% more bytes, no visible gain
-#   FPS=24 → 1393 frames →  3.0 px/frame → three frames per frame the eye gets
+#   FPS=4  → 232 frames → 42.9 px/frame → obviously coarse
+#   FPS=8  → 464 frames → 21.5 px/frame → acceptable with blending, ~half of 12fps  ← default
+#   FPS=12 → 696 frames → 14.3 px/frame → smoother, ~50% more bytes
+#   FPS=24 → 1393 frames →  7.1 px/frame → source cadence, much heavier
 #
-# 8 fps is the default because it lands mid-band at both 900px and 1080p, and
-# because doubling it doubles the download for a difference that only shows up
-# if someone flings the scrollbar — which the damped scrub already smooths.
+# 8 fps is the default because the last 144vh is already a hold, the player
+# blends between adjacent frames, and the damped scrub makes the low-20s
+# px/frame spacing read well enough on this material for roughly half the bytes
+# of 12 fps. If a venue test rig still shows stepping, 12 fps is the first bump
+# to try.
 #
 # Raise FPS if the film has fast camera moves; lower it if bytes matter more
 # than the fling case.
@@ -115,6 +122,6 @@ JSON
 echo
 echo "  ✓ $COUNT frames · $SIZE · public/vision2040/frames/"
 echo
-echo "  Segment weights live in lib/vision2040/filmScrub.ts and MUST match the"
+echo "  Segment weights live in components/vision2040/FilmCanvas.tsx and MUST match the"
 echo "  act heights in app/vision-2040/page.tsx. The page checks this at runtime"
 echo "  and warns in the console if they drift apart."

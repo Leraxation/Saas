@@ -16,10 +16,10 @@
   --paper-3: rgba(255, 255, 255, 0.38);
   --hair: rgba(216, 182, 120, 0.22);
 
-  --display: var(--font-display), "Trajan Pro", Georgia, serif;
-  --serif: var(--font-serif), Georgia, "Times New Roman", serif;
-  --ui: var(--font-ui), Inter, system-ui, -apple-system, sans-serif;
-  --arabic: var(--font-arabic), "Noto Naskh Arabic", serif;
+  --display: ui-serif, Georgia, "Times New Roman", serif;
+  --serif: ui-serif, Georgia, "Times New Roman", serif;
+  --ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --arabic: "Segoe UI", Tahoma, Arial, sans-serif;
 
   --gutter: clamp(1.25rem, 5vw, 5.5rem);
 
@@ -33,8 +33,8 @@
 /* ── Stage ──────────────────────────────────────────────────────────────── */
 
 /* The film canvas sits behind everything, fixed and full-bleed. It fades in
-   only once its first frame is painted, so a machine with no frame sequence
-   shows the procedural stage instead of a black rectangle. */
+   only once its first scrub frame is painted, so a machine with no frame
+   sequence shows the procedural stage instead of a black rectangle. */
 .v-filmcanvas {
   position: fixed;
   inset: 0;

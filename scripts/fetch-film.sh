@@ -3,17 +3,19 @@
 # Fetch the Vision 2040 film assets into public/vision2040/.
 #
 #   ./scripts/fetch-film.sh           download the film, the scrub encode, the poster
-#   ./scripts/fetch-film.sh --frames  also cut the film to a canvas frame sequence
+#   FPS=8 WIDTH=1600 ./scripts/fetch-film.sh --frames
 #   ./scripts/fetch-film.sh --60fps   also build a 60fps master locally (needs ffmpeg)
 #
-# --frames is the one that turns Act II into a true scroll-driven canvas: the
-# film is cut to stills up front and the act paints frame N directly onto the
-# canvas as you scroll. No video element, no playback clock, no decoder seek.
-# Without it Act II falls back to seeking the all-keyframe encode, which looks
-# nearly identical but leans on the browser's decoder to land each frame.
+# --frames is the one that turns acts I-IV into a true scroll-driven canvas:
+# the film is cut to stills up front and the page paints frame N directly onto
+# the canvas as you scroll. No video element, no playback clock, no decoder
+# seek. Scrub fps is NOT playback fps; it is chosen for scroll pixels per
+# frame. The shared cutter defaults to 8 fps because that is the best byte /
+# smoothness trade for this page, and 12 fps is the first bump if a venue test
+# still shows stepping.
 #
 # The presentation runs without these files — the canvas carries every act on
-# its own. The film is what turns the overture, Act II and the close from a
+# its own. The film is what turns the overture, acts II-IV and the close from a
 # dark stage into footage of the country.
 #
 # Run this once on the machine that will present, then `npm run build`. After
@@ -55,28 +57,18 @@ if [ "${1:-}" = "--frames" ]; then
     echo "   Run ./scripts/fetch-film.sh first, then re-run with --frames."
     exit 1
   fi
-  FPS="${FRAME_FPS:-4}"       # frames per second of film
-  WIDTH="${FRAME_WIDTH:-1280}"
-  DIR="$OUT/frames"
+  FPS="${FPS:-${FRAME_FPS:-8}}"
+  WIDTH="${WIDTH:-${FRAME_WIDTH:-1600}}"
+  QUALITY="${QUALITY:-${FRAME_QUALITY:-5}}"
+  INTERPOLATE="${INTERPOLATE:-${FRAME_INTERPOLATE:-}}"
   echo
-  echo "Cutting the film to a canvas frame sequence (${FPS} fps, ${WIDTH}px wide)."
-  rm -rf "$DIR"
-  mkdir -p "$DIR"
-  ffmpeg -hide_banner -loglevel error -stats -y -i "$OUT/film.mp4" \
-    -vf "fps=$FPS,scale=$WIDTH:-2" -q:v 4 "$DIR/f%04d.jpg"
-  # ffmpeg numbers from 1; the player indexes from 0, so shift the set down.
-  i=0
-  for f in "$DIR"/f*.jpg; do
-    mv "$f" "$DIR/tmp_$(printf '%04d' "$i").jpg"
-    i=$((i + 1))
-  done
-  for f in "$DIR"/tmp_*.jpg; do mv "$f" "${f/tmp_/f}"; done
-  COUNT=$(ls -1 "$DIR"/f*.jpg | wc -l | tr -d ' ')
-  printf '{"count":%s,"pattern":"/vision2040/frames/f%%04d.jpg","width":%s,"fps":%s}\n' \
-    "$COUNT" "$WIDTH" "$FPS" > "$DIR/manifest.json"
-  echo "  ✓ $COUNT frames in public/vision2040/frames/ ($(du -sh "$DIR" | cut -f1))"
-  echo "    Act II will now paint these frames directly. Raise density with:"
-  echo "    FRAME_FPS=8 ./scripts/fetch-film.sh --frames"
+  echo "Cutting the film to a canvas frame sequence via scripts/cut-frames.sh."
+  FPS="$FPS" WIDTH="$WIDTH" QUALITY="$QUALITY" INTERPOLATE="$INTERPOLATE" \
+    "$ROOT/scripts/cut-frames.sh" "$OUT/film.mp4"
+  echo
+  echo "  Acts I-IV now scrub public/vision2040/frames/f0000.jpg … via manifest.json."
+  echo "  Raise density with:"
+  echo "    FPS=12 WIDTH=1600 ./scripts/fetch-film.sh --frames"
   exit 0
 fi
 
