@@ -1,0 +1,2364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Manpower Budget Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Schibsted+Grotesk:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: sticky header + tab bar over a single working column; tables scroll inside their own frames. */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --surface-2:#eef0f4; --line:#dcdfe6; --line-2:#c7ccd6;
+  --fg:#141824; --fg-2:#4a5163; --fg-3:#737a8c;
+  --accent:#3140b8; --accent-soft:#e6e8fa; --accent-fg:#ffffff;
+  --good:#0f7b4b; --good-soft:#e2f4ea; --warn:#9a5b00; --warn-soft:#fdf0d8; --bad:#b42323; --bad-soft:#fbe6e4;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4;
+  --up:#c24a3a; --down:#1f7a55;
+  --f-display:"Schibsted Grotesk","Segoe UI",system-ui,sans-serif;
+  --f-body:"Public Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  --r:8px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12141a; --surface:#1a1d25; --surface-2:#232733; --line:#2e3340; --line-2:#3c4252;
+  --fg:#eef0f5; --fg-2:#b4b9c6; --fg-3:#8a90a0;
+  --accent:#8e9bff; --accent-soft:#262c55; --accent-fg:#0f1226;
+  --good:#5fd39a; --good-soft:#15352a; --warn:#f0b54a; --warn-soft:#3a2d12; --bad:#ff8b80; --bad-soft:#3d1c1b;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181;
+  --up:#ef7b6b; --down:#4cc28e; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#12141a; --surface:#1a1d25; --surface-2:#232733; --line:#2e3340; --line-2:#3c4252;
+  --fg:#eef0f5; --fg-2:#b4b9c6; --fg-3:#8a90a0;
+  --accent:#8e9bff; --accent-soft:#262c55; --accent-fg:#0f1226;
+  --good:#5fd39a; --good-soft:#15352a; --warn:#f0b54a; --warn-soft:#3a2d12; --bad:#ff8b80; --bad-soft:#3d1c1b;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181;
+  --up:#ef7b6b; --down:#4cc28e; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5;margin:0}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:20px;font-weight:700}
+h2{font-size:17px;font-weight:700}
+h3{font-size:14px;font-weight:600}
+td.n,th.n{font-variant-numeric:tabular-nums}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:16px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding-block:12px}
+.brand{display:flex;flex-direction:column;min-width:0;flex:1 1 260px}
+.eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);font-weight:600}
+.status{font-size:12px;color:var(--fg-2);display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--surface-2)}
+.status i{width:8px;height:8px;border-radius:50%;background:var(--fg-3);display:inline-block}
+.status[data-s="ok"] i{background:var(--good)} .status[data-s="busy"] i{background:var(--warn)} .status[data-s="local"] i{background:var(--accent)}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav.tabs button{appearance:none;border:0;background:none;color:var(--fg-2);font:600 13px var(--f-body);padding:10px 14px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+nav.tabs button:hover{color:var(--fg)}
+main{padding-block:20px 60px}
+section.view{display:flex;flex-direction:column;gap:18px}
+.stack{display:flex;flex-direction:column;gap:18px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
+.panel-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px;margin-bottom:12px}
+.panel-head p{margin:0;color:var(--fg-3);font-size:12.5px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.kpi{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi .v{font-family:var(--f-display);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi .l{font-size:12px;color:var(--fg-3)}
+.kpi .d{font-size:12px;color:var(--fg-2);overflow-wrap:anywhere}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.pill.good{background:var(--good-soft);color:var(--good)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.info{background:var(--accent-soft);color:var(--accent)}
+.alerts{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.alerts li{display:flex;gap:10px;align-items:flex-start;font-size:13px}
+.tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:11.5px;color:var(--fg-3);font-weight:600;letter-spacing:.02em;background:var(--surface-2);position:sticky;top:0;z-index:1}
+td.n,th.n{text-align:right}
+tr.total td{font-weight:700;background:var(--surface-2);border-bottom:0}
+tr.grp td{background:var(--surface-2);font-weight:600;font-size:12px;color:var(--fg-2)}
+tbody tr:hover td{background:color-mix(in srgb,var(--accent-soft) 45%,transparent)}
+td.muted,.muted{color:var(--fg-3)}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line-2);border-radius:6px;padding:5px 8px;min-width:0}
+input[type=number]{text-align:right;font-variant-numeric:tabular-nums}
+input:focus-visible,select:focus-visible,button:focus-visible,textarea:focus-visible,label.btn:focus-within{outline:2px solid var(--accent);outline-offset:1px}
+table input,table select{padding:4px 6px;border-color:transparent;background:transparent;width:100%}
+table input:hover,table select:hover{border-color:var(--line-2)}
+table input:focus,table select:focus{border-color:var(--accent);background:var(--surface)}
+td.cell-in{padding:2px 4px}
+.w-xs{width:64px}.w-s{width:84px}.w-m{width:110px}.w-l{width:190px}
+.btn{appearance:none;font:600 13px var(--f-body);border-radius:6px;padding:7px 12px;border:1px solid var(--line-2);background:var(--surface);color:var(--fg);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--fg-3)}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:4px 9px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+button.icon{appearance:none;border:0;background:none;color:var(--fg-3);cursor:pointer;padding:4px 6px;border-radius:4px;font-size:15px;line-height:1}
+button.icon:hover{color:var(--bad);background:var(--bad-soft)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar .grow{flex:1 1 auto}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px 20px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:12.5px;font-weight:600;color:var(--fg-2)}
+.field .hint{font-size:11.5px;color:var(--fg-3)}
+.field input,.field select{width:100%}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--fg-2);font-family:var(--f-body);font-size:11px}
+.chart .axis{stroke:var(--line-2)} .chart .grid{stroke:var(--line);stroke-dasharray:2 3}
+.chart-scroll{overflow-x:auto}
+.chart-scroll .chart{min-width:520px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--fg-2);margin-bottom:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+#tip{position:fixed;pointer-events:none;z-index:50;background:var(--fg);color:var(--bg);font-size:12px;padding:6px 9px;border-radius:6px;max-width:260px;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.note{font-size:12.5px;color:var(--fg-3);margin:0}
+.callout{border:1px dashed var(--line-2);border-radius:var(--r);padding:12px 14px;font-size:13px;color:var(--fg-2);background:var(--surface-2)}
+.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;border-radius:var(--r);background:var(--bad-soft);color:var(--bad);font-size:13px}
+.scen-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.scen{border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+.scen.base{border-color:var(--accent)}
+.scen .res{font-family:var(--f-display);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.dropzone{border:2px dashed var(--line-2);border-radius:var(--r);padding:22px;text-align:center;color:var(--fg-2);background:var(--surface-2)}
+.dropzone.over{border-color:var(--accent);background:var(--accent-soft)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.steps{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--fg-3);margin:0 0 12px;padding:0;list-style:none;counter-reset:st}
+.steps li{counter-increment:st;display:flex;gap:6px;align-items:center}
+.steps li::before{content:counter(st);display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--surface-2);font-weight:700;font-size:11px;color:var(--fg-2)}
+.steps li.on{color:var(--fg);font-weight:600}
+.steps li.on::before{background:var(--accent);color:var(--accent-fg)}
+.map-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px 20px}
+.map-row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:4px 8px;align-items:center;font-size:13px}
+.map-row label{font-weight:600;color:var(--fg-2)}
+.map-row label b{color:var(--bad)}
+.map-row .smp{grid-column:2;font-size:11.5px;color:var(--fg-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-2);border-radius:999px;padding:3px 10px;font-size:12.5px;cursor:pointer;background:var(--surface)}
+.chip:has(input:checked){background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.chip input{margin:0}
+.checks{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px}
+.checks label{display:inline-flex;gap:6px;align-items:center}
+.vstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.vstat{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.vstat b{display:block;font-family:var(--f-display);font-size:20px;font-variant-numeric:tabular-nums}
+.vstat span{font-size:12px;color:var(--fg-3)}
+.vstat.warn{border-color:var(--warn);background:var(--warn-soft)}
+.vstat.bad{border-color:var(--bad);background:var(--bad-soft)}
+.pager{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end;font-size:12.5px;color:var(--fg-2);margin-top:10px}
+.flagrow{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
+.flagrow:last-of-type{border-bottom:0}
+.flagrow .t{font-size:13px;min-width:0;flex:1 1 260px}
+.badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--bad);color:#fff;font-size:11px;font-weight:700;margin-left:4px}
+.req{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:8px;background:var(--surface)}
+.req-top{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
+.req-top h3{font-size:15px}
+.req-meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--fg-2)}
+.req-why{font-size:13px;color:var(--fg);white-space:pre-wrap;overflow-wrap:anywhere;max-width:90ch}
+.req-act{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.req-act input[type=number]{width:110px}
+.req-act input[type=text]{flex:1 1 220px}
+#reqList{display:grid;gap:10px}
+body.form-mode > header.top, body.form-mode > main{display:none!important}
+body.gated main, body.gated #formApp, body.gated nav.tabs, body.gated #btnExportXlsx, body.gated #userBar{display:none!important}
+.temp-pw{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:18px;font-weight:700;letter-spacing:.04em;padding:6px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--line-2);user-select:all}
+textarea{width:100%;resize:vertical}
+.flagrow .t b{font-family:var(--f-display);font-size:18px;margin-right:6px;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <div class="brand">
+        <span class="eyebrow" id="hdrEyebrow">Manpower plan · FY2027 · OMR</span>
+        <h1>Manpower Budget Planner</h1>
+      </div>
+      <span class="status" id="saveStatus" data-s="local"><i></i><span>Loading…</span></span>
+      <span class="toolbar" id="userBar" hidden><span class="note" id="userLabel"></span><button class="btn sm" type="button" data-logout>Sign out</button></span>
+      <button class="btn primary" id="btnExportXlsx" type="button">Export to Excel</button>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+      <button role="tab" data-tab="emp" aria-selected="false">Employees</button>
+      <button role="tab" data-tab="plan" aria-selected="false">Headcount plan</button>
+      <button role="tab" data-tab="req" aria-selected="false">Requests <span class="badge" id="reqBadge" hidden></span></button>
+      <button role="tab" data-tab="budget" aria-selected="false">Budget detail</button>
+      <button role="tab" data-tab="scen" aria-selected="false">Scenarios</button>
+      <button role="tab" data-tab="assump" aria-selected="false">Assumptions</button>
+      <button role="tab" data-tab="data" aria-selected="false">Import &amp; export</button>
+      <button role="tab" data-tab="users" aria-selected="false" hidden>Users</button>
+      <button role="tab" data-tab="audit" aria-selected="false" hidden>Audit log</button>
+    </nav>
+  </div>
+</header>
+
+<!-- SIGN-IN (localhost server) -->
+<div class="wrap" id="gate" hidden>
+  <div class="panel" style="max-width:440px;margin:48px auto">
+    <h2 id="gTitle" style="margin-bottom:6px">Sign in</h2>
+    <p class="note" id="gIntro" style="margin-bottom:14px"></p>
+    <form id="gForm" class="stack" style="gap:12px" novalidate>
+      <div class="field" id="gf-name" hidden><label for="g-name">Your full name</label><input id="g-name" autocomplete="name" maxlength="120"></div>
+      <div class="field" id="gf-user"><label for="g-user">Username</label><input id="g-user" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="40"></div>
+      <div class="field" id="gf-cur" hidden><label for="g-cur">Current or temporary password</label><input id="g-cur" type="password" autocomplete="current-password" maxlength="200"></div>
+      <div class="field" id="gf-pass"><label for="g-pass" id="g-pass-l">Password</label><input id="g-pass" type="password" autocomplete="current-password" maxlength="200"></div>
+      <div class="field" id="gf-pass2" hidden><label for="g-pass2">Repeat the new password</label><input id="g-pass2" type="password" autocomplete="new-password" maxlength="200"></div>
+      <p class="hint note" id="gHint" hidden>At least 12 characters, without your name or username. A phrase of several words is easiest to remember.</p>
+      <button class="btn primary" type="submit" id="gSubmit">Sign in</button>
+      <p class="note" id="gateMsg" role="alert" style="color:var(--bad);margin:0"></p>
+    </form>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="callout" id="roBanner" hidden style="margin-bottom:18px"><b>Read-only access.</b> You can review the plan and export it. Changes are not saved.</div>
+  <div class="confirm" id="conflictBanner" hidden style="margin-bottom:18px"></div>
+  <!-- OVERVIEW -->
+  <section class="view" id="v-overview">
+    <div id="sampleBanner" class="callout" hidden>
+      You are looking at <b>example data</b>: a generated file of 3,100 employees across 11 departments, with no real people in it. Load your own employee master file on the <b>Import &amp; export</b> tab and every screen recalculates from it.
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-head"><h2>Budget bridge</h2><p id="bridgeSrc">From today's payroll run-rate to the FY budget</p></div>
+        <div class="chart-scroll" id="chBridge"></div>
+        <details style="margin-top:8px"><summary style="cursor:pointer;font-size:13px;font-weight:600">Show the figures</summary><div class="tbl-wrap" style="margin-top:8px"><table id="bridgeTbl"></table></div></details>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Checks</h2><p>Items that need attention before submission</p></div>
+        <ul class="alerts" id="alerts"></ul>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Budget by department</h2><p>Annual cost incl. contingency, split by cost group</p></div>
+      <div class="legend" id="lgDept"></div>
+      <div class="chart-scroll" id="chDept"></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-head"><h2>Omanisation at year end</h2><p id="omanSub">Closing Omani share of headcount vs target</p></div>
+        <div class="chart-scroll" id="chOman"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Monthly phasing</h2><p>Payroll cost and headcount by month</p></div>
+        <div class="chart-scroll" id="chMonth"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EMPLOYEES -->
+  <section class="view" id="v-emp" hidden>
+    <div class="panel" id="empEmpty">
+      <div class="panel-head"><h2>No employee file loaded</h2></div>
+      <p class="note" style="max-width:75ch;margin-bottom:12px">The plan is currently built from summary lines. Load your employee master file (one row per employee, with department, nationality and pay) to cost every person individually, find retirements and contract ends in the budget year, and see the workforce profile of each department.</p>
+      <button class="btn primary" type="button" data-goto="data">Load employee file</button>
+    </div>
+    <div class="stack" id="empBody">
+      <div class="kpis" id="empKpis"></div>
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-head"><h2>Known leavers in FY</h2><p>Found from dates of birth and contract end dates</p></div>
+          <div id="empFlags"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Age profile</h2><p>Employees by age at the start of the budget year</p></div>
+          <div class="legend"><span><i style="background:var(--s1)"></i>Omani</span><span><i style="background:var(--s2)"></i>Expatriate</span></div>
+          <div class="chart-scroll" id="chAge"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Workforce by department</h2><p id="profileSub">From the employee file</p></div>
+        <div class="tbl-wrap"><table id="tblProfile"></table></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Employee list</h2><p>Set a planned exit month or a personal increment. Budget figures update straight away.</p></div>
+        <div class="toolbar" style="margin-bottom:12px">
+          <label class="sr" for="eDept">Department</label><select id="eDept"></select>
+          <label class="sr" for="eNat">Nationality</label><select id="eNat"><option value="">Omani &amp; expat</option><option value="1">Omani</option><option value="0">Expatriate</option></select>
+          <label class="sr" for="eFlag">Show</label><select id="eFlag"><option value="">All employees</option><option value="ret">Retiring in FY</option><option value="con">Contract ends in FY</option><option value="exit">Planned exits</option><option value="pay">Missing pay</option></select>
+          <label class="sr" for="eSort">Sort</label><select id="eSort"><option value="id">Sort: Employee ID</option><option value="cost">Sort: FY cost, highest first</option><option value="age">Sort: Age, oldest first</option><option value="svc">Sort: Service, longest first</option></select>
+          <label class="sr" for="eSearch">Search</label><input id="eSearch" type="search" placeholder="Search ID, name, job, grade">
+        </div>
+        <div class="tbl-wrap" style="max-height:70vh"><table id="tblEmp"></table></div>
+        <div class="pager" id="empPager"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLAN -->
+  <section class="view" id="v-plan" hidden>
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Headcount plan</h2>
+        <p id="planSub">One line per department × position/grade × nationality. Salaries are monthly averages in OMR.</p>
+      </div>
+      <div class="toolbar" style="margin-bottom:12px">
+        <label class="sr" for="fDept">Filter by department</label>
+        <select id="fDept"></select>
+        <label class="sr" for="fSearch">Search positions</label>
+        <input id="fSearch" type="search" placeholder="Search position or grade">
+        <span class="grow"></span>
+        <button class="btn primary" id="btnAddLine" type="button">+ Add line</button>
+      </div>
+      <div class="tbl-wrap" style="max-height:70vh">
+        <table id="tblPlan">
+          <thead></thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
+      <p class="note" id="planNote" style="margin-top:10px"></p>
+    </div>
+  </section>
+
+  <!-- BUDGET -->
+  <section class="view" id="v-budget" hidden>
+    <div class="panel">
+      <div class="panel-head"><h2>Department budget</h2><p>Annual OMR by cost line. Contingency is added per department.</p></div>
+      <div class="tbl-wrap"><table id="tblBudget"></table></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Headcount movement</h2><p>Opening to closing headcount and Omanisation by department</p></div>
+      <div class="tbl-wrap"><table id="tblHC"></table></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Monthly phasing</h2><p>Cost (OMR) and headcount by month, for cash-flow and payroll forecasting</p></div>
+      <div class="tbl-wrap"><table id="tblMonth"></table></div>
+    </div>
+  </section>
+
+  <!-- SCENARIOS -->
+  <section class="view" id="v-scen" hidden>
+    <div class="panel">
+      <div class="panel-head"><h2>Scenarios</h2><p>Test what-ifs against the base plan without changing it</p></div>
+      <div class="scen-grid" id="scenGrid"></div>
+      <div class="toolbar" style="margin-top:12px"><button class="btn" id="btnAddScen" type="button">+ Add scenario</button></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Comparison</h2><p>Differences are against the base plan</p></div>
+      <div class="tbl-wrap"><table id="tblScen"></table></div>
+    </div>
+  </section>
+
+  <!-- ASSUMPTIONS -->
+  <section class="view" id="v-assump" hidden>
+    <div class="panel">
+      <div class="panel-head"><h2>Plan settings</h2></div>
+      <div class="form-grid" id="formPlan"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Pay &amp; on-cost assumptions</h2><p>Statutory rates are defaults. Confirm them with Payroll before submission.</p></div>
+      <div class="form-grid" id="formRates"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Departments</h2><p>Overtime rate, prior-year budget and budget ceiling per department</p></div>
+      <div class="tbl-wrap"><table id="tblDepts"></table></div>
+      <div class="toolbar" style="margin-top:12px"><button class="btn" id="btnAddDept" type="button">+ Add department</button></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>How the budget is calculated</h2></div>
+      <div class="note" style="display:grid;gap:6px;max-width:80ch">
+        <span>With an employee file loaded, every employee is costed individually at their own basic and allowances, from January until their planned exit month. Without one, each plan line is costed at its average pay.</span>
+        <span>New hires join from their start month at the line's new-hire pay. Other exits (unnamed attrition) leave after their last month at the line's average pay.</span>
+        <span>Basic and allowances rise by the increment from its effective month; an employee's personal increment overrides the company rate. Overtime is a % of basic per department; bonus accrues as <i>n</i> months of basic.</span>
+        <span>Social protection applies to Omani and expatriate staff at their own rates, on basic or gross pay. End-of-service accrues on expatriate basic. Air tickets apply to expatriates; medical and training apply per head per year.</span>
+        <span>Recruitment cost is charged in each new hire's start month. Contingency is a % on each department's total.</span>
+        <span>The run-rate is today's staff at today's pay for 12 months with no increment, hires or exits; the bridge shows what each change adds.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- DATA -->
+  <section class="view" id="v-data" hidden>
+    <div class="panel">
+      <div class="panel-head"><h2>Employee master file</h2><p>One row per employee, exported from your HR or payroll system (.xlsx or .csv)</p></div>
+      <ol class="steps" id="wizSteps"><li class="on">Choose file</li><li>Match columns</li><li>Check &amp; import</li></ol>
+      <div id="wizBody"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Summary plan or backup</h2><p>Already-summarised headcount lines (.xlsx/.csv), or a planner backup (.json)</p></div>
+      <div class="dropzone" id="drop">
+        <p style="margin:0 0 10px">Drop a file here, or</p>
+        <button class="btn" type="button" data-pick="fileIn">Choose file</button>
+        <input id="fileIn" type="file" accept=".xlsx,.xls,.xlsm,.csv,.json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,application/json" class="sr" tabindex="-1">
+      </div>
+      <div id="importPreview" style="margin-top:14px"></div>
+      <p class="note" style="margin-top:12px;max-width:90ch">Columns recognised: Department, Position (or Grade), Nationality, Current HC, New hires, Start month, Exits, Last month, Basic, Allowances. Importing a summary plan with “Replace” removes any loaded employee file.</p>
+      <div class="toolbar" style="margin-top:12px"><button class="btn" id="btnTemplate" type="button">Download summary template</button></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Export &amp; backup</h2><p>Take the budget to Finance, or keep a copy of the whole plan</p></div>
+      <div class="toolbar">
+        <button class="btn primary" id="btnExportXlsx2" type="button">Budget workbook (.xlsx)</button>
+        <button class="btn" id="btnExportCsv" type="button">Plan lines (.csv)</button>
+        <button class="btn" id="btnExportJson" type="button">Full backup (.json)</button>
+        <button class="btn" id="btnCopy" type="button">Copy department summary</button>
+      </div>
+      <p class="note" id="exportMsg" style="margin-top:10px"></p>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Storage</h2></div>
+      <p class="note" id="storageNote" style="margin-bottom:12px"></p>
+      <div class="toolbar" id="resetArea">
+        <button class="btn danger" id="btnReset" type="button">Reset to example data</button>
+        <button class="btn danger" id="btnBlank" type="button">Start a blank plan</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- USERS (admin, localhost server) -->
+  <section class="view" id="v-users" hidden>
+    <div class="panel">
+      <div class="panel-head"><h2>Add a user</h2><p>Everyone signs in with their own account. New users get a one-time password.</p></div>
+      <form id="uForm" class="stack" style="gap:12px" novalidate>
+        <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
+          <div class="field"><label for="u-user">Username</label><input id="u-user" maxlength="40" autocapitalize="none" spellcheck="false" placeholder="e.g. a.albalushi"></div>
+          <div class="field"><label for="u-name">Full name and title</label><input id="u-name" maxlength="120"></div>
+          <div class="field"><label for="u-role">Role</label><select id="u-role">
+            <option value="requester">Department head: request form only</option>
+            <option value="viewer">Viewer: read-only planner (e.g. Finance)</option>
+            <option value="planner">Planner: edit plan, decide requests</option>
+            <option value="admin">Administrator: planner + users + audit log</option></select></div>
+        </div>
+        <div class="field" id="u-depts-f"><label>Departments this person may request for</label><div class="chips" id="u-depts"></div><span class="hint">Leave all unticked to allow every department.</span></div>
+        <div class="toolbar"><button class="btn primary" type="submit">Create user</button><span class="note" id="uMsg" role="status"></span></div>
+      </form>
+      <div id="uTemp"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Users</h2><p>Disable accounts instead of deleting them, so the audit log keeps its meaning</p></div>
+      <div class="tbl-wrap"><table id="tblUsers"></table></div>
+    </div>
+  </section>
+
+  <!-- AUDIT LOG (admin, localhost server) -->
+  <section class="view" id="v-audit" hidden>
+    <div class="panel">
+      <div class="panel-head"><h2>Audit log</h2><p>Sign-ins, user changes, imports, saves, decisions and exports. Each entry is chained to the previous one, so edits to the file are detectable.</p></div>
+      <div class="toolbar" style="margin-bottom:12px"><span id="auditState"></span><span class="grow"></span><label class="sr" for="auditQ">Filter</label><input id="auditQ" type="search" placeholder="Filter by user, event or IP"><button class="btn sm" type="button" id="btnAuditReload">Refresh</button></div>
+      <div class="tbl-wrap" style="max-height:70vh"><table id="tblAudit"></table></div>
+    </div>
+  </section>
+
+  <!-- REQUESTS (planner side) -->
+  <section class="view" id="v-req" hidden>
+    <div class="kpis" id="reqKpis"></div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-head"><h2>Request form</h2><p>What department heads see</p></div>
+        <div class="stack" style="gap:12px">
+          <div class="checks"><label><input type="checkbox" id="rqOpen"> Accepting requests</label></div>
+          <div class="field"><label for="rqDeadline">Submission deadline</label><input id="rqDeadline" type="date" style="max-width:220px"></div>
+          <div class="field"><label for="rqNote">Note to department heads</label><textarea id="rqNote" rows="3" placeholder="For example: submit only positions that are budgeted for FY2027. Replacements for known leavers count as requests too."></textarea></div>
+          <div class="callout" id="rqShare"></div>
+          <div class="toolbar"><button class="btn" type="button" id="btnPreviewForm">Preview the form</button></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>By department</h2><p>Requested vs approved, against each ceiling</p></div>
+        <div class="tbl-wrap"><table id="tblReqDept"></table></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Requests</h2><p>Set the salary if needed, then approve to add the positions to the headcount plan</p></div>
+      <div class="toolbar" style="margin-bottom:12px">
+        <label class="sr" for="rqFStatus">Status</label><select id="rqFStatus"><option value="open">Waiting for decision</option><option value="">All requests</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="changes">Changes requested</option></select>
+        <label class="sr" for="rqFDept">Department</label><select id="rqFDept"></select>
+        <span class="grow"></span><span class="note" id="rqSync"></span>
+      </div>
+      <div id="reqList"></div>
+    </div>
+  </section>
+</main>
+
+<!-- REQUEST FORM (department heads) -->
+<div id="formApp" hidden>
+  <header class="top"><div class="wrap"><div class="top-row">
+    <div class="brand"><span class="eyebrow" id="fEyebrow">Manpower request</span><h1>Manpower Request Form</h1></div>
+    <span class="toolbar"><span class="note" id="userLabel2"></span><button class="btn" type="button" id="btnBackPlanner" hidden>Back to planner</button><button class="btn sm" type="button" data-logout id="btnLogout2" hidden>Sign out</button></span>
+  </div></div></header>
+  <main class="wrap stack">
+    <div class="callout" id="fIntro"></div>
+    <div class="grid2" style="align-items:start">
+      <form class="panel stack" id="reqForm" novalidate style="gap:14px">
+        <div class="panel-head" style="margin:0"><h2 id="fTitle">New request</h2><p>Fields marked <b style="color:var(--bad)">*</b> are required</p></div>
+        <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
+          <div class="field"><label for="f-dept">Department <b style="color:var(--bad)">*</b></label><select id="f-dept" required></select></div>
+          <div class="field"><label for="f-by">Your name and title <b style="color:var(--bad)">*</b></label><input id="f-by" required maxlength="120" autocomplete="name"></div>
+          <div class="field"><label for="f-title">Position title <b style="color:var(--bad)">*</b></label><input id="f-title" required maxlength="120" placeholder="e.g. Licensed Engineer B1"></div>
+          <div class="field"><label for="f-grade">Grade</label><input id="f-grade" maxlength="40" placeholder="e.g. T3"></div>
+          <div class="field"><label for="f-type">Request type</label><select id="f-type"><option value="new">New position</option><option value="replacement">Replacement for a leaver</option><option value="omanisation">Omani replacing an expatriate</option></select></div>
+          <div class="field"><label for="f-nat">Nationality</label><select id="f-nat"><option value="O">Omani</option><option value="E">Expatriate</option></select></div>
+          <div class="field"><label for="f-count">Number of positions <b style="color:var(--bad)">*</b></label><input id="f-count" type="number" min="1" max="500" step="1" value="1" required></div>
+          <div class="field"><label for="f-start">Expected start month</label><select id="f-start"></select></div>
+          <div class="field"><label for="f-prio">Priority</label><select id="f-prio"><option value="normal">Normal</option><option value="high">High</option><option value="critical">Critical (safety or regulatory)</option></select></div>
+          <div class="field"><label for="f-basic">Expected basic salary / month (OMR)</label><input id="f-basic" type="number" min="0" step="10" placeholder="If known"></div>
+          <div class="field"><label for="f-allow">Expected allowances / month (OMR)</label><input id="f-allow" type="number" min="0" step="10" placeholder="If known"></div>
+        </div>
+        <div class="field"><label for="f-why">Justification <b style="color:var(--bad)">*</b></label><textarea id="f-why" rows="4" required maxlength="2000" placeholder="Why is this position needed in the budget year? Mention fleet, routes, regulatory requirements, workload or the leaver being replaced."></textarea></div>
+        <div class="callout" id="fEst"></div>
+        <div class="toolbar"><button class="btn primary" type="submit" id="fSubmit">Submit request</button><button class="btn" type="button" id="fCancel" hidden>Cancel editing</button><span class="note" id="fMsg" role="status"></span></div>
+      </form>
+      <div class="panel">
+        <div class="panel-head"><h2>Your requests</h2><p>Status updates appear here</p></div>
+        <div id="myReqs" class="stack" style="gap:10px"></div>
+      </div>
+    </div>
+  </main>
+</div>
+<div id="tip" hidden></div>
+
+<script src="xlsx.full.min.js"></script>
+<script>
+(() => {
+"use strict";
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const GROUPS = [
+  {k:"pay", label:"Basic & allowances", c:"--s1"},
+  {k:"var", label:"Overtime & bonus", c:"--s2"},
+  {k:"stat", label:"Social protection & EOSB", c:"--s3"},
+  {k:"ben", label:"Tickets, medical & training", c:"--s4"},
+  {k:"rec", label:"Recruitment", c:"--s5"},
+];
+const LS_KEY = "manpower-planner-v1", LS_ROS = "manpower-planner-v1:roster";
+const ROSTER_CHUNK = 400;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
+const nf0 = new Intl.NumberFormat("en-GB", {maximumFractionDigits:0});
+const nf1 = new Intl.NumberFormat("en-GB", {maximumFractionDigits:1, minimumFractionDigits:1});
+const f0 = v => nf0.format(Math.round(v || 0));
+const fM = v => { const a = Math.abs(v); return a >= 1e6 ? (v/1e6).toFixed(2) + "m" : a >= 1e3 ? (v/1e3).toFixed(0) + "k" : f0(v); };
+const fPct = v => isFinite(v) ? nf1.format(v) + "%" : "—";
+const sgn = v => (v > 0 ? "+" : v < 0 ? "−" : "");
+const fDelta = (v, fmt = fM) => sgn(v) + fmt(Math.abs(v));
+const num = v => { const n = parseFloat(String(v ?? "").replace(/[, ]/g, "")); return isFinite(n) ? n : 0; };
+const clampM = v => Math.min(12, Math.max(1, Math.round(num(v)) || 1));
+const trunc = (s, n) => { s = String(s); return s.length > n ? s.slice(0, n - 1) + "…" : s; };
+const pad2 = n => String(n).padStart(2, "0");
+const ymd = (y, m, d) => (y > 1900 && y < 2200 && m >= 1 && m <= 12 && d >= 1 && d <= 31) ? `${y}-${pad2(m)}-${pad2(d)}` : "!";
+
+/* ---------- Example data ---------- */
+function sampleState(){
+  const D = [
+    ["Flight Operations",4, [["Captains","E",95,6,4,8,6,3800,1900],["Captains","O",110,8,4,3,9,3600,1800],["First Officers","O",190,20,3,6,7,2100,1100],["First Officers","E",40,0,1,10,6,2300,1100],["Flight Ops Support & Crew Scheduling","O",85,3,5,2,8,950,450]]],
+    ["Cabin Services",6, [["Cabin Crew","O",680,60,3,45,6,520,380],["Cabin Crew","E",180,0,1,25,6,560,380],["Pursers & Cabin Managers","O",110,6,4,4,7,900,520]]],
+    ["Engineering & Maintenance",10, [["Licensed Engineers (B1/B2)","O",160,12,5,6,8,1300,650],["Licensed Engineers (B1/B2)","E",95,4,3,12,6,1700,800],["Technicians & Mechanics","O",208,15,4,8,7,650,350],["Planning & Technical Records","O",45,2,6,1,9,800,400]]],
+    ["Ground & Airport Services",12, [["Station & Ground Staff","O",280,10,4,14,6,480,300],["Outstation Managers","E",30,0,1,3,6,1500,900],["Load Control & Ops Control","O",60,4,3,2,8,750,380]]],
+    ["Commercial",1, [["Sales & Distribution","O",110,5,4,6,6,900,480],["Network & Revenue Planning","O",35,3,3,1,6,1400,650],["Revenue Management Specialists","E",12,0,1,2,6,2000,900],["Marketing & Loyalty","O",40,2,5,2,6,950,480]]],
+    ["Cargo",5, [["Cargo Operations","O",70,4,4,3,6,600,320],["Cargo Sales","E",8,0,1,1,6,1600,800]]],
+    ["Customer Experience",3, [["Contact Centre","O",90,6,3,8,6,480,300],["Customer Service Management","O",25,1,6,1,9,1100,550]]],
+    ["Finance",1, [["Finance & Accounts","O",75,2,4,3,6,950,480],["Finance Specialists","E",6,0,1,1,6,2200,1000]]],
+    ["Human Resources & Training",1, [["HR & Administration","O",55,2,4,2,6,900,450],["Training Instructors","O",30,3,3,1,9,1500,700],["Training Instructors","E",20,0,1,4,6,2400,1100]]],
+    ["IT & Digital",2, [["IT & Digital","O",70,6,3,3,6,1100,550],["IT Specialists","E",18,0,1,3,6,2300,1000]]],
+    ["Safety, Security & Quality",2, [["Safety, Security & Quality","O",60,3,4,2,6,1000,500],["Quality & Safety Auditors","E",8,0,1,1,6,2100,950]]],
+  ];
+  const fy26 = [29.8e6, 14.6e6, 12.2e6, 5.7e6, 4.5e6, 1.25e6, 1.7e6, 1.85e6, 2.8e6, 2.35e6, 1.7e6];
+  const depts = [], lines = [];
+  D.forEach(([name, ot, ls], i) => {
+    const id = "d" + (i + 1);
+    depts.push({id, name, ot, prior: fy26[i], ceiling: 0});
+    ls.forEach(([role, nat, hc, hires, hireM, exits, exitM, basic, allow], j) =>
+      lines.push({id: `l${i + 1}-${j + 1}`, dept: id, role, nat, hc, hires, hireM, exits, exitM, basic, allow}));
+  });
+  depts[0].ceiling = 31e6; depts[1].ceiling = 15.5e6;
+  return {
+    v: 2, sample: true, savedAt: 0,
+    fy: 2027, org: "", baseYear: 2026,
+    a: { incPct: 3, incMonth: 1, bonusMonths: 1, omSI: 12.5, exSI: 1, siBase: "gross", eosbPct: 8.33,
+         ticket: 350, medO: 280, medE: 420, training: 220, recO: 400, recE: 1800, contingency: 2, omanTarget: 85, retO: 60, retE: 60 },
+    depts, lines,
+    scen: [
+      {id: "s1", name: "Hiring slowdown", hirePct: 60, delay: 3, incPct: 3, otPct: 100, bonusMonths: 1},
+      {id: "s2", name: "Growth & retention", hirePct: 100, delay: 0, incPct: 4.5, otPct: 110, bonusMonths: 1.5},
+    ],
+  };
+}
+function blankState(){
+  const s = sampleState();
+  s.sample = false; s.lines = []; s.depts = [{id: "d1", name: "New department", ot: 2, prior: 0, ceiling: 0}];
+  s.scen = []; return s;
+}
+function mulberry32(a){ return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function sampleRoster(st){
+  const rnd = mulberry32(20270), emps = [], fy = st.fy; let n = 10001;
+  const r10 = v => Math.round(v / 10) * 10;
+  for (const l of st.lines){
+    const female = /cabin|purser/i.test(l.role) ? 0.5 : /contact|hr|finance|customer|marketing|sales/i.test(l.role) ? 0.4 : 0.12;
+    const ageMin = /captain|manager|instructor|auditor|specialist/i.test(l.role) ? 34 : 22;
+    for (let i = 0; i < l.hc; i++){
+      const age = ageMin + Math.floor(Math.pow(rnd(), 1.25) * (60 - ageMin));
+      const by = fy - 1 - age, bm = 1 + Math.floor(rnd() * 12), bd = 1 + Math.floor(rnd() * 28);
+      const svc = Math.floor(rnd() * Math.min(Math.max(1, age - 21), 30));
+      const f = 0.8 + rnd() * 0.35 + svc * 0.006;
+      const bs = r10(l.basic * f), al = r10(l.allow * (0.9 + rnd() * 0.2));
+      const ce = l.nat === "E" ? `${fy + Math.floor(rnd() * 3)}-${pad2(1 + Math.floor(rnd() * 12))}-${pad2(1 + Math.floor(rnd() * 28))}` : "";
+      const g = bs >= 3000 ? "G1" : bs >= 2000 ? "G2" : bs >= 1300 ? "G3" : bs >= 900 ? "G4" : bs >= 600 ? "G5" : "G6";
+      emps.push({i: "EX" + n++, n: "", k: l.id, s: "", j: l.role, g, o: l.nat === "O" ? 1 : 0, x: rnd() < female ? "F" : "M",
+        dob: `${by}-${pad2(bm)}-${pad2(bd)}`, jd: `${fy - 1 - svc}-${pad2(1 + Math.floor(rnd() * 12))}-01`, ce, bs, al, inc: null, ex: 0});
+    }
+  }
+  return {sample: true, fileName: "Example employee file", importedAt: 0, savedAt: 0, groupBy: "job", emps};
+}
+
+/* ---------- Cost engine ---------- */
+const COST_KEYS = ["basic","allow","ot","bonus","si","eosb","ticket","med","train","rec"];
+const newAcc = () => ({basic:0, allow:0, ot:0, bonus:0, si:0, eosb:0, ticket:0, med:0, train:0, rec:0, m: new Array(12).fill(0), h: new Array(12).fill(0)});
+// Adds the cost of h[month] heads (negative = savings) at the given monthly pay into acc.
+function costHeads(acc, h, basic, allow, isO, otR, A, o, incPct, recM, recN){
+  const inc = incPct / 100, bm = o.bonusMonths ?? A.bonusMonths, siR = (isO ? A.omSI : A.exSI) / 100;
+  for (let i = 0; i < 12; i++){
+    const hh = h[i], m = i + 1, rc = m === recM ? recN * (isO ? A.recO : A.recE) : 0;
+    if (!hh && !rc) continue;
+    const rate = o.noInc ? 1 : (m >= A.incMonth ? 1 + inc : 1);
+    const b = hh * basic * rate, a = hh * allow * rate;
+    const ot = b * otR, bo = b * bm / 12;
+    const si = (A.siBase === "basic" ? b : b + a) * siR;
+    const eo = isO ? 0 : b * A.eosbPct / 100;
+    const tk = isO ? 0 : hh * A.ticket / 12;
+    const md = hh * (isO ? A.medO : A.medE) / 12;
+    const tr = hh * A.training / 12;
+    acc.basic += b; acc.allow += a; acc.ot += ot; acc.bonus += bo; acc.si += si; acc.eosb += eo; acc.ticket += tk; acc.med += md; acc.train += tr; acc.rec += rc;
+    acc.m[i] += b + a + ot + bo + si + eo + tk + md + tr + rc; acc.h[i] += hh;
+  }
+}
+function finish(r){
+  r.pay = r.basic + r.allow; r.var = r.ot + r.bonus; r.stat = r.si + r.eosb; r.ben = r.ticket + r.med + r.train;
+  r.total = r.pay + r.var + r.stat + r.ben + r.rec; r.fte = r.h.reduce((s, x) => s + x, 0) / 12; return r;
+}
+const H_ONE = last => Array.from({length: 12}, (_, i) => i + 1 <= last ? 1 : 0);
+function calcLine(l, dept, A, o = {}, emps = null){
+  const r = newAcc(), isO = l.nat === "O";
+  const lineInc = o.incPct ?? A.incPct;
+  const hiresPlan = o.noHires || (o.noReqHires && l.req) ? 0 : num(l.hires) * (o.hirePct ?? 100) / 100;
+  const hireM = clampM(l.hireM) + (o.delay || 0);
+  const hires = hireM <= 12 ? hiresPlan : 0;
+  const exits = o.noExits || o.noOther ? 0 : num(l.exits);
+  const useNamed = !o.noExits && !o.noNamed;
+  const exitM = clampM(l.exitM || 12);
+  const otR = num(dept?.ot) / 100 * (o.otPct ?? 100) / 100;
+  const basic = num(l.basic), allow = num(l.allow);
+  if (emps){
+    let named = 0;
+    for (const e of emps){
+      const ex = useNamed && e.ex ? e.ex : 12;
+      if (useNamed && e.ex) named++;
+      costHeads(r, H_ONE(ex), e.bs, e.al, isO, otR, A, o, e.inc ?? lineInc, 0, 0);
+    }
+    const h = Array.from({length: 12}, (_, i) => (i + 1 >= hireM ? hires : 0) - (i + 1 > exitM ? exits : 0));
+    costHeads(r, h, basic, allow, isO, otR, A, o, lineInc, hireM, hires);
+    r.open = emps.length; r.named = named; r.hires = hires; r.exits = named + exits;
+    r.close = Math.max(0, emps.length - named + hires - exits);
+  } else {
+    const hc = num(l.hc);
+    const h = Array.from({length: 12}, (_, i) => Math.max(0, hc + (i + 1 >= hireM ? hires : 0) - (i + 1 > exitM ? exits : 0)));
+    costHeads(r, h, basic, allow, isO, otR, A, o, lineInc, hireM, hires);
+    r.open = hc; r.named = 0; r.hires = hires; r.exits = Math.min(exits, hc + hires); r.close = Math.max(0, hc + hires - exits);
+  }
+  return finish(r);
+}
+function empCost(e){
+  const l = lineById(e.k); if (!l) return 0;
+  const d = S.depts.find(x => x.id === l.dept), r = newAcc();
+  costHeads(r, H_ONE(e.ex || 12), e.bs, e.al, l.nat === "O", num(d?.ot) / 100, S.a, {}, e.inc ?? S.a.incPct, 0, 0);
+  return finish(r).total;
+}
+function compute(st, o = {}){
+  const A = st.a, map = new Map(), lineRes = new Map(), idx = rosterIndex();
+  const blank = () => ({sub:0, cont:0, total:0, open:0, close:0, openO:0, closeO:0, hires:0, exits:0, named:0, fte:0, m:new Array(12).fill(0), h:new Array(12).fill(0), pay:0, var:0, stat:0, ben:0, ...Object.fromEntries(COST_KEYS.map(k => [k, 0]))});
+  st.depts.forEach(d => map.set(d.id, {d, ...blank()}));
+  for (const l of st.lines){
+    const g = map.get(l.dept); if (!g) continue;
+    const r = calcLine(l, g.d, A, o, idx ? (idx.get(l.id) || []) : null); lineRes.set(l.id, r);
+    for (const k of ["pay","var","stat","ben","open","close","hires","exits","named","fte", ...COST_KEYS]) g[k] += r[k] || 0;
+    g.sub += r.total;
+    if (l.nat === "O"){ g.openO += r.open; g.closeO += r.close; }
+    r.m.forEach((v, i) => { g.m[i] += v; g.h[i] += r.h[i]; });
+  }
+  const depts = [...map.values()], tot = blank(), cf = o.noCont ? 0 : A.contingency / 100;
+  for (const g of depts){
+    g.cont = g.sub * cf; g.total = g.sub + g.cont;
+    for (const k of Object.keys(tot)) if (typeof tot[k] === "number") tot[k] += g[k];
+    g.m.forEach((v, i) => { tot.m[i] += v * (1 + cf); tot.h[i] += g.h[i]; });
+  }
+  return {depts, tot, lineRes};
+}
+function bridge(st){
+  // Each step switches one more change on, so the steps add up exactly to the budget.
+  const run = o => compute(st, {...o, noCont: true}).tot;
+  const t0 = run({noHires: true, noExits: true, noInc: true});
+  const t1 = run({noHires: true, noExits: true});
+  const t2 = run({noHires: true, noOther: true});
+  const t3 = run({noHires: true});
+  const t4 = run({noReqHires: true});
+  const full = compute(st), t5 = full.tot;
+  const named = t2.named, other = t3.exits - t3.named, planH = t4.hires, reqH = t5.hires - t4.hires;
+  const steps = [
+    {label: "Run-rate", full: "Payroll run-rate today", v: t0.sub, kind: "total", heads: t0.open,
+      desc: `${f0(t0.open)} current staff at today's pay for 12 months, with no increment, hires or exits.`},
+    {label: "Increment", full: `Salary increment (${st.a.incPct}% from ${MONTHS[st.a.incMonth - 1]})`, v: t1.sub - t0.sub, heads: 0,
+      desc: `The ${st.a.incPct}% increment on basic and allowances from ${MONTHS[st.a.incMonth - 1]}, including its knock-on effect on overtime, bonus and social protection.`},
+    {label: "Leavers", full: "Named leavers (retirements, contract ends)", v: t2.sub - t1.sub, heads: -named, optional: true,
+      desc: `${f0(named)} people marked with a planned exit on the Employees tab are paid only until their exit month.`},
+    {label: "Attrition", full: "Other exits (unnamed attrition)", v: t3.sub - t2.sub, heads: -other,
+      desc: `${f0(other)} other exits entered on Headcount plan lines, costed at each line's average pay.`},
+    {label: "New hires", full: "Planned new hires", v: t4.sub - t3.sub, heads: planH,
+      desc: `${f0(planH)} planned hires from their start month, including recruitment costs.`},
+    {label: "Requests", full: "Approved department requests", v: t5.sub - t4.sub, heads: reqH, optional: true,
+      desc: `${f0(reqH)} positions from approved department-head requests.`},
+    {label: "Contingency", full: `Contingency (${st.a.contingency}%)`, v: t5.cont, heads: 0, desc: `${st.a.contingency}% on each department's total.`},
+    {label: "FY budget", full: `FY${st.fy} manpower budget`, v: t5.total, kind: "total", heads: t5.close, desc: `${f0(t5.close)} staff at year end.`},
+  ];
+  return steps.filter(x => !x.optional || x.heads || Math.abs(x.v) >= 1);
+}
+
+/* ---------- Roster helpers ---------- */
+let ROS = null, rosVer = 0, idxCache = {ver: -1, idx: null};
+const rosterOn = () => !!(ROS && ROS.emps && ROS.emps.length);
+function rosterIndex(){
+  if (!rosterOn()) return null;
+  if (idxCache.ver !== rosVer){ const m = new Map(); for (const e of ROS.emps){ if (!m.has(e.k)) m.set(e.k, []); m.get(e.k).push(e); } idxCache = {ver: rosVer, idx: m}; }
+  return idxCache.idx;
+}
+const lineById = id => S.lines.find(l => l.id === id);
+const empDept = e => { const l = lineById(e.k); return l ? l.dept : null; };
+function ageAt(e){ if (!e.dob) return null; const [y, m, d] = e.dob.split("-").map(Number); return S.fy - 1 - y + ((m === 1 && d === 1) ? 1 : 0); }
+function svcAt(e){ if (!e.jd) return null; const [y, m] = e.jd.split("-").map(Number); return Math.max(0, S.fy - y - (m > 1 ? 1 : 0)); }
+function empFlags(e){
+  const f = {};
+  if (e.dob){ const [y, m] = e.dob.split("-").map(Number); const ra = e.o ? S.a.retO : S.a.retE; if (ra > 0){ const t = S.fy - y; if (t === ra) f.ret = m; else if (t > ra) f.ret = 1; } }
+  if (e.ce){ const [y, m] = e.ce.split("-").map(Number); if (y === S.fy) f.con = m; else if (y < S.fy) f.con = 1; }
+  if (!(e.bs > 0)) f.pay = 1;
+  return f;
+}
+
+/* ---------- State & persistence ---------- */
+let S = null, R = null;
+// Where data lives: "artifact" (claude.ai page), "server" (local Node server) or "local" (this browser only).
+const BE = {mode: "local", db: null, base: null, uid: null, user: null, owner: true, ready: false, csrf: "", role: "", ver: {plan: 0, roster: 0}, pending: {plan: false, roster: false}};
+let saveTimer = null, rosTimer = null;
+const LS_REQ = "manpower-planner-v1:requests", LS_TOKEN = "manpower-planner-v1:token";
+const lsGet = k => { try { const t = localStorage.getItem(k); return t ? JSON.parse(t) : null; } catch { return null; } };
+const lsSet = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
+const clone = v => JSON.parse(JSON.stringify(v));
+function setStatus(s, text){ const el = $("#saveStatus"); el.dataset.s = s; el.lastElementChild.textContent = text; }
+function normalise(s){
+  const d = sampleState();
+  if (!s || typeof s !== "object" || !Array.isArray(s.lines) || !Array.isArray(s.depts)) return d;
+  s.a = {...d.a, ...(s.a || {})}; s.scen = Array.isArray(s.scen) ? s.scen : [];
+  s.fy = s.fy || d.fy; s.baseYear = s.baseYear || s.fy - 1; s.org = s.org || "";
+  if (s.reqOpen === undefined) s.reqOpen = true;
+  return s;
+}
+async function api(path, method = "GET", body){
+  const r = await fetch("api/" + path, {method, cache: "no-store", credentials: "same-origin",
+    headers: {"content-type": "application/json", "x-csrf-token": BE.csrf || ""}, body: body === undefined ? undefined : JSON.stringify(body)});
+  let j = null; try { j = await r.json(); } catch {}
+  if (r.ok) return j || {};
+  const e = new Error((j && j.error) || "HTTP " + r.status); e.status = r.status; e.code = j && j.code; e.body = j;
+  if (r.status === 401 && path !== "login" && path !== "session") authLost();
+  if (r.status === 403 && e.code === "must_change") showAuth("change");
+  throw e;
+}
+const savedText = () => BE.mode === "artifact" ? "Saved to your account" : BE.mode === "server" ? "Saved on the server" : "Saved in this browser";
+const savedState = () => BE.mode === "local" ? "local" : "ok";
+function persist(){
+  if (!BE.owner || !BE.ready) return;
+  S.savedAt = Date.now();
+  clearTimeout(saveTimer); setStatus("busy", "Saving…");
+  saveTimer = setTimeout(async () => {
+    try {
+      if (BE.mode === "artifact"){ await BE.db.doc(BE.base + "/plan").set(clone(S)); lsSet(LS_KEY, S); }
+      else if (BE.mode === "server"){ BE.pending.plan = true; BE.ver.plan = (await api("plan", "PUT", {data: S, baseVersion: BE.ver.plan})).version; BE.pending.plan = false; }
+      else if (!lsSet(LS_KEY, S)) throw new Error("quota");
+      setStatus(savedState(), savedText());
+    } catch (e) { if (serverSaveError(e)) return; setStatus("local", BE.mode !== "server" && lsSet(LS_KEY, S) ? "Storage unreachable · kept in this browser" : "Not saved · export a backup"); }
+    publishConfig();
+  }, 900);
+}
+function persistRoster(){
+  if (!BE.owner || !BE.ready) return;
+  if (ROS) ROS.savedAt = Date.now();
+  clearTimeout(rosTimer); setStatus("busy", "Saving…");
+  rosTimer = setTimeout(async () => {
+    try {
+      if (BE.mode === "artifact"){
+        const metaRef = BE.db.doc(BE.base + "/roster");
+        const prev = await metaRef.get();
+        const prevN = prev.exists ? (prev.data().chunks || 0) : 0;
+        const emps = ROS ? ROS.emps : [], n = Math.ceil(emps.length / ROSTER_CHUNK);
+        for (let c = 0; c < n; c++) await BE.db.doc(`${BE.base}/roster-${c}`).set({c, emps: emps.slice(c * ROSTER_CHUNK, (c + 1) * ROSTER_CHUNK)});
+        for (let c = n; c < prevN; c++) await BE.db.doc(`${BE.base}/roster-${c}`).delete();
+        await metaRef.set(ROS ? {chunks: n, fileName: ROS.fileName || "", importedAt: ROS.importedAt || 0, savedAt: ROS.savedAt, groupBy: ROS.groupBy || "", sample: !!ROS.sample} : {chunks: 0, savedAt: Date.now(), cleared: true});
+        lsSet(LS_ROS, ROS);
+      } else if (BE.mode === "server"){ BE.pending.roster = true; BE.ver.roster = (await api("roster", "PUT", {data: ROS, baseVersion: BE.ver.roster})).version; BE.pending.roster = false; }
+      else if (!lsSet(LS_ROS, ROS)) throw new Error("quota");
+      setStatus(savedState(), savedText());
+    } catch (e) { if (serverSaveError(e)) return; setStatus("local", BE.mode !== "server" && lsSet(LS_ROS, ROS) ? "Storage unreachable · kept in this browser" : "Employee file not saved · export a backup"); }
+  }, 1200);
+}
+function changed(){ recalc(); persist(); }
+function rosterChanged(){ rosVer++; recalc(); persistRoster(); }
+
+async function detectBackend(){
+  if (window.claude && window.claude.use){
+    try {
+      const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+      const id = user ? await user.id() : null;
+      if (db && id){
+        BE.mode = "artifact"; BE.db = db; BE.uid = id; BE.user = user; BE.base = "data/users/" + id;
+        BE.owner = await user.isOwner().catch(() => false);
+      }
+    } catch {}
+    return;
+  }
+  if (/^https?:$/.test(location.protocol)){
+    try {
+      const h = await fetch("api/health", {cache: "no-store"}).then(r => r.ok ? r.json() : null);
+      if (h && h.app === "manpower-planner") BE.mode = "server";
+    } catch {}
+  }
+}
+async function loadPlannerData(){
+  if (BE.mode === "artifact"){
+    const [pSnap, mSnap] = await Promise.all([BE.db.doc(BE.base + "/plan").get(), BE.db.doc(BE.base + "/roster").get()]);
+    if (pSnap.exists){ const remote = normalise(pSnap.data()); if ((remote.savedAt || 0) >= (S.savedAt || 0)){ S = remote; lsSet(LS_KEY, S); } else persist(); }
+    if (mSnap.exists){
+      const meta = mSnap.data();
+      if ((meta.savedAt || 0) >= ((ROS && ROS.savedAt) || 0)){
+        if (meta.cleared || !meta.chunks) ROS = S.sample ? sampleRoster(S) : null;
+        else {
+          const parts = await Promise.all(Array.from({length: meta.chunks}, (_, c) => BE.db.doc(`${BE.base}/roster-${c}`).get()));
+          const emps = parts.flatMap(p => p.exists ? (p.data().emps || []) : []);
+          ROS = {sample: !!meta.sample, fileName: meta.fileName, importedAt: meta.importedAt, savedAt: meta.savedAt, groupBy: meta.groupBy, emps};
+        }
+        lsSet(LS_ROS, ROS);
+      } else if (ROS && !ROS.sample) persistRoster();
+    } else if (ROS && !ROS.sample) persistRoster();
+  } else if (BE.mode === "server"){
+    const [p, r] = await Promise.all([api("plan"), api("roster")]);
+    S = p.data ? normalise(p.data) : sampleState();
+    ROS = r.data && Array.isArray(r.data.emps) ? r.data : (S.sample ? sampleRoster(S) : null);
+    BE.ver.plan = p.version || 0; BE.ver.roster = r.version || 0;
+  }
+  rosVer++;
+}
+function updateStorageNote(){
+  $("#storageNote").textContent = BE.mode === "artifact"
+    ? "Your plan and employee file are saved privately to your account: nobody you share this page with can see them. Department heads you share it with see only the request form. Export a .json backup before major changes."
+    : BE.mode === "server"
+    ? "Your plan and employee file are saved on the planner server (in its data folder), with a daily backup copy. Export a .json backup before major changes."
+    : "Your plan is saved in this browser only. Clearing site data or switching device loses it, so export a .json backup regularly. Run the localhost server to share the request form with department heads.";
+}
+
+/* ---------- Shared request-form config & requests ---------- */
+let lastCfg = "";
+function publicConfig(){
+  const a = S.a;
+  return {fy: S.fy, org: S.org, open: S.reqOpen !== false, deadline: S.reqDeadline || "", note: S.reqNote || "", sample: !!S.sample,
+    depts: S.depts.map(d => ({id: d.id, name: d.name, ot: num(d.ot)})),
+    a: {incPct: a.incPct, incMonth: a.incMonth, bonusMonths: a.bonusMonths, omSI: a.omSI, exSI: a.exSI, siBase: a.siBase, eosbPct: a.eosbPct, ticket: a.ticket, medO: a.medO, medE: a.medE, training: a.training, recO: a.recO, recE: a.recE}};
+}
+async function publishConfig(force){
+  if (!BE.owner || BE.mode === "local") return;
+  const cfg = publicConfig(), s = JSON.stringify(cfg);
+  if (s === lastCfg && !force) return;
+  try { if (BE.mode === "artifact") await BE.db.doc("config/public").set(cfg); else await api("config", "PUT", cfg); lastCfg = s; } catch {}
+}
+async function loadConfig(){
+  if (BE.mode === "artifact"){ const snap = await BE.db.doc("config/public").get(); return snap.exists ? snap.data() : null; }
+  if (BE.mode === "server") return (await api("config")).data;
+  return publicConfig();
+}
+function requesterToken(){
+  if (BE.mode === "artifact") return BE.uid;
+  if (BE.mode === "server") return BE.user ? BE.user.username : "";
+  let t = lsGet(LS_TOKEN); if (!t){ t = "r-" + uid() + uid(); lsSet(LS_TOKEN, t); } return t;
+}
+let REQ = [], reqUnsub = null, reqPoll = null;
+async function loadRequests(){
+  try {
+    if (BE.mode === "artifact"){
+      if (reqUnsub) return;
+      reqUnsub = BE.db.collection("requests").onSnapshot(snap => { REQ = snap.docs.flatMap(d => (d.data().items || []).map(it => ({...it, owner: d.id}))); onRequests(); }, () => {});
+    } else if (BE.mode === "server"){
+      REQ = (await api("requests")).items || []; onRequests();
+      if (!reqPoll) reqPoll = setInterval(async () => { try { REQ = (await api("requests")).items || []; onRequests(); } catch {} }, 30000);
+    } else { REQ = lsGet(LS_REQ) || []; onRequests(); }
+  } catch { onRequests(); }
+}
+async function myRequests(){
+  const tok = requesterToken();
+  if (BE.mode === "artifact"){ const snap = await BE.db.doc("requests/" + tok).get(); return snap.exists ? (snap.data().items || []) : []; }
+  if (BE.mode === "server") return ((await api("requests")).items || []).filter(r => r.owner === tok);
+  return (lsGet(LS_REQ) || []).filter(r => r.owner === tok);
+}
+async function saveRequest(item){
+  item.updatedAt = Date.now();
+  if (item.example) return item;
+  if (BE.mode === "artifact"){
+    const owner = item.owner || BE.uid, ref = BE.db.doc("requests/" + owner);
+    const snap = await ref.get(), items = snap.exists ? (snap.data().items || []) : [];
+    const {owner: _o, ...clean} = item, i = items.findIndex(x => x.id === item.id);
+    if (i >= 0) items[i] = clean; else items.push(clean);
+    await ref.set({items, updatedAt: Date.now()});
+    return {...clean, owner};
+  }
+  if (BE.mode === "server") return (await api("requests", "POST", item)).item;
+  const all = lsGet(LS_REQ) || [], i = all.findIndex(x => x.id === item.id);
+  if (i >= 0) all[i] = item; else all.push(item);
+  lsSet(LS_REQ, all); REQ = all;
+  return item;
+}
+
+/* ---------- Tooltip ---------- */
+const tip = $("#tip");
+document.addEventListener("mousemove", e => {
+  const t = e.target.closest && e.target.closest("[data-tip]");
+  if (!t){ tip.hidden = true; return; }
+  tip.innerHTML = t.getAttribute("data-tip"); tip.hidden = false;
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = e.clientX + 14, y = e.clientY + 14;
+  if (x + w > innerWidth - 8) x = e.clientX - w - 14;
+  if (y + h > innerHeight - 8) y = e.clientY - h - 14;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+});
+document.addEventListener("scroll", () => tip.hidden = true, true);
+
+/* ---------- Charts ---------- */
+function niceMax(v){ if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))); const n = v / p; return [1,1.2,1.6,2,2.4,3,4,5,6,8,10].find(x => n <= x) * p; }
+function chartDept(){
+  const rows = [...R.depts].filter(g => g.total > 0 || g.open > 0).sort((a, b) => b.total - a.total);
+  const W = 760, L = 190, RP = 70, rowH = 28, T = 8, B = 26, H = T + rows.length * rowH + B;
+  const max = niceMax(Math.max(1, ...rows.map(g => Math.max(g.total, g.d.ceiling || 0))));
+  const x = v => L + (v / max) * (W - L - RP);
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Budget by department">`;
+  for (let i = 0; i <= 4; i++){ const v = max * i / 4, xx = x(v); s += `<line class="grid" x1="${xx}" x2="${xx}" y1="${T}" y2="${H - B}"/><text x="${xx}" y="${H - 8}" text-anchor="middle">${fM(v)}</text>`; }
+  rows.forEach((g, i) => {
+    const y = T + i * rowH + 5, bh = rowH - 10;
+    s += `<text x="${L - 10}" y="${y + bh / 2 + 4}" text-anchor="end">${esc(trunc(g.d.name, 28))}</text>`;
+    let acc = 0;
+    GROUPS.forEach(gr => {
+      const v = g[gr.k] * (1 + S.a.contingency / 100); if (v <= 0) return;
+      const x0 = x(acc), x1 = x(acc + v); acc += v;
+      s += `<rect x="${x0}" y="${y}" width="${Math.max(0, x1 - x0 - 1.5)}" height="${bh}" rx="2" fill="var(${gr.c})" data-tip="<b>${esc(g.d.name)}</b><br>${gr.label}: OMR ${f0(v)}<br>${fPct(v / g.total * 100)} of department"/>`;
+    });
+    if (g.d.ceiling > 0){ const cx = x(g.d.ceiling); s += `<line x1="${cx}" x2="${cx}" y1="${y - 3}" y2="${y + bh + 3}" stroke="var(--fg)" stroke-width="2" data-tip="Ceiling OMR ${f0(g.d.ceiling)}"/>`; }
+    s += `<text x="${x(g.total) + 6}" y="${y + bh / 2 + 4}" style="fill:var(--fg);font-weight:600">${fM(g.total)}</text>`;
+    s += `<rect x="0" y="${y - 5}" width="${L}" height="${rowH}" fill="transparent" data-tip="<b>${esc(g.d.name)}</b><br>Budget OMR ${f0(g.total)}<br>Closing HC ${f0(g.close)}${g.d.ceiling ? "<br>Ceiling OMR " + f0(g.d.ceiling) : ""}"/>`;
+  });
+  s += `<line class="axis" x1="${L}" x2="${L}" y1="${T}" y2="${H - B}"/></svg>`;
+  $("#chDept").innerHTML = s;
+  $("#lgDept").innerHTML = GROUPS.map(g => `<span><i style="background:var(${g.c})"></i>${g.label}</span>`).join("") + `<span><i style="background:var(--fg);width:2px;height:12px"></i>Budget ceiling</span>`;
+}
+function chartBridge(){
+  const steps = bridge(S), prior = S.depts.reduce((s, d) => s + num(d.prior), 0);
+  const W = 640, H = 270, L = 56, T = 26, B = 36, RP = 10;
+  const tops = []; let run = 0;
+  steps.forEach(st => { if (st.kind === "total"){ st.a = 0; st.b = st.v; run = st.v; } else { st.a = run; st.b = run + st.v; run += st.v; } tops.push(st.a, st.b); });
+  if (prior > 0) tops.push(prior);
+  const vmax = Math.max(...tops, 1), pos = tops.filter(v => v > 0), vmin = pos.length ? Math.min(...pos) : 0;
+  const step = niceMax(vmax / 10);
+  const lo = Math.max(0, Math.floor((vmin * 0.9) / step) * step);
+  const hi = vmax + (vmax - lo) * 0.08;
+  const y = v => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  const bw = (W - L - RP) / steps.length;
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Budget bridge">`;
+  for (let i = 0; i <= 4; i++){ const v = lo + (hi - lo) * i / 4; s += `<line class="grid" x1="${L}" x2="${W - RP}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${fM(v)}</text>`; }
+  steps.forEach((st, i) => {
+    const x0 = L + i * bw + bw * 0.18, w = bw * 0.64;
+    const a = st.kind === "total" ? lo : st.a;
+    const y0 = y(Math.max(a, st.b)), y1 = y(Math.min(a, st.b));
+    const fill = st.kind === "total" ? "var(--accent)" : st.v >= 0 ? "var(--up)" : "var(--down)";
+    s += `<rect x="${x0}" y="${y0}" width="${w}" height="${Math.max(1.5, y1 - y0)}" rx="3" fill="${fill}" data-tip="<b>${esc(st.full)}</b><br>${st.kind === "total" ? "OMR " + f0(st.v) : (st.v >= 0 ? "Adds" : "Saves") + " OMR " + f0(Math.abs(st.v))}${st.heads && st.kind !== "total" ? `<br>${st.heads > 0 ? "+" : "−"}${f0(Math.abs(st.heads))} heads` : ""}<br>${esc(st.desc)}"/>`;
+    s += `<text x="${x0 + w / 2}" y="${y0 - 6}" text-anchor="middle" style="fill:var(--fg);font-weight:600">${st.kind === "total" ? fM(st.v) : fDelta(st.v)}</text>`;
+    s += `<text x="${x0 + w / 2}" y="${H - 14}" text-anchor="middle">${st.label}</text>`;
+    if (i < steps.length - 1){ const nx = L + (i + 1) * bw + bw * 0.18; s += `<line x1="${x0 + w}" x2="${nx}" y1="${y(st.b)}" y2="${y(st.b)}" stroke="var(--line-2)" stroke-dasharray="3 3"/>`; }
+  });
+  if (prior > 0){
+    const py = y(prior);
+    s += `<line x1="${L}" x2="${W - RP}" y1="${py}" y2="${py}" stroke="var(--fg-3)" stroke-width="1.2" stroke-dasharray="6 4" data-tip="FY${S.baseYear} budget OMR ${f0(prior)}"/>`;
+    s += `<text x="${W - RP}" y="${py - 5}" text-anchor="end" style="fill:var(--fg-2);paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round">FY${S.baseYear} budget ${fM(prior)}</text>`;
+  }
+  $("#chBridge").innerHTML = s + `</svg>`;
+  const base = steps[0].v || 1, last = steps[steps.length - 1];
+  $("#bridgeSrc").textContent = rosterOn()
+    ? `Built from the ${ROS.sample ? "example employee file" : "employee file"}: ${f0(ROS.emps.length)} people costed one by one`
+    : `Built from summary plan lines: ${f0(R.tot.open)} staff at each line's average pay`;
+  $("#bridgeTbl").innerHTML = `<thead><tr><th>Step</th><th class="n">OMR</th><th class="n">Heads</th><th class="n">vs run-rate</th></tr></thead><tbody>` +
+    steps.map(st => `<tr${st.kind === "total" ? ' class="total"' : ""}><td title="${esc(st.desc)}">${esc(st.full)}</td><td class="n">${st.kind === "total" ? f0(st.v) : fDelta(st.v, f0)}</td><td class="n">${st.kind === "total" ? f0(st.heads) : st.heads ? (st.heads > 0 ? "+" : "−") + f0(Math.abs(st.heads)) : "—"}</td><td class="n">${st === steps[0] ? "—" : (st.kind === "total" ? sgn(st.v - base) + fPct(Math.abs(st.v / base - 1) * 100) : sgn(st.v) + fPct(Math.abs(st.v / base) * 100))}</td></tr>`).join("") +
+    (prior > 0 ? `<tr><td class="muted">Change vs FY${S.baseYear} budget</td><td class="n">${fDelta(last.v - prior, f0)}</td><td></td><td class="n muted">${sgn(last.v - prior)}${fPct(Math.abs(last.v / prior - 1) * 100)}</td></tr>` : "") + "</tbody>";
+}
+function chartOman(){
+  const rows = R.depts.filter(g => g.close > 0).map(g => ({n: g.d.name, p: g.closeO / g.close * 100, g})).sort((a, b) => a.p - b.p);
+  const W = 560, L = 190, RP = 60, rowH = 24, T = 18, B = 8, H = T + rows.length * rowH + B;
+  const x = v => L + v / 100 * (W - L - RP), tgt = S.a.omanTarget;
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Omanisation by department">`;
+  [0, 50, 100].forEach(v => s += `<line class="grid" x1="${x(v)}" x2="${x(v)}" y1="${T}" y2="${H - B}"/><text x="${x(v)}" y="${T - 6}" text-anchor="middle">${v}%</text>`);
+  rows.forEach((r, i) => {
+    const y = T + i * rowH + 4, bh = rowH - 9, below = r.p < tgt;
+    s += `<text x="${L - 10}" y="${y + bh / 2 + 4}" text-anchor="end">${esc(trunc(r.n, 28))}</text>`;
+    s += `<rect x="${L}" y="${y}" width="${Math.max(1, x(r.p) - L)}" height="${bh}" rx="2" fill="${below ? "var(--warn)" : "var(--s3)"}" data-tip="<b>${esc(r.n)}</b><br>Omani ${f0(r.g.closeO)} of ${f0(r.g.close)} (${fPct(r.p)})<br>Target ${fPct(tgt)}${below ? " · short by " + f0(Math.ceil(tgt / 100 * r.g.close - r.g.closeO)) + " Omani staff" : ""}"/>`;
+    s += `<text x="${x(r.p) + 6}" y="${y + bh / 2 + 4}" style="fill:var(--fg)">${fPct(r.p)}${below ? " ▼" : ""}</text>`;
+  });
+  s += `<line x1="${x(tgt)}" x2="${x(tgt)}" y1="${T - 2}" y2="${H - B}" stroke="var(--fg)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>`;
+  $("#chOman").innerHTML = s;
+  $("#omanSub").textContent = `Closing Omani share vs ${fPct(tgt)} target (dashed line). ▼ marks departments below target.`;
+}
+function chartMonth(){
+  const m = R.tot.m, h = R.tot.h;
+  const W = 560, H = 240, L = 50, T = 24, B = 40, RP = 8;
+  const max = niceMax(Math.max(1, ...m) * 1.05), y = v => T + (1 - v / max) * (H - T - B), bw = (W - L - RP) / 12;
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly phasing">`;
+  for (let i = 0; i <= 4; i++){ const v = max * i / 4; s += `<line class="grid" x1="${L}" x2="${W - RP}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${fM(v)}</text>`; }
+  m.forEach((v, i) => {
+    const x0 = L + i * bw + bw * 0.15, w = bw * 0.7;
+    s += `<rect x="${x0}" y="${y(v)}" width="${w}" height="${Math.max(0, y(0) - y(v))}" rx="3" fill="var(--s1)" data-tip="<b>${MONTHS[i]} ${S.fy}</b><br>Cost OMR ${f0(v)}<br>Headcount ${f0(h[i])}"/>`;
+    s += `<text x="${x0 + w / 2}" y="${H - 22}" text-anchor="middle">${MONTHS[i]}</text><text x="${x0 + w / 2}" y="${H - 8}" text-anchor="middle" style="font-size:10px;fill:var(--fg-3)">${f0(h[i])}</text>`;
+  });
+  $("#chMonth").innerHTML = s + `<text x="${L - 6}" y="${H - 8}" text-anchor="end" style="font-size:10px;fill:var(--fg-3)">HC</text></svg>`;
+}
+function chartAge(){
+  const bands = ["<25","25–29","30–34","35–39","40–44","45–49","50–54","55–59","60+"];
+  const O = new Array(9).fill(0), E = new Array(9).fill(0);
+  for (const e of ROS.emps){ const a = ageAt(e); if (a == null) continue; const b = a < 25 ? 0 : a >= 60 ? 8 : Math.floor((a - 20) / 5); (e.o ? O : E)[b]++; }
+  const W = 560, H = 230, L = 44, T = 18, B = 26, RP = 8, max = niceMax(Math.max(1, ...O.map((v, i) => v + E[i])));
+  const y = v => T + (1 - v / max) * (H - T - B), bw = (W - L - RP) / 9;
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Age profile">`;
+  for (let i = 0; i <= 4; i++){ const v = max * i / 4; s += `<line class="grid" x1="${L}" x2="${W - RP}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${f0(v)}</text>`; }
+  bands.forEach((b, i) => {
+    const x0 = L + i * bw + bw * 0.16, w = bw * 0.68, o = O[i], ex = E[i];
+    const tipTxt = `<b>Age ${b}</b><br>Omani ${f0(o)} · Expatriate ${f0(ex)}`;
+    s += `<rect x="${x0}" y="${y(o)}" width="${w}" height="${Math.max(0, y(0) - y(o))}" fill="var(--s1)" data-tip="${tipTxt}"/>`;
+    if (ex) s += `<rect x="${x0}" y="${y(o + ex)}" width="${w}" height="${Math.max(0, y(o) - y(o + ex) - 2)}" rx="3" fill="var(--s2)" data-tip="${tipTxt}"/>`;
+    s += `<text x="${x0 + w / 2}" y="${y(o + ex) - 5}" text-anchor="middle" style="fill:var(--fg)">${o + ex ? f0(o + ex) : ""}</text><text x="${x0 + w / 2}" y="${H - 8}" text-anchor="middle">${b}</text>`;
+  });
+  $("#chAge").innerHTML = s + `</svg>`;
+}
+
+/* ---------- Overview ---------- */
+function renderOverview(){
+  const t = R.tot, A = S.a;
+  const oman = t.close ? t.closeO / t.close * 100 : 0, omanOpen = t.open ? t.openO / t.open * 100 : 0;
+  const prior = S.depts.reduce((s, d) => s + num(d.prior), 0), perFte = t.fte ? t.total / t.fte : 0;
+  const k = [
+    {l:`FY${S.fy} manpower budget`, v:"OMR " + fM(t.total), d: prior ? `${fDelta(t.total - prior)} (${sgn(t.total - prior)}${fPct(Math.abs(t.total / prior - 1) * 100)}) vs FY${S.baseYear}` : "Enter prior-year budgets to compare"},
+    {l:"Headcount: opening → closing", v:`${f0(t.open)} → ${f0(t.close)}`, d:`+${f0(t.hires)} hires, −${f0(t.exits)} exits (${sgn(t.close - t.open)}${f0(Math.abs(t.close - t.open))} net)`},
+    {l:"Omanisation at year end", v:fPct(oman), d: `${oman >= A.omanTarget ? '<span class="pill good">✓ Meets</span>' : '<span class="pill warn">▼ Below</span>'} ${fPct(A.omanTarget)} target · ${fPct(omanOpen)} today`},
+    {l:"Average cost per FTE", v:"OMR " + f0(perFte), d:`${f0(t.fte)} average FTE across the year`},
+  ];
+  $("#kpis").innerHTML = k.map(x => `<div class="kpi"><span class="l">${x.l}</span><span class="v">${x.v}</span><span class="d">${x.d}</span></div>`).join("");
+  $("#sampleBanner").hidden = !S.sample;
+  chartBridge(); chartDept(); chartOman(); chartMonth(); renderAlerts();
+}
+function renderAlerts(){
+  const out = [], A = S.a;
+  R.depts.forEach(g => {
+    if (g.d.ceiling > 0 && g.total > g.d.ceiling) out.push(["bad", "Over ceiling", `${g.d.name} is OMR ${f0(g.total - g.d.ceiling)} over its ceiling of OMR ${f0(g.d.ceiling)}.`]);
+    if (g.close > 0 && g.closeO / g.close * 100 < A.omanTarget) out.push(["warn", "Omanisation", `${g.d.name} closes at ${fPct(g.closeO / g.close * 100)} Omani, needing ${f0(Math.ceil(A.omanTarget / 100 * g.close - g.closeO))} more Omani staff to reach ${fPct(A.omanTarget)}.`]);
+    if (num(g.d.prior) > 0){ const ch = g.total / g.d.prior - 1; if (ch > 0.1) out.push(["warn", "Growth", `${g.d.name} is up ${fPct(ch * 100)} on FY${S.baseYear}; prepare the justification.`]); }
+    if (!S.lines.some(l => l.dept === g.d.id)) out.push(["info", "Empty", `${g.d.name} has no plan lines.`]);
+  });
+  if (rosterOn()){
+    let ret = 0, con = 0, pay = 0;
+    for (const e of ROS.emps){ const f = empFlags(e); if (f.ret && !e.ex) ret++; if (f.con && !e.ex) con++; if (f.pay) pay++; }
+    if (pay) out.push(["bad", "Missing pay", `${f0(pay)} employees in the employee file have no basic salary.`]);
+    if (ret) out.push(["warn", "Retirements", `${f0(ret)} employees reach retirement age in FY${S.fy} but are still costed for the full year. Review them on the Employees tab.`]);
+    if (con) out.push(["info", "Contracts", `${f0(con)} contracts end in FY${S.fy} with no decision recorded. Mark the ones that will not be renewed on the Employees tab.`]);
+  } else S.lines.forEach(l => { if (num(l.hc) + num(l.hires) > 0 && num(l.basic) <= 0) out.push(["bad", "Missing pay", `${l.role || "Unnamed line"} (${deptName(l.dept)}) has no basic salary.`]); });
+  S.lines.forEach(l => { const r = R.lineRes.get(l.id); if (r && num(l.exits) > r.open - r.named + r.hires) out.push(["warn", "Exits", `${l.role} (${deptName(l.dept)}) has more exits than people.`]); });
+  const pendReq = allRequests().filter(r => r.status === "pending");
+  if (pendReq.length) out.push(["info", "Requests", `${f0(pendReq.length)} department request${pendReq.length > 1 ? "s" : ""} (${f0(pendReq.reduce((s, r) => s + num(r.count), 0))} positions) waiting for your decision on the Requests tab.`]);
+  const order = {bad:0, warn:1, info:2};
+  out.sort((a, b) => order[a[0]] - order[b[0]]);
+  $("#alerts").innerHTML = out.length ? out.slice(0, 12).map(([c, tag, txt]) => `<li><span class="pill ${c}">${tag}</span><span>${esc(txt)}</span></li>`).join("") + (out.length > 12 ? `<li class="note">+ ${out.length - 12} more</li>` : "")
+    : `<li><span class="pill good">✓ Clear</span><span>No ceilings breached, Omanisation targets met and every line is priced.</span></li>`;
+}
+const deptName = id => (S.depts.find(d => d.id === id) || {}).name || "—";
+
+/* ---------- Employees ---------- */
+const empView = {dept: "", nat: "", flag: "", sort: "id", q: "", page: 0};
+const EMP_PAGE = 100;
+function renderEmp(){
+  const on = rosterOn();
+  $("#empEmpty").hidden = on; $("#empBody").hidden = !on;
+  if (!on) return;
+  const E = ROS.emps;
+  let om = 0, fe = 0, ages = 0, na = 0, svc = 0, ns = 0, gross = 0;
+  for (const e of E){ if (e.o) om++; if (e.x === "F") fe++; const a = ageAt(e); if (a != null){ ages += a; na++; } const s = svcAt(e); if (s != null){ svc += s; ns++; } gross += e.bs + e.al; }
+  const k = [
+    ["Employees on file", f0(E.length), ROS.sample ? "Example file" : esc(ROS.fileName || "")],
+    ["Omanisation today", fPct(om / E.length * 100), `${f0(om)} Omani · ${f0(E.length - om)} expatriate`],
+    ["Women", fPct(fe / E.length * 100), `${f0(fe)} employees`],
+    ["Average age", na ? nf1.format(ages / na) : "—", `at 1 Jan ${S.fy}`],
+    ["Average service", ns ? nf1.format(svc / ns) + " yrs" : "—", "since joining date"],
+    ["Monthly gross payroll", "OMR " + fM(gross), "basic + allowances, today"],
+  ];
+  $("#empKpis").innerHTML = k.map(([l, v, d]) => `<div class="kpi"><span class="l">${l}</span><span class="v">${v}</span><span class="d">${d}</span></div>`).join("");
+  renderEmpFlags(); chartAge(); renderProfile(); renderEmpTable();
+}
+function renderEmpFlags(){
+  let ret = 0, retM = 0, con = 0, conM = 0, marked = 0;
+  for (const e of ROS.emps){ const f = empFlags(e); if (f.ret){ ret++; if (e.ex) retM++; } if (f.con){ con++; if (e.ex) conM++; } if (e.ex) marked++; }
+  let namedSave = 0; for (const e of ROS.emps) if (e.ex) namedSave += empCostWith(e, 12) - empCost(e);
+  $("#empFlags").innerHTML = `
+    <div class="flagrow"><div class="t"><b>${f0(ret)}</b>reach retirement age (${S.a.retO} Omani / ${S.a.retE} expat) in FY${S.fy} · ${f0(retM)} marked as exits</div><button class="btn sm" data-bulk="ret" type="button"${ret - retM ? "" : " disabled"}>Mark as exits in birth month</button></div>
+    <div class="flagrow"><div class="t"><b>${f0(con)}</b>contracts end in FY${S.fy} · ${f0(conM)} marked as exits</div><button class="btn sm" data-bulk="con" type="button"${con - conM ? "" : " disabled"}>Mark as exits at contract end</button></div>
+    <div class="flagrow"><div class="t"><b>${f0(marked)}</b>named exits planned · saving OMR ${fM(namedSave)} this year</div><button class="btn sm danger" data-bulk="clear" type="button"${marked ? "" : " disabled"}>Clear named exits</button></div>
+    <p class="note" style="margin-top:8px">Filter the list below by “Retiring in FY” or “Contract ends in FY” to decide person by person. Unnamed attrition stays on the Headcount plan as “Other exits”.</p>`;
+}
+function empCostWith(e, last){ const ex = e.ex; e.ex = last === 12 ? 0 : last; const c = empCost(e); e.ex = ex; return c; }
+$("#empFlags").addEventListener("click", e => {
+  const b = e.target.dataset && e.target.dataset.bulk; if (!b) return;
+  for (const emp of ROS.emps){ const f = empFlags(emp); if (b === "clear") emp.ex = 0; else if (b === "ret" && f.ret && !emp.ex) emp.ex = f.ret; else if (b === "con" && f.con && !emp.ex) emp.ex = f.con; }
+  rosterChanged(); renderEmp();
+});
+function renderProfile(){
+  const P = new Map(S.depts.map(d => [d.id, {d, n:0, o:0, f:0, age:0, na:0, svc:0, ns:0, gross:0, ret:0, con:0}]));
+  for (const e of ROS.emps){
+    const p = P.get(empDept(e)); if (!p) continue;
+    p.n++; if (e.o) p.o++; if (e.x === "F") p.f++;
+    const a = ageAt(e); if (a != null){ p.age += a; p.na++; } const s = svcAt(e); if (s != null){ p.svc += s; p.ns++; }
+    p.gross += e.bs + e.al; const fl = empFlags(e); if (fl.ret) p.ret++; if (fl.con) p.con++;
+  }
+  const rows = [...P.values()].filter(p => p.n);
+  const T = rows.reduce((t, p) => { for (const k of ["n","o","f","age","na","svc","ns","gross","ret","con"]) t[k] += p[k]; return t; }, {n:0, o:0, f:0, age:0, na:0, svc:0, ns:0, gross:0, ret:0, con:0});
+  const row = (name, p, cls = "") => `<tr class="${cls}"><td>${esc(name)}</td><td class="n">${f0(p.n)}</td><td class="n">${f0(p.o)}</td><td class="n">${f0(p.n - p.o)}</td><td class="n"><span class="pill ${p.o / p.n * 100 >= S.a.omanTarget ? "good" : "warn"}">${fPct(p.o / p.n * 100)}</span></td><td class="n">${fPct(p.f / p.n * 100)}</td><td class="n">${p.na ? nf1.format(p.age / p.na) : "—"}</td><td class="n">${p.ns ? nf1.format(p.svc / p.ns) : "—"}</td><td class="n">${f0(p.gross / p.n)}</td><td class="n">${f0(p.gross)}</td><td class="n">${p.ret || "—"}</td><td class="n">${p.con || "—"}</td></tr>`;
+  $("#tblProfile").innerHTML = `<thead><tr><th>Department</th><th class="n">Employees</th><th class="n">Omani</th><th class="n">Expat</th><th class="n">Omani %</th><th class="n">Women</th><th class="n">Avg age</th><th class="n">Avg service (yrs)</th><th class="n">Avg gross / mo</th><th class="n">Monthly payroll</th><th class="n">Retiring</th><th class="n">Contracts ending</th></tr></thead><tbody>${rows.sort((a, b) => b.n - a.n).map(p => row(p.d.name, p)).join("")}</tbody><tfoot>${T.n ? row("Total", T, "total") : ""}</tfoot>`;
+  $("#profileSub").textContent = `${ROS.sample ? "Example file" : ROS.fileName || "Employee file"} · retirements and contract ends counted for FY${S.fy}`;
+}
+function filteredEmps(){
+  const q = empView.q.toLowerCase();
+  let list = ROS.emps.filter(e => {
+    if (empView.dept && empDept(e) !== empView.dept) return false;
+    if (empView.nat !== "" && String(e.o) !== empView.nat) return false;
+    if (empView.flag){ const f = empFlags(e); if (empView.flag === "exit" ? !e.ex : !f[empView.flag]) return false; }
+    if (q && !`${e.i} ${e.n} ${e.j} ${e.g} ${e.s}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const s = empView.sort;
+  if (s === "cost") list = list.map(e => [empCost(e), e]).sort((a, b) => b[0] - a[0]).map(x => x[1]);
+  else if (s === "age") list.sort((a, b) => (ageAt(b) ?? -1) - (ageAt(a) ?? -1));
+  else if (s === "svc") list.sort((a, b) => (svcAt(b) ?? -1) - (svcAt(a) ?? -1));
+  else list.sort((a, b) => String(a.i).localeCompare(String(b.i), undefined, {numeric: true}));
+  return list;
+}
+function renderEmpTable(){
+  $("#eDept").innerHTML = `<option value="">All departments</option>` + S.depts.map(d => `<option value="${d.id}"${d.id === empView.dept ? " selected" : ""}>${esc(d.name)}</option>`).join("");
+  const list = filteredEmps(), pages = Math.max(1, Math.ceil(list.length / EMP_PAGE));
+  empView.page = Math.min(empView.page, pages - 1);
+  const slice = list.slice(empView.page * EMP_PAGE, (empView.page + 1) * EMP_PAGE);
+  const hasNames = ROS.emps.some(e => e.n);
+  const exitOpts = sel => `<option value="0"${!sel ? " selected" : ""}>Stays</option>` + MONTHS.map((m, i) => `<option value="${i + 1}"${i + 1 === sel ? " selected" : ""}>Leaves end ${m}</option>`).join("");
+  let h = `<thead><tr><th>Employee ID</th>${hasNames ? "<th>Name</th>" : ""}<th>Department</th><th>Job title</th><th>Grade</th><th>Nat.</th><th>Gender</th><th class="n">Age</th><th class="n">Service</th><th class="n">Basic</th><th class="n">Allowances</th><th class="n">FY cost</th><th>Flags</th><th>Planned exit</th><th class="n">Increment %</th></tr></thead><tbody>`;
+  for (const e of slice){
+    const f = empFlags(e), a = ageAt(e), s = svcAt(e);
+    const flags = [f.ret ? `<span class="pill warn" title="Reaches retirement age">Retires ${MONTHS[f.ret - 1]}</span>` : "", f.con ? `<span class="pill info" title="Contract end date">Contract ${MONTHS[f.con - 1]}</span>` : "", f.pay ? `<span class="pill bad">No pay</span>` : ""].join(" ");
+    h += `<tr data-eid="${esc(e.i)}"><td>${esc(e.i)}</td>${hasNames ? `<td>${esc(e.n)}</td>` : ""}<td>${esc(trunc(deptName(empDept(e)), 26))}</td><td>${esc(trunc(e.j, 30))}</td><td>${esc(e.g)}</td><td>${e.o ? "O" : "E"}</td><td>${esc(e.x)}</td><td class="n">${a ?? "—"}</td><td class="n">${s ?? "—"}</td><td class="n">${f0(e.bs)}</td><td class="n">${f0(e.al)}</td><td class="n" data-c="cost">${f0(empCost(e))}</td><td>${flags}</td>
+      <td class="cell-in"><select data-ek="ex" aria-label="Planned exit for ${esc(e.i)}" style="width:140px">${exitOpts(e.ex)}</select></td>
+      <td class="cell-in"><input data-ek="inc" type="number" min="0" step="0.5" value="${e.inc ?? ""}" placeholder="${S.a.incPct}" aria-label="Personal increment percent for ${esc(e.i)}" style="width:80px"></td></tr>`;
+  }
+  $("#tblEmp").innerHTML = h + (slice.length ? "" : `<tr><td colspan="15" class="muted" style="padding:20px">No employees match these filters.</td></tr>`) + "</tbody>";
+  $("#empPager").innerHTML = `<span>${f0(list.length)} employees${list.length > EMP_PAGE ? ` · showing ${f0(empView.page * EMP_PAGE + 1)}–${f0(Math.min(list.length, (empView.page + 1) * EMP_PAGE))}` : ""}</span>
+    <button class="btn sm" data-pg="-1" type="button"${empView.page ? "" : " disabled"}>‹ Previous</button><button class="btn sm" data-pg="1" type="button"${empView.page < pages - 1 ? "" : " disabled"}>Next ›</button>`;
+}
+const empFind = id => ROS.emps.find(e => String(e.i) === id);
+$("#tblEmp").addEventListener("change", e => {
+  const tr = e.target.closest("tr[data-eid]"), k = e.target.dataset.ek; if (!tr || !k) return;
+  const emp = empFind(tr.dataset.eid); if (!emp) return;
+  if (k === "ex") emp.ex = +e.target.value;
+  else emp.inc = e.target.value === "" ? null : Math.max(0, num(e.target.value));
+  tr.querySelector('[data-c="cost"]').textContent = f0(empCost(emp));
+  rosterChanged(); renderEmpFlags();
+});
+$("#empPager").addEventListener("click", e => { const d = e.target.dataset && e.target.dataset.pg; if (!d) return; empView.page += +d; renderEmpTable(); $("#tblEmp").closest(".tbl-wrap").scrollTop = 0; });
+[["eDept","dept"],["eNat","nat"],["eFlag","flag"],["eSort","sort"]].forEach(([id, k]) => $("#" + id).addEventListener("change", e => { empView[k] = e.target.value; empView.page = 0; renderEmpTable(); }));
+$("#eSearch").addEventListener("input", e => { empView.q = e.target.value; empView.page = 0; renderEmpTable(); });
+
+/* ---------- Headcount plan ---------- */
+const planFilter = {dept: "", q: ""};
+function monthOpts(sel){ return MONTHS.map((m, i) => `<option value="${i + 1}"${i + 1 === +sel ? " selected" : ""}>${m}</option>`).join(""); }
+function renderPlan(){
+  const ros = rosterOn();
+  $("#tblPlan thead").innerHTML = `<tr><th>Department</th><th>Position / grade</th><th>Nat.</th><th class="n">${ros ? "Employees" : "Current HC"}</th>${ros ? '<th class="n">Named exits</th>' : ""}<th class="n">New hires</th><th>Start</th><th class="n">${ros ? "Other exits" : "Exits"}</th><th>Last month</th><th class="n">${ros ? "New-hire basic" : "Basic / mo"}</th><th class="n">${ros ? "New-hire allow." : "Allow. / mo"}</th><th class="n">Closing HC</th><th class="n">FY cost (OMR)</th><th></th></tr>`;
+  $("#planSub").textContent = ros ? "Current staff come from the employee file. Plan new hires and unnamed attrition per line." : "One line per department × position/grade × nationality. Salaries are monthly averages in OMR.";
+  $("#planNote").textContent = ros
+    ? "Employees and named exits come from the employee file (set named exits on the Employees tab). New hires are paid the line's new-hire salary. Other exits are unnamed attrition at the line's pay."
+    : "Nat.: O = Omani, E = Expatriate. “Start” is the month new hires join; “Last month” is the final month leavers are on payroll. Costs update as you type.";
+  $("#fDept").innerHTML = `<option value="">All departments</option>` + S.depts.map(d => `<option value="${d.id}"${d.id === planFilter.dept ? " selected" : ""}>${esc(d.name)}</option>`).join("");
+  const q = planFilter.q.toLowerCase(), order = new Map(S.depts.map((d, i) => [d.id, i]));
+  const rows = S.lines.filter(l => (!planFilter.dept || l.dept === planFilter.dept) && (!q || (l.role || "").toLowerCase().includes(q)))
+    .sort((a, b) => (order.get(a.dept) ?? 999) - (order.get(b.dept) ?? 999));
+  const deptOpts = sel => S.depts.map(d => `<option value="${d.id}"${d.id === sel ? " selected" : ""}>${esc(d.name)}</option>`).join("");
+  const cols = ros ? 14 : 13;
+  let html = "", cur = null;
+  for (const l of rows){
+    if (l.dept !== cur){ cur = l.dept; const g = R.depts.find(x => x.d.id === cur); html += `<tr class="grp"><td colspan="3">${esc(deptName(cur))}</td><td class="n">${f0(g?.open)}</td>${ros ? `<td class="n">${f0(g?.named)}</td>` : ""}<td class="n">${f0(g?.hires)}</td><td></td><td class="n">${f0((g?.exits || 0) - (g?.named || 0))}</td><td colspan="3"></td><td class="n">${f0(g?.close)}</td><td class="n">${f0(g?.sub)}</td><td></td></tr>`; }
+    const r = R.lineRes.get(l.id) || {}, hasEmp = ros && r.open > 0;
+    html += `<tr data-id="${l.id}">
+      <td class="cell-in"><select class="w-l" data-k="dept" aria-label="Department">${deptOpts(l.dept)}</select></td>
+      <td class="cell-in"><input class="w-l" data-k="role" value="${esc(l.role)}" aria-label="Position or grade"></td>
+      <td class="cell-in">${hasEmp ? `<span style="padding-inline:6px">${l.nat}</span>` : `<select class="w-xs" data-k="nat" aria-label="Nationality"><option value="O"${l.nat === "O" ? " selected" : ""}>O</option><option value="E"${l.nat !== "O" ? " selected" : ""}>E</option></select>`}</td>
+      ${ros ? `<td class="n" data-tip="From the employee file">${f0(r.open)}</td><td class="n">${f0(r.named)}</td>` : `<td class="cell-in"><input class="w-s" type="number" min="0" step="1" data-k="hc" value="${l.hc}" aria-label="Current headcount"></td>`}
+      <td class="cell-in"><input class="w-s" type="number" min="0" step="1" data-k="hires" value="${l.hires}" aria-label="New hires"></td>
+      <td class="cell-in"><select class="w-xs" data-k="hireM" aria-label="Hire start month">${monthOpts(l.hireM)}</select></td>
+      <td class="cell-in"><input class="w-s" type="number" min="0" step="1" data-k="exits" value="${l.exits}" aria-label="Exits"></td>
+      <td class="cell-in"><select class="w-xs" data-k="exitM" aria-label="Last month for leavers">${monthOpts(l.exitM)}</select></td>
+      <td class="cell-in"><input class="w-m" type="number" min="0" step="10" data-k="basic" value="${l.basic}" aria-label="Basic salary per month"></td>
+      <td class="cell-in"><input class="w-m" type="number" min="0" step="10" data-k="allow" value="${l.allow}" aria-label="Allowances per month"></td>
+      <td class="n" data-c="close"></td><td class="n" data-c="cost"></td>
+      <td>${l.req ? '<span class="pill info" title="Added from an approved department request">Request</span>' : ""}${hasEmp ? "" : `<button class="icon" data-del="${l.id}" title="Delete line" aria-label="Delete line">×</button>`}</td></tr>`;
+  }
+  $("#tblPlan tbody").innerHTML = html || `<tr><td colspan="${cols}" class="muted" style="padding:20px">No lines match. Add a line or clear the filter.</td></tr>`;
+  updatePlanComputed();
+}
+function updatePlanComputed(){
+  document.querySelectorAll("#tblPlan tbody tr[data-id]").forEach(tr => {
+    const r = R.lineRes.get(tr.dataset.id); if (!r) return;
+    tr.querySelector('[data-c="close"]').textContent = f0(r.close);
+    tr.querySelector('[data-c="cost"]').textContent = f0(r.total);
+  });
+  const t = R.tot, ros = rosterOn();
+  $("#tblPlan tfoot").innerHTML = `<tr class="total"><td colspan="3">Total (${S.lines.length} lines, before contingency)</td><td class="n">${f0(t.open)}</td>${ros ? `<td class="n">${f0(t.named)}</td>` : ""}<td class="n">${f0(t.hires)}</td><td></td><td class="n">${f0(t.exits - t.named)}</td><td colspan="3"></td><td class="n">${f0(t.close)}</td><td class="n">${f0(t.sub)}</td><td></td></tr>`;
+}
+$("#tblPlan").addEventListener("input", e => {
+  const tr = e.target.closest("tr[data-id]"), k = e.target.dataset.k; if (!tr || !k) return;
+  const l = lineById(tr.dataset.id); if (!l) return;
+  l[k] = ["role","nat","dept"].includes(k) ? e.target.value : ["hireM","exitM"].includes(k) ? +e.target.value : Math.max(0, num(e.target.value));
+  S.sample = false;
+  recalc(false); updatePlanComputed(); persist();
+});
+$("#tblPlan").addEventListener("change", e => { if (e.target.dataset.k === "dept") renderPlan(); });
+$("#tblPlan").addEventListener("click", e => {
+  const id = e.target.dataset && e.target.dataset.del; if (!id) return;
+  const gone = lineById(id); S.lines = S.lines.filter(l => l.id !== id); if (gone && gone.req) releaseRequestLine(id); changed(); renderPlan();
+});
+$("#btnAddLine").addEventListener("click", () => {
+  const dept = planFilter.dept || (S.depts[0] && S.depts[0].id); if (!dept) return;
+  const l = {id: uid(), dept, role: "New position", nat: "O", hc: 0, hires: 1, hireM: 4, exits: 0, exitM: 12, basic: 800, allow: 400};
+  S.lines.push(l); changed(); renderPlan();
+  const inp = document.querySelector(`tr[data-id="${l.id}"] input[data-k="role"]`); if (inp){ inp.focus(); inp.select(); }
+});
+$("#fDept").addEventListener("change", e => { planFilter.dept = e.target.value; renderPlan(); });
+$("#fSearch").addEventListener("input", e => { planFilter.q = e.target.value; renderPlan(); });
+
+/* ---------- Budget detail ---------- */
+const COST_COLS = [["basic","Basic"],["allow","Allowances"],["ot","Overtime"],["bonus","Bonus"],["si","Social prot."],["eosb","EOSB"],["ticket","Air tickets"],["med","Medical"],["train","Training"],["rec","Recruitment"]];
+function renderBudget(){
+  const rows = R.depts;
+  let h = `<thead><tr><th>Department</th>${COST_COLS.map(c => `<th class="n">${c[1]}</th>`).join("")}<th class="n">Contingency</th><th class="n">FY${S.fy} total</th><th class="n">FY${S.baseYear} budget</th><th class="n">Change</th><th class="n">Ceiling</th></tr></thead><tbody>`;
+  const line = (name, g, cls = "") => {
+    const pr = num(g.prior), ch = pr ? g.total - pr : null, ceil = num(g.ceiling);
+    return `<tr class="${cls}"><td>${esc(name)}</td>${COST_COLS.map(c => `<td class="n">${f0(g[c[0]])}</td>`).join("")}<td class="n">${f0(g.cont)}</td><td class="n"><b>${f0(g.total)}</b></td><td class="n">${pr ? f0(pr) : "—"}</td><td class="n">${ch === null ? "—" : `${fDelta(ch, f0)} <span class="muted">(${sgn(ch)}${fPct(Math.abs(ch / pr) * 100)})</span>`}</td><td class="n">${ceil ? (g.total > ceil ? `<span class="pill bad">Over ${f0(g.total - ceil)}</span>` : `<span class="pill good">✓ ${f0(ceil)}</span>`) : "—"}</td></tr>`;
+  };
+  rows.forEach(g => h += line(g.d.name, {...g, prior: g.d.prior, ceiling: g.d.ceiling}));
+  const prior = S.depts.reduce((s, d) => s + num(d.prior), 0);
+  $("#tblBudget").innerHTML = h + `</tbody><tfoot>${line("Total", {...R.tot, prior, ceiling: 0}, "total")}</tfoot>`;
+  let hc = `<thead><tr><th>Department</th><th class="n">Opening HC</th><th class="n">New hires</th><th class="n">Exits</th><th class="n">Closing HC</th><th class="n">Net change</th><th class="n">Avg FTE</th><th class="n">Omani (open)</th><th class="n">Omani (close)</th><th class="n">Omanisation</th><th class="n">Cost / FTE</th></tr></thead><tbody>`;
+  const hl = (name, g, cls = "") => { const p = g.close ? g.closeO / g.close * 100 : 0; return `<tr class="${cls}"><td>${esc(name)}</td><td class="n">${f0(g.open)}</td><td class="n">${f0(g.hires)}</td><td class="n">${f0(g.exits)}</td><td class="n">${f0(g.close)}</td><td class="n">${fDelta(g.close - g.open, f0)}</td><td class="n">${f0(g.fte)}</td><td class="n">${f0(g.openO)}</td><td class="n">${f0(g.closeO)}</td><td class="n"><span class="pill ${p >= S.a.omanTarget ? "good" : "warn"}">${fPct(p)}</span></td><td class="n">${g.fte ? f0(g.total / g.fte) : "—"}</td></tr>`; };
+  rows.forEach(g => hc += hl(g.d.name, g));
+  $("#tblHC").innerHTML = hc + `</tbody><tfoot>${hl("Total", R.tot, "total")}</tfoot>`;
+  const cf = 1 + S.a.contingency / 100;
+  let m = `<thead><tr><th>Department</th>${MONTHS.map(x => `<th class="n">${x}</th>`).join("")}<th class="n">Total</th></tr></thead><tbody>`;
+  rows.forEach(g => m += `<tr><td>${esc(g.d.name)}</td>${g.m.map(v => `<td class="n">${f0(v * cf)}</td>`).join("")}<td class="n"><b>${f0(g.total)}</b></td></tr>`);
+  $("#tblMonth").innerHTML = m + `</tbody><tfoot><tr class="total"><td>Total cost</td>${R.tot.m.map(v => `<td class="n">${f0(v)}</td>`).join("")}<td class="n">${f0(R.tot.total)}</td></tr><tr class="total"><td>Headcount</td>${R.tot.h.map(v => `<td class="n">${f0(v)}</td>`).join("")}<td></td></tr></tfoot>`;
+}
+
+/* ---------- Scenarios ---------- */
+const SCEN_FIELDS = [["hirePct","Hires filled (% of plan)",0,200,5],["delay","Hiring delay (months)",0,12,1],["incPct","Salary increment (%)",0,20,0.5],["otPct","Overtime (% of plan)",0,300,5],["bonusMonths","Bonus (months of basic)",0,6,0.25]];
+const scenOpts = sc => ({hirePct: sc.hirePct, delay: sc.delay, incPct: sc.incPct, otPct: sc.otPct, bonusMonths: sc.bonusMonths});
+function renderScen(){
+  const base = R.tot;
+  const cards = [`<div class="scen base"><div><span class="eyebrow">Base plan</span><h3>As entered</h3></div><div class="res">OMR ${fM(base.total)}</div><div class="note">Closing HC ${f0(base.close)} · Omanisation ${fPct(base.close ? base.closeO / base.close * 100 : 0)}</div><div class="note">Increment ${S.a.incPct}% · bonus ${S.a.bonusMonths} mo · all hires on plan</div></div>`];
+  S.scen.forEach(sc => {
+    const r = compute(S, scenOpts(sc)).tot, d = r.total - base.total;
+    cards.push(`<div class="scen" data-sid="${sc.id}">
+      <div class="toolbar"><input data-sk="name" value="${esc(sc.name)}" aria-label="Scenario name" style="flex:1;font-weight:600"><button class="icon" data-sdel="${sc.id}" title="Delete scenario" aria-label="Delete scenario">×</button></div>
+      <div class="res">OMR ${fM(r.total)} <span class="pill ${d > 0 ? "bad" : "good"}">${fDelta(d)}</span></div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:8px">${SCEN_FIELDS.map(([k, lab, mn, mx, st]) => `<div class="field"><label for="sc-${sc.id}-${k}">${lab}</label><input id="sc-${sc.id}-${k}" type="number" min="${mn}" max="${mx}" step="${st}" data-sk="${k}" value="${sc[k]}"></div>`).join("")}</div>
+    </div>`);
+  });
+  $("#scenGrid").innerHTML = cards.join("");
+  renderScenTable();
+}
+function renderScenTable(){
+  const base = R.tot, om = t => t.close ? t.closeO / t.close * 100 : 0;
+  const all = [{name:"Base plan", t: base}, ...S.scen.map(sc => ({name: sc.name, t: compute(S, scenOpts(sc)).tot}))];
+  let h = `<thead><tr><th>Scenario</th><th class="n">FY budget</th><th class="n">vs base</th><th class="n">Closing HC</th><th class="n">vs base</th><th class="n">Avg FTE</th><th class="n">Omanisation</th><th class="n">Recruitment</th><th class="n">Overtime</th></tr></thead><tbody>`;
+  all.forEach((s, i) => h += `<tr${i === 0 ? ' class="total"' : ""}><td>${esc(s.name)}</td><td class="n">${f0(s.t.total)}</td><td class="n">${i ? fDelta(s.t.total - base.total, f0) : "—"}</td><td class="n">${f0(s.t.close)}</td><td class="n">${i ? fDelta(s.t.close - base.close, f0) : "—"}</td><td class="n">${f0(s.t.fte)}</td><td class="n">${fPct(om(s.t))}</td><td class="n">${f0(s.t.rec)}</td><td class="n">${f0(s.t.ot)}</td></tr>`);
+  $("#tblScen").innerHTML = h + "</tbody>";
+}
+$("#scenGrid").addEventListener("input", e => {
+  const card = e.target.closest("[data-sid]"), k = e.target.dataset.sk; if (!card || !k) return;
+  const sc = S.scen.find(x => x.id === card.dataset.sid); if (!sc) return;
+  sc[k] = k === "name" ? e.target.value : Math.max(0, num(e.target.value));
+  persist();
+  const r = compute(S, scenOpts(sc)).tot, d = r.total - R.tot.total;
+  card.querySelector(".res").innerHTML = `OMR ${fM(r.total)} <span class="pill ${d > 0 ? "bad" : "good"}">${fDelta(d)}</span>`;
+  renderScenTable();
+});
+$("#scenGrid").addEventListener("click", e => { const id = e.target.dataset && e.target.dataset.sdel; if (!id) return; S.scen = S.scen.filter(s => s.id !== id); persist(); renderScen(); });
+$("#btnAddScen").addEventListener("click", () => { S.scen.push({id: uid(), name: "New scenario", hirePct: 100, delay: 0, incPct: S.a.incPct, otPct: 100, bonusMonths: S.a.bonusMonths}); persist(); renderScen(); });
+
+/* ---------- Assumptions ---------- */
+const PLAN_FIELDS = [["org","Organisation name","text",null,"Shown on exports"],["fy","Budget year","number",1,"Fiscal year being planned"],["baseYear","Comparison year","number",1,"Prior year used for variance"]];
+const RATE_FIELDS = [
+  ["incPct","Annual increment (%)",0.1,"Applied to basic and allowances; employees can have their own"],
+  ["incMonth","Increment effective month","month",""],
+  ["bonusMonths","Bonus / incentive (months of basic)",0.25,"Accrued evenly across the year"],
+  ["omSI","Employer social protection, Omani (%)",0.1,"Default 12.5%. Check the current Social Protection Fund schedule"],
+  ["exSI","Employer contribution, expatriate (%)",0.1,"Occupational injury cover. Default 1%"],
+  ["siBase","Contribution base","base",""],
+  ["eosbPct","Expatriate end-of-service accrual (% of basic)",0.01,"8.33% = one month's basic per year"],
+  ["ticket","Expatriate annual air ticket (OMR per head)",10,""],
+  ["medO","Medical insurance, Omani (OMR per head / yr)",10,""],
+  ["medE","Medical insurance, expatriate (OMR per head / yr)",10,""],
+  ["training","Training (OMR per head / yr)",10,"Excludes type-rating and licence costs budgeted elsewhere"],
+  ["recO","Recruitment cost, Omani hire (OMR)",50,""],
+  ["recE","Recruitment cost, expatriate hire (OMR)",50,"Agency, visa, medical, relocation"],
+  ["contingency","Contingency (% of department total)",0.5,""],
+  ["omanTarget","Omanisation target (%)",1,"Company-wide closing target"],
+  ["retO","Retirement age, Omani",1,"Used to flag retirements in the employee file"],
+  ["retE","Retirement age, expatriate",1,"Set 0 to switch off"],
+];
+function renderAssump(){
+  $("#formPlan").innerHTML = PLAN_FIELDS.map(([k, lab, type, st, hint]) => `<div class="field"><label for="p-${k}">${lab}</label><input id="p-${k}" data-pk="${k}" type="${type}"${st ? ` step="${st}"` : ""} value="${esc(S[k])}"${k === "org" ? ' placeholder="Company name"' : ""}><span class="hint">${hint}</span></div>`).join("");
+  $("#formRates").innerHTML = RATE_FIELDS.map(([k, lab, st, hint]) => {
+    let input;
+    if (st === "month") input = `<select id="a-${k}" data-ak="${k}">${monthOpts(S.a[k])}</select>`;
+    else if (st === "base") input = `<select id="a-${k}" data-ak="${k}"><option value="gross"${S.a.siBase === "gross" ? " selected" : ""}>Basic + allowances (gross)</option><option value="basic"${S.a.siBase === "basic" ? " selected" : ""}>Basic only</option></select>`;
+    else input = `<input id="a-${k}" data-ak="${k}" type="number" min="0" step="${st}" value="${S.a[k]}">`;
+    return `<div class="field"><label for="a-${k}">${lab}</label>${input}${hint ? `<span class="hint">${hint}</span>` : ""}</div>`;
+  }).join("");
+  renderDeptTable();
+}
+function renderDeptTable(){
+  const cnt = id => S.lines.filter(l => l.dept === id).length;
+  $("#tblDepts").innerHTML = `<thead><tr><th>Department</th><th class="n">Overtime (% of basic)</th><th class="n">FY${S.baseYear} budget (OMR)</th><th class="n">FY${S.fy} ceiling (OMR)</th><th class="n">Lines</th><th></th></tr></thead><tbody>` +
+    S.depts.map(d => `<tr data-did="${d.id}"><td class="cell-in"><input data-dk="name" value="${esc(d.name)}" aria-label="Department name" style="width:260px"></td><td class="cell-in"><input class="w-s" type="number" min="0" step="0.5" data-dk="ot" value="${d.ot}" aria-label="Overtime percent"></td><td class="cell-in"><input type="number" min="0" step="1000" data-dk="prior" value="${d.prior || ""}" placeholder="—" aria-label="Prior year budget" style="width:130px"></td><td class="cell-in"><input type="number" min="0" step="1000" data-dk="ceiling" value="${d.ceiling || ""}" placeholder="None" aria-label="Budget ceiling" style="width:130px"></td><td class="n">${cnt(d.id)}</td><td>${cnt(d.id) ? "" : `<button class="icon" data-ddel="${d.id}" title="Delete department" aria-label="Delete department">×</button>`}</td></tr>`).join("") + "</tbody>";
+}
+$("#formPlan").addEventListener("input", e => { const k = e.target.dataset.pk; if (!k) return; S[k] = k === "org" ? e.target.value : Math.round(num(e.target.value)); changed(); });
+$("#formRates").addEventListener("input", e => { const k = e.target.dataset.ak; if (!k) return; S.a[k] = k === "siBase" ? e.target.value : k === "incMonth" ? +e.target.value : Math.max(0, num(e.target.value)); changed(); });
+$("#tblDepts").addEventListener("input", e => { const tr = e.target.closest("[data-did]"), k = e.target.dataset.dk; if (!tr || !k) return; const d = S.depts.find(x => x.id === tr.dataset.did); d[k] = k === "name" ? e.target.value : Math.max(0, num(e.target.value)); changed(); });
+$("#tblDepts").addEventListener("click", e => { const id = e.target.dataset && e.target.dataset.ddel; if (!id) return; S.depts = S.depts.filter(d => d.id !== id); changed(); renderDeptTable(); });
+$("#btnAddDept").addEventListener("click", () => { S.depts.push({id: "d" + uid(), name: "New department", ot: 2, prior: 0, ceiling: 0}); changed(); renderDeptTable(); });
+
+/* ---------- File reading ---------- */
+function parseCSV(text){
+  const first = text.split("\n")[0];
+  const delim = first.includes("\t") ? "\t" : (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ";" : ",";
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (q){ if (c === '"'){ if (text[i + 1] === '"'){ cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === delim){ row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r"){ if (c === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+    else cell += c;
+  }
+  if (cell || row.length){ row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(x => String(x).trim() !== ""));
+}
+let xlsxLoading = null;
+function ensureXLSX(){
+  if (window.XLSX) return Promise.resolve(true);
+  if (!xlsxLoading) xlsxLoading = new Promise(res => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    const t = setTimeout(() => res(!!window.XLSX), 15000);
+    sc.onload = () => { clearTimeout(t); res(!!window.XLSX); };
+    sc.onerror = () => { clearTimeout(t); res(false); };
+    document.head.appendChild(sc);
+  });
+  return xlsxLoading.then(ok => { updateXlsxStatus(); return ok; });
+}
+function updateXlsxStatus(){
+  const el = $("#xlsxStatus"); if (!el) return;
+  el.innerHTML = window.XLSX ? '<span class="pill good">✓ Excel reader ready</span>' : '<span class="pill warn">Excel reader not loaded</span> Import a CSV or paste from Excel instead.';
+}
+const MAX_IMPORT_BYTES = 40 * 1048576, MAX_IMPORT_ROWS = 200000;
+function parseFail(e){
+  const m = String(e && e.message || e);
+  if (/password|encrypt|ECMA-376|CFB/i.test(m)) throw new Error("This workbook is password-protected or encrypted (HR exports often are). Open it in Excel, remove the protection or use File → Save As → CSV UTF-8, then import the copy.");
+  throw new Error(/too long/.test(m) ? m : "This file could not be read as Excel (" + m + "). Save it as .xlsx or CSV and try again.");
+}
+// Excel files are parsed in a separate worker: a malformed or malicious workbook cannot reach the
+// page's data, and a parse that hangs is stopped after 90 seconds.
+function parseInWorker(buf){
+  return new Promise((resolve, reject) => {
+    const lib = new URL("xlsx.full.min.js", location.href).href;
+    const src = `self.onmessage=function(e){try{importScripts(${JSON.stringify(lib)});var wb=XLSX.read(e.data,{type:"array",cellDates:true}),out={};wb.SheetNames.forEach(function(n){out[n]=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:"",raw:true,blankrows:false});});postMessage({ok:true,sheets:out});}catch(err){postMessage({ok:false,error:String(err&&err.message||err)});}};`;
+    let w, url;
+    try { url = URL.createObjectURL(new Blob([src], {type: "text/javascript"})); w = new Worker(url); }
+    catch (e){ reject(Object.assign(new Error("worker"), {worker: true})); return; }
+    const done = () => { clearTimeout(t); w.terminate(); URL.revokeObjectURL(url); };
+    const t = setTimeout(() => { done(); reject(new Error("Reading the file took too long and was stopped. Save it as CSV and try again.")); }, 90000);
+    w.onmessage = e => { done(); if (e.data && e.data.ok) resolve(e.data.sheets); else if (/importScripts|NetworkError|Failed to execute/i.test(e.data && e.data.error || "")) reject(Object.assign(new Error("worker"), {worker: true})); else reject(new Error(e.data ? e.data.error : "Unknown error")); };
+    w.onerror = ev => { ev.preventDefault && ev.preventDefault(); done(); reject(Object.assign(new Error("worker"), {worker: true})); };
+    w.postMessage(buf, [buf]);
+  });
+}
+async function readSheets(file){
+  const name = file.name.toLowerCase();
+  if (/\.(csv|tsv|txt)$/.test(name)) return {"Sheet1": parseCSV((await file.text()).replace(/^\ufeff/, ""))};
+  if (!(await ensureXLSX())) throw new Error("The Excel reader could not be loaded on this network. In Excel, use File → Save As → CSV UTF-8 and import the CSV, or use “Paste from Excel” below.");
+  if (file.size > MAX_IMPORT_BYTES) throw new Error("That file is larger than 40 MB. Remove unused sheets or columns, or save it as CSV.");
+  const buf = await file.arrayBuffer();
+  let out;
+  try { out = await parseInWorker(buf.slice(0)); }
+  catch (e) {
+    if (!e.worker || BE.mode === "server") return parseFail(e);
+    // Workers unavailable in this view: parse on the page instead.
+    try { const wb = XLSX.read(buf, {type: "array", cellDates: true}); out = {}; for (const n of wb.SheetNames) out[n] = XLSX.utils.sheet_to_json(wb.Sheets[n], {header: 1, defval: "", raw: true, blankrows: false}); }
+    catch (e2) { return parseFail(e2); }
+  }
+  const rows = Object.values(out).reduce((n, r) => n + r.length, 0);
+  if (rows > MAX_IMPORT_ROWS) throw new Error(`That workbook has ${f0(rows)} rows. The limit is ${f0(MAX_IMPORT_ROWS)}.`);
+  return out;
+}
+function parseMonth(v){ if (v === "" || v == null) return null; if (v instanceof Date) return v.getMonth() + 1; const s = String(v).trim().toLowerCase(); const i = MONTHS.findIndex(m => s.startsWith(m.toLowerCase())); if (i >= 0) return i + 1; const n = Math.round(num(s)); return n >= 1 && n <= 12 ? n : null; }
+const parseNat = v => /^(o|om|omn|omani|oman|sultanate of oman|local|national|citizen)\b/i.test(String(v || "").trim()) ? "O" : "E";
+function parseDate(v){
+  if (v == null || v === "") return "";
+  if (v instanceof Date) return isNaN(v) ? "!" : ymd(v.getFullYear(), v.getMonth() + 1, v.getDate());
+  if (typeof v === "number"){ if (v > 3000 && v < 80000){ const d = new Date(Date.UTC(1899, 11, 30) + Math.round(v) * 864e5); return ymd(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()); } return "!"; }
+  const s = String(v).trim(); let m;
+  if ((m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/))) return ymd(+m[1], +m[2], +m[3]);
+  if ((m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/))){ let y = +m[3]; if (y < 100) y += y > 40 ? 1900 : 2000; let d = +m[1], mo = +m[2]; if (mo > 12 && d <= 12) [d, mo] = [mo, d]; return ymd(y, mo, d); }
+  if ((m = s.match(/^(\d{1,2})[\s\-\/]([A-Za-z]{3})[A-Za-z]*[\s\-\/,]+(\d{2,4})/))){ const mo = MONTHS.findIndex(x => x.toLowerCase() === m[2].toLowerCase()) + 1; let y = +m[3]; if (y < 100) y += y > 40 ? 1900 : 2000; return mo ? ymd(y, mo, +m[1]) : "!"; }
+  const t = Date.parse(s); if (!isNaN(t)){ const d = new Date(t); return ymd(d.getFullYear(), d.getMonth() + 1, d.getDate()); }
+  return "!";
+}
+function findHeaderRow(rows){
+  for (let i = 0; i < Math.min(15, rows.length); i++){ const r = rows[i].map(c => String(c).toLowerCase()); if (r.filter(c => c.trim()).length >= 3 && r.some(c => /depart|dept|directorate/.test(c))) return i; }
+  return 0;
+}
+function bindDrop(el, fn){
+  ["dragenter","dragover"].forEach(t => el.addEventListener(t, e => { e.preventDefault(); el.classList.add("over"); }));
+  ["dragleave","drop"].forEach(t => el.addEventListener(t, e => { e.preventDefault(); el.classList.remove("over"); }));
+  el.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) fn(f); });
+}
+
+/* ---------- Employee master import wizard ---------- */
+const EMP_FIELDS = [
+  {k:"id", label:"Employee ID", kw:["employee id","emp id","emp no","employee no","employee number","staff id","staff no","staff number","personnel no","emp code","employee code","id"]},
+  {k:"name", label:"Employee name", kw:["employee name","full name","name"]},
+  {k:"dept", label:"Department", req:1, kw:["department","dept","directorate","division"]},
+  {k:"section", label:"Section / unit", kw:["section","sub department","unit","cost centre","cost center"]},
+  {k:"job", label:"Job title", kw:["job title","position title","designation","position","job","title","role"]},
+  {k:"grade", label:"Grade", kw:["grade","band","pay scale","level"]},
+  {k:"nat", label:"Nationality", req:1, kw:["nationality","omani/expat","omani / expat","local/expat","citizenship","national","nat"]},
+  {k:"gender", label:"Gender", kw:["gender","sex"]},
+  {k:"dob", label:"Date of birth", kw:["date of birth","birth date","dob","birth"]},
+  {k:"jd", label:"Joining date", kw:["date of joining","joining date","join date","hire date","doj","date joined","joined"]},
+  {k:"ce", label:"Contract end date", kw:["contract end date","contract end","contract expiry","end of contract","expiry date"]},
+  {k:"basic", label:"Basic salary / mo", req:1, kw:["basic salary","basic pay","basic"]},
+  {k:"gross", label:"Gross salary / mo", kw:["gross salary","gross pay","total salary","gross"]},
+  {k:"inc", label:"Increment % (optional)", kw:["increment %","increment","merit %","merit"]},
+  {k:"exit", label:"Planned exit month (optional)", kw:["planned exit","exit month","leaving month"]},
+  {k:"status", label:"Employment status", kw:["employment status","emp status","status"]},
+];
+const ALLOW_RX = /allow|housing|hra|transport|car\b|telephone|phone|mobile|utilit|cola|living|special pay|shift|flying|meal|fuel|education|remote|hardship|responsib|acting|overseas|outstation/i;
+const rxEsc = s => s.replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&");
+let W = null;
+function guessMap(headers){
+  const norm = headers.map(h => String(h || "").toLowerCase().replace(/\s+/g, " ").trim()), used = new Set(), map = {};
+  for (const pass of ["exact","word"]){
+    for (const f of EMP_FIELDS){
+      if (map[f.k] != null) continue;
+      for (const kw of f.kw){
+        const rx = new RegExp("(^|[^a-z])" + rxEsc(kw) + "([^a-z]|$)");
+        const idx = norm.findIndex((h, i) => !used.has(i) && (pass === "exact" ? h === kw : rx.test(h)));
+        if (idx >= 0){ map[f.k] = idx; used.add(idx); break; }
+      }
+    }
+  }
+  if (map.gross != null && /allow/.test(norm[map.gross])){ used.delete(map.gross); delete map.gross; }
+  const allow = new Set();
+  const total = norm.findIndex((h, i) => !used.has(i) && /total allow/.test(h));
+  if (total >= 0) allow.add(total);
+  else norm.forEach((h, i) => { if (!used.has(i) && ALLOW_RX.test(h) && !/total|gross|net|deduct/.test(h)) allow.add(i); });
+  return {map, allow};
+}
+async function startWizard(file, preSheets){
+  if (!preSheets && $("#wizMsg")) $("#wizMsg").innerHTML = `<p class="note" style="margin-top:12px">Reading ${esc(file.name)}…</p>`;
+  try {
+    const sheets = preSheets || await readSheets(file);
+    const names = Object.keys(sheets).filter(n => sheets[n].length > 1);
+    if (!names.length) throw new Error("The file has no rows of data.");
+    const best = names.slice().sort((a, b) => sheets[b].length - sheets[a].length)[0];
+    W = {fileName: preSheets ? "Pasted from Excel" : file.name, sheets, sheet: best, groupBy: "grade", vacantHires: true, keepNames: true, keepOther: false};
+    loadSheet();
+  } catch (err){ resetWizard(); $("#wizMsg").innerHTML = `<div class="confirm" style="margin-top:12px">${esc(err.message || "That file could not be read.")}</div>`; }
+}
+function loadSheet(){
+  const rows = W.sheets[W.sheet], hr = findHeaderRow(rows);
+  W.headers = rows[hr].map((h, i) => String(h || "").trim() || `Column ${i + 1}`);
+  W.rows = rows.slice(hr + 1).filter(r => r.some(c => String(c).trim() !== ""));
+  const g = guessMap(W.headers); W.map = g.map; W.allow = g.allow;
+  W.groupBy = W.map.grade != null ? "grade" : W.map.job != null ? "job" : "section";
+  renderWizard();
+}
+function sampleVals(i){ if (i == null) return ""; const v = []; for (const r of W.rows){ const c = r[i]; if (c !== "" && c != null){ v.push(c instanceof Date ? parseDate(c) : String(c)); if (v.length >= 3) break; } } return v.join(" · "); }
+function setSteps(n){ document.querySelectorAll("#wizSteps li").forEach((li, i) => li.classList.toggle("on", i === n)); }
+function renderWizard(){
+  setSteps(1);
+  const opts = sel => `<option value="">— not in file —</option>` + W.headers.map((h, i) => `<option value="${i}"${i === sel ? " selected" : ""}>${esc(h)}</option>`).join("");
+  const sheetNames = Object.keys(W.sheets);
+  const sheetSel = sheetNames.length > 1 ? `<div class="field" style="max-width:320px"><label for="wSheet">Sheet</label><select id="wSheet">${sheetNames.map(n => `<option${n === W.sheet ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></div>` : "";
+  const mapped = new Set(Object.values(W.map));
+  $("#wizBody").innerHTML = `
+    <div class="stack" style="gap:16px">
+      <div class="toolbar"><b>${esc(W.fileName)}</b><span class="muted">${f0(W.rows.length)} data rows · ${W.headers.length} columns</span><span class="grow"></span><button class="btn sm" id="wCancel" type="button">Choose another file</button></div>
+      ${sheetSel}
+      <div><h3 style="margin-bottom:6px">Match your columns</h3><p class="note" style="margin-bottom:10px">Columns were matched by their headers. Check each one; fields marked <b style="color:var(--bad)">*</b> are required. Sample values from your file appear under each field.</p>
+      <div class="map-grid">${EMP_FIELDS.map(f => `<div class="map-row"><label for="wm-${f.k}">${f.label}${f.req ? " <b>*</b>" : ""}</label><select id="wm-${f.k}" data-wm="${f.k}">${opts(W.map[f.k])}</select><span class="smp">${esc(sampleVals(W.map[f.k])) || "&nbsp;"}</span></div>`).join("")}</div></div>
+      <div><h3 style="margin-bottom:6px">Allowance columns</h3><p class="note" style="margin-bottom:8px">Tick every monthly allowance to add to basic. If none are ticked and a gross column is matched, allowances = gross − basic.</p>
+      <div class="chips">${W.headers.map((h, i) => mapped.has(i) ? "" : `<label class="chip"><input type="checkbox" data-wa="${i}"${W.allow.has(i) ? " checked" : ""}>${esc(h)}</label>`).join("")}</div></div>
+      <div><h3 style="margin-bottom:6px">Options</h3>
+      <div class="checks">
+        <label for="wGroup">Group employees into plan lines by <select id="wGroup"><option value="grade"${W.groupBy === "grade" ? " selected" : ""}>Grade</option><option value="job"${W.groupBy === "job" ? " selected" : ""}>Job title</option><option value="section"${W.groupBy === "section" ? " selected" : ""}>Section</option></select></label>
+        <label><input type="checkbox" id="wVac"${W.vacantHires ? " checked" : ""}> Add vacant posts as planned new hires</label>
+        <label><input type="checkbox" id="wNames"${W.keepNames ? " checked" : ""}> Keep employee names</label>
+        <label><input type="checkbox" id="wKeep"${W.keepOther ? " checked" : ""}> Keep current plan lines that are not in the file</label>
+      </div></div>
+      <div id="wCheck"></div>
+    </div>`;
+  renderWizCheck();
+}
+function parseInc(v){ if (v === "" || v == null) return null; const s = String(v).trim(); const n = num(s.replace("%", "")); if (!s) return null; return n > 0 && n < 1 && !s.includes("%") ? Math.round(n * 1000) / 10 : n; }
+function buildRoster(){
+  const m = W.map, get = (r, k) => m[k] == null ? "" : r[m[k]];
+  const res = {emps: [], vac: new Map(), groups: new Map(), deptNames: [], excluded: 0, vacant: 0, noDept: 0, noBasic: 0, badDate: 0, dup: 0, noNat: 0};
+  const seen = new Set(); let auto = 1;
+  for (const r of W.rows){
+    const dept = String(get(r, "dept") || "").trim();
+    const st = String(get(r, "status") || "").toLowerCase(), nm = String(get(r, "name") || "").trim();
+    const isVac = /vacan/.test(st) || /^vacan/i.test(nm);
+    if (!isVac && /terminat|resign|inactive|left|separat|deceas|retired|exited|end of service/.test(st)){ res.excluded++; continue; }
+    if (!dept){ res.noDept++; continue; }
+    if (!res.deptNames.includes(dept)) res.deptNames.push(dept);
+    const natRaw = String(get(r, "nat") || "").trim();
+    if (m.nat != null && !natRaw && !isVac) res.noNat++;
+    const nat = parseNat(natRaw);
+    const grp = String((W.groupBy === "grade" ? get(r, "grade") : W.groupBy === "section" ? get(r, "section") : get(r, "job")) || get(r, "job") || "General").trim();
+    const key = dept + "\u0001" + grp + "\u0001" + nat;
+    if (!res.groups.has(key)) res.groups.set(key, {dept, grp, nat, n: 0, bs: 0, al: 0, vbs: 0, val: 0});
+    const gg = res.groups.get(key);
+    let bs = num(get(r, "basic")), al = 0;
+    W.allow.forEach(i => al += num(r[i]));
+    if (!W.allow.size && m.gross != null) al = Math.max(0, num(get(r, "gross")) - bs);
+    if (isVac){ res.vacant++; res.vac.set(key, (res.vac.get(key) || 0) + 1); gg.vbs += bs; gg.val += al; continue; }
+    if (!(bs > 0)) res.noBasic++;
+    const dates = ["dob","jd","ce"].map(k => parseDate(get(r, k)));
+    dates.forEach(d => { if (d === "!") res.badDate++; });
+    let id = String(get(r, "id") || "").trim(); if (!id) id = "ROW-" + auto++;
+    if (seen.has(id)){ res.dup++; id = id + "-" + auto++; } seen.add(id);
+    const g = String(get(r, "gender") || "").trim().toUpperCase();
+    res.emps.push({i: id, n: W.keepNames ? nm : "", key, s: String(get(r, "section") || "").trim(), j: String(get(r, "job") || "").trim(), g: String(get(r, "grade") || "").trim(), o: nat === "O" ? 1 : 0,
+      x: g.startsWith("F") ? "F" : g.startsWith("M") ? "M" : "", dob: dates[0] === "!" ? "" : dates[0], jd: dates[1] === "!" ? "" : dates[1], ce: dates[2] === "!" ? "" : dates[2],
+      bs: Math.round(bs * 1000) / 1000, al: Math.round(al * 1000) / 1000, inc: parseInc(get(r, "inc")), ex: parseMonth(get(r, "exit")) || 0});
+    gg.n++; gg.bs += bs; gg.al += al;
+  }
+  return res;
+}
+function renderWizCheck(){
+  const missing = EMP_FIELDS.filter(f => f.req && W.map[f.k] == null);
+  if (missing.length){ W.res = null; $("#wCheck").innerHTML = `<div class="confirm">Match ${missing.map(f => f.label).join(", ")} to continue.</div>`; setSteps(1); return; }
+  const res = buildRoster(); W.res = res;
+  const om = res.emps.filter(e => e.o).length, gross = res.emps.reduce((s, e) => s + e.bs + e.al, 0);
+  const st = (v, l, cls = "") => `<div class="vstat ${v && cls ? cls : ""}"><b>${f0(v)}</b><span>${l}</span></div>`;
+  const byDept = new Map();
+  for (const e of res.emps){ const d = e.key.split("\u0001")[0]; const x = byDept.get(d) || {n: 0, o: 0, g: 0}; x.n++; x.o += e.o; x.g += e.bs + e.al; byDept.set(d, x); }
+  const grpLabel = W.groupBy === "job" ? "job title" : W.groupBy;
+  $("#wCheck").innerHTML = `<h3 style="margin-bottom:8px">Check before importing</h3>
+    <div class="vstats">${st(res.emps.length, "employees to import")}${st(res.deptNames.length, "departments")}${st(res.groups.size, `plan lines (department × ${grpLabel} × nationality)`)}${st(om, `Omani (${fPct(res.emps.length ? om / res.emps.length * 100 : 0)})`)}${st(res.vacant, "vacant posts")}${st(res.excluded, "left or inactive, skipped")}${st(res.noDept, "rows with no department, skipped", "bad")}${st(res.noBasic, "employees with no basic salary", "bad")}${st(res.dup, "duplicate employee IDs", "warn")}${st(res.badDate, "dates not understood", "warn")}${res.noNat ? st(res.noNat, "blank nationality (counted as expatriate)", "warn") : ""}</div>
+    <div class="tbl-wrap" style="margin-top:12px;max-height:320px"><table><thead><tr><th>Department in file</th><th class="n">Employees</th><th class="n">Omani %</th><th class="n">Monthly gross</th><th>Settings</th></tr></thead><tbody>${[...byDept].sort((a, b) => b[1].n - a[1].n).map(([d, x]) => `<tr><td>${esc(d)}</td><td class="n">${f0(x.n)}</td><td class="n">${fPct(x.o / x.n * 100)}</td><td class="n">${f0(x.g)}</td><td>${!S.sample && S.depts.some(dd => dd.name.toLowerCase() === d.toLowerCase()) ? '<span class="pill good">Keeps current settings</span>' : '<span class="pill info">New department</span>'}</td></tr>`).join("")}</tbody><tfoot><tr class="total"><td>Total</td><td class="n">${f0(res.emps.length)}</td><td class="n">${fPct(res.emps.length ? om / res.emps.length * 100 : 0)}</td><td class="n">${f0(gross)}</td><td></td></tr></tfoot></table></div>
+    <div class="toolbar" style="margin-top:12px"><button class="btn primary" id="wImport" type="button"${res.emps.length ? "" : " disabled"}>Import ${f0(res.emps.length)} employees</button><span class="note">Replaces the current employee file${S.sample ? " and the example data" : ". Planned hires and exits on matching lines are kept"}.</span></div>`;
+  setSteps(2);
+}
+function applyRoster(){
+  const res = W && W.res; if (!res) return;
+  const oldLines = S.lines, oldDepts = S.depts, wasSample = S.sample;
+  const dKey = s => String(s).toLowerCase().trim();
+  const depts = [], deptByName = new Map();
+  for (const name of res.deptNames){
+    const old = wasSample ? null : oldDepts.find(d => dKey(d.name) === dKey(name));
+    const d = old ? {...old} : {id: "d" + uid(), name, ot: 2, prior: 0, ceiling: 0};
+    depts.push(d); deptByName.set(dKey(name), d);
+  }
+  const lines = [], lineByKey = new Map();
+  for (const [key, g] of res.groups){
+    const d = deptByName.get(dKey(g.dept));
+    const oldDept = wasSample ? null : oldDepts.find(x => dKey(x.name) === dKey(g.dept));
+    const old = oldDept ? oldLines.find(l => l.dept === oldDept.id && dKey(l.role) === dKey(g.grp) && l.nat === g.nat) : null;
+    const vac = W.vacantHires ? (res.vac.get(key) || 0) : 0;
+    const nb = g.n ? g.bs / g.n : vac ? g.vbs / vac : (old ? old.basic : 0), na = g.n ? g.al / g.n : vac ? g.val / vac : (old ? old.allow : 0);
+    if (!g.n && !vac) continue;
+    const l = {id: old ? old.id : uid(), dept: d.id, role: g.grp, nat: g.nat, hc: g.n,
+      hires: (old ? num(old.hires) : 0) + vac, hireM: old ? old.hireM : 4, exits: old ? num(old.exits) : 0, exitM: old ? old.exitM : 6,
+      basic: Math.round(nb), allow: Math.round(na)};
+    lines.push(l); lineByKey.set(key, l);
+  }
+  // Positions added from approved department requests always survive a re-import.
+  for (const l of oldLines){
+    if (!l.req || lines.some(x => x.id === l.id)) continue;
+    const od = oldDepts.find(x => x.id === l.dept); if (!od) continue;
+    let d = deptByName.get(dKey(od.name)); if (!d){ d = {...od}; depts.push(d); deptByName.set(dKey(od.name), d); }
+    lines.push({...l, dept: d.id, hc: 0});
+  }
+  if (W.keepOther && !wasSample){
+    for (const l of oldLines){
+      if (l.req || lines.some(x => x.id === l.id)) continue;
+      const od = oldDepts.find(x => x.id === l.dept); if (!od) continue;
+      let d = deptByName.get(dKey(od.name)); if (!d){ d = {...od}; depts.push(d); deptByName.set(dKey(od.name), d); }
+      lines.push({...l, dept: d.id, hc: 0});
+    }
+  }
+  S.depts = depts; S.lines = lines; S.sample = false;
+  ROS = {sample: false, fileName: W.fileName, importedAt: Date.now(), savedAt: 0, groupBy: W.groupBy,
+    emps: res.emps.map(({key, ...e}) => ({...e, k: lineByKey.get(key).id}))};
+  rosVer++; changed(); persistRoster();
+  resetWizard(`Imported ${f0(ROS.emps.length)} employees into ${f0(S.lines.length)} plan lines across ${S.depts.length} departments. Next: set overtime rates and prior-year budgets on Assumptions, then review retirements and contract ends on Employees.`);
+  updateHeader();
+}
+function resetWizard(msg){
+  setSteps(0); W = null;
+  $("#wizBody").innerHTML = `
+    <div class="dropzone" id="dropEmp">
+      <p style="margin:0 0 10px">Drop your employee file here, or</p>
+      <button class="btn primary" type="button" data-pick="fileEmp">Choose file</button>
+      <input id="fileEmp" type="file" accept=".xlsx,.xls,.xlsm,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/vnd.ms-excel.sheet.macroEnabled.12,text/csv" class="sr" tabindex="-1">
+      <p class="note" style="margin-top:12px">Any column layout works: you match the columns in the next step. Typical columns are Employee ID, Name, Department, Section, Job title, Grade, Nationality, Gender, Date of birth, Joining date, Contract end, Basic, and each allowance.</p>
+    </div>
+    <div id="wizMsg">${msg ? `<div class="callout" style="margin-top:12px">${esc(msg)}</div>` : ""}</div>
+    <p class="note" id="xlsxStatus" style="margin-top:10px"></p>
+    <details style="margin-top:10px">
+      <summary style="cursor:pointer;font-weight:600;font-size:13px">Can't upload the file? Paste from Excel instead</summary>
+      <div class="stack" style="gap:8px;margin-top:8px">
+        <p class="note">In Excel, click any cell in the employee sheet, press <b>Ctrl+A</b> then <b>Ctrl+C</b>. Click in the box below and press <b>Ctrl+V</b>. Include the header row.</p>
+        <label class="sr" for="pasteEmp">Pasted employee data</label>
+        <textarea id="pasteEmp" rows="5" spellcheck="false" placeholder="Paste the employee sheet here (header row first)"></textarea>
+        <div class="toolbar"><button class="btn" type="button" id="btnPasteEmp">Use pasted data</button></div>
+      </div>
+    </details>
+    <div class="toolbar" style="margin-top:12px">
+      <button class="btn" id="btnEmpTemplate" type="button">Download employee file template</button>
+      <button class="btn danger" id="btnDropRoster" type="button" hidden>Remove employee file</button>
+    </div>
+    <p class="note" id="rosterInfo" style="margin-top:10px"></p>`;
+  $("#fileEmp").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if (f) startWizard(f); e.target.value = ""; });
+  $("#btnPasteEmp").addEventListener("click", () => {
+    const t = $("#pasteEmp").value;
+    if (!t.trim()){ $("#wizMsg").innerHTML = `<div class="confirm" style="margin-top:12px">Paste the employee sheet into the box first.</div>`; return; }
+    const rows = parseCSV(t);
+    if (rows.length < 2){ $("#wizMsg").innerHTML = `<div class="confirm" style="margin-top:12px">Only one row was pasted. Include the header row and the employee rows.</div>`; return; }
+    startWizard(null, {"Pasted": rows});
+  });
+  updateXlsxStatus();
+  bindDrop($("#dropEmp"), startWizard);
+  $("#btnEmpTemplate").addEventListener("click", empTemplate);
+  $("#btnDropRoster").addEventListener("click", dropRosterAsk);
+  updateRosterInfo();
+}
+function updateRosterInfo(){
+  const el = $("#rosterInfo"); if (!el) return;
+  $("#btnDropRoster").hidden = !rosterOn();
+  el.textContent = rosterOn() ? `Loaded: ${ROS.sample ? "example employee file" : ROS.fileName} · ${f0(ROS.emps.length)} employees${ROS.importedAt ? " · imported " + new Date(ROS.importedAt).toLocaleDateString("en-GB") : ""}.` : "No employee file loaded. The plan uses summary lines.";
+}
+function dropRosterAsk(){
+  const n = ROS.emps.length;
+  $("#wizMsg").innerHTML = `<div class="callout" style="margin-top:12px;display:grid;gap:10px">
+    <b>Remove the employee file (${f0(n)} people)?</b>
+    <span>Choose what happens to the people in it:</span>
+    <div class="toolbar"><button class="btn sm" type="button" id="drKeep">Keep them as plan lines</button><span class="note">Each line keeps its headcount and average pay, so the budget stays about the same. Use this to stop costing person by person.</span></div>
+    <div class="toolbar"><button class="btn sm danger" type="button" id="drClear">Remove them from the budget</button><span class="note">Current staff are cleared. Only planned hires, attrition entries and approved requests remain.</span></div>
+    <div class="toolbar"><button class="btn sm" type="button" id="drNo">Cancel</button></div>
+    <span class="note">To start again with nothing, use “Start a blank plan” under Storage below.</span></div>`;
+  const apply = keep => {
+    const before = R.tot.total, idx = rosterIndex();
+    for (const l of S.lines){
+      const em = idx.get(l.id) || [];
+      if (!em.length){ if (!l.req) l.hc = 0; continue; }
+      if (keep){
+        l.hc = em.length; l.basic = Math.round(em.reduce((s, e) => s + e.bs, 0) / em.length); l.allow = Math.round(em.reduce((s, e) => s + e.al, 0) / em.length);
+        const named = em.filter(e => e.ex); if (named.length){ l.exits = num(l.exits) + named.length; l.exitM = Math.round(named.reduce((s, e) => s + e.ex, 0) / named.length); }
+      } else { l.hc = 0; l.exits = 0; }
+    }
+    if (!keep) S.lines = S.lines.filter(l => l.req || num(l.hires) > 0);
+    ROS = null; S.sample = false; rosVer++; changed(); persistRoster(); updateHeader();
+    const after = R.tot.total;
+    resetWizard(keep
+      ? `Employee file removed. Budget OMR ${fM(before)} → OMR ${fM(after)}: the ${f0(n)} people are now summary plan lines at their average pay, so the total barely moves.`
+      : `Employee file removed. Budget OMR ${fM(before)} → OMR ${fM(after)}: current staff were taken out; ${f0(S.lines.length)} lines with planned hires or approved requests remain.`);
+  };
+  $("#drKeep").onclick = () => apply(true);
+  $("#drClear").onclick = () => apply(false);
+  $("#drNo").onclick = () => { $("#wizMsg").innerHTML = ""; };
+}
+$("#wizBody").addEventListener("change", e => {
+  if (!W) return;
+  const t = e.target;
+  if (t.id === "wSheet"){ W.sheet = t.value; loadSheet(); return; }
+  if (t.dataset.wm){ const k = t.dataset.wm; if (t.value === "") delete W.map[k]; else { const v = +t.value; for (const kk of Object.keys(W.map)) if (W.map[kk] === v) delete W.map[kk]; W.map[k] = v; W.allow.delete(v); } renderWizard(); return; }
+  if (t.dataset.wa != null){ const i = +t.dataset.wa; if (t.checked) W.allow.add(i); else W.allow.delete(i); }
+  if (t.id === "wGroup") W.groupBy = t.value;
+  if (t.id === "wVac") W.vacantHires = t.checked;
+  if (t.id === "wNames") W.keepNames = t.checked;
+  if (t.id === "wKeep") W.keepOther = t.checked;
+  renderWizCheck();
+});
+$("#wizBody").addEventListener("click", e => { if (e.target.id === "wCancel") resetWizard(); if (e.target.id === "wImport") applyRoster(); });
+function empTemplate(){
+  const rows = [["Employee ID","Employee Name","Department","Section","Job Title","Grade","Nationality","Gender","Date of Birth","Date of Joining","Contract End Date","Basic Salary","Housing Allowance","Transport Allowance","Other Allowances","Status"],
+    ["E0001","Example – delete this row","Flight Operations","Fleet A","First Officer","P2","Omani","M","14/03/1990","01/09/2015","",2100,600,300,200,"Active"],
+    ["E0002","Example – delete this row","Engineering & Maintenance","Line Maintenance","Licensed Engineer B1","T3","Indian","M","02/11/1975","15/01/2012","31/12/2027",1700,450,200,150,"Active"],
+    ["","VACANT","Cabin Services","Cabin Crew","Cabin Crew Member","C1","Omani","","","","",520,200,100,80,"Vacant"]];
+  if (window.XLSX){ const wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(rows); ws["!cols"] = rows[0].map(h => ({wch: Math.max(12, h.length + 2)})); XLSX.utils.book_append_sheet(wb, ws, "Employees"); saveFile("Employee-master-template.xlsx", new Blob([XLSX.write(wb, {bookType: "xlsx", type: "array"})])); }
+  else saveFile("Employee-master-template.csv", toCSV(rows));
+}
+
+document.addEventListener("click", e => { const id = e.target.dataset && e.target.dataset.pick; if (id){ const inp = document.getElementById(id); if (inp) inp.click(); } });
+
+/* ---------- Summary import ---------- */
+const HDR = {
+  dept: ["department","dept","division","directorate","unit","cost centre","cost center"],
+  role: ["position","grade","job","title","role","designation"],
+  nat: ["nationality","nat","national","omani/expat","local/expat","citizenship"],
+  hc: ["current hc","headcount","hc","current headcount","count","actual"],
+  hires: ["new hire","hires","new position","additions","recruit"],
+  hireM: ["start month","hire month","joining month","start"],
+  exits: ["exit","leaver","separation","attrition"],
+  exitM: ["last month","exit month","leaving month"],
+  basic: ["basic"], allow: ["allowance","allow"],
+};
+function mapHeaders(headers){
+  const map = {}, norm = headers.map(h => String(h || "").toLowerCase().trim());
+  for (const [k, keys] of Object.entries(HDR)){
+    let idx = norm.findIndex(h => keys.includes(h));
+    if (idx < 0) idx = norm.findIndex((h, i) => !Object.values(map).includes(i) && keys.some(kw => h.includes(kw)));
+    if (idx >= 0 && !Object.values(map).includes(idx)) map[k] = idx;
+  }
+  return map;
+}
+let pending = null;
+function buildImport(rows){
+  if (rows.length < 2) throw new Error("The file has no data rows under the header.");
+  const map = mapHeaders(rows[0]);
+  if (map.dept == null) throw new Error("No Department column found. Add a column headed “Department”.");
+  if (map.basic == null) throw new Error("No Basic salary column found. Add a column headed “Basic”.");
+  if (map.hc == null) throw new Error("No “Current HC” column found. For a file with one row per employee, use the Employee master file section above.");
+  const get = (r, k) => map[k] == null ? "" : r[map[k]];
+  const lines = [], deptNames = [];
+  for (const r of rows.slice(1)){
+    const dept = String(get(r, "dept") || "").trim(); if (!dept) continue;
+    if (!deptNames.includes(dept)) deptNames.push(dept);
+    lines.push({dept, role: String(get(r, "role") || "General").trim(), nat: parseNat(get(r, "nat")), hc: Math.round(num(get(r, "hc"))), hires: Math.round(num(get(r, "hires"))), hireM: parseMonth(get(r, "hireM")) || 4, exits: Math.round(num(get(r, "exits"))), exitM: parseMonth(get(r, "exitM")) || 6, basic: Math.round(num(get(r, "basic"))), allow: Math.round(num(get(r, "allow")))});
+  }
+  return {rows: rows.length - 1, lines, deptNames, cols: Object.keys(map)};
+}
+function showPreview(p){
+  pending = p;
+  const hc = p.lines.reduce((s, l) => s + l.hc, 0);
+  const missing = ["role","nat","hires","exits","allow"].filter(k => !p.cols.includes(k));
+  $("#importPreview").innerHTML = `<div class="callout" style="display:grid;gap:8px">
+    <b>Ready to import</b>
+    <span>${f0(p.lines.length)} plan lines across ${p.deptNames.length} departments, ${f0(hc)} current staff.</span>
+    ${missing.length ? `<span class="note">Not found in file: ${missing.join(", ")}. Those values start at zero or defaults.</span>` : ""}
+    <div class="toolbar"><button class="btn primary" id="impReplace" type="button">Replace current plan</button><button class="btn" id="impAppend" type="button">Add to current plan</button><button class="btn" id="impCancel" type="button">Cancel</button></div></div>`;
+}
+function applyImport(replace){
+  const p = pending; if (!p) return;
+  if (replace){ S.lines = []; S.depts = []; if (ROS){ ROS = null; rosVer++; persistRoster(); } }
+  S.sample = false;
+  for (const name of p.deptNames){ if (!S.depts.some(d => d.name.toLowerCase() === name.toLowerCase())) S.depts.push({id: "d" + uid(), name, ot: 2, prior: 0, ceiling: 0}); }
+  for (const l of p.lines){ const d = S.depts.find(x => x.name.toLowerCase() === l.dept.toLowerCase()); S.lines.push({...l, id: uid(), dept: d.id}); }
+  pending = null; $("#importPreview").innerHTML = `<p class="note">Imported. Review overtime rates and prior-year budgets on the Assumptions tab.</p>`;
+  changed(); updateHeader(); updateRosterInfo();
+}
+$("#importPreview").addEventListener("click", e => { if (e.target.id === "impReplace") applyImport(true); if (e.target.id === "impAppend") applyImport(false); if (e.target.id === "impCancel"){ pending = null; $("#importPreview").innerHTML = ""; } });
+async function handleFile(file){
+  const box = $("#importPreview");
+  try {
+    if (file.name.toLowerCase().endsWith(".json")){
+      const data = JSON.parse(await file.text());
+      const plan = data && data.plan ? data.plan : data;
+      if (!plan || !Array.isArray(plan.lines)) throw new Error("This JSON file is not a planner backup.");
+      S = normalise(plan); S.sample = false;
+      ROS = data.roster && Array.isArray(data.roster.emps) ? data.roster : null; rosVer++;
+      changed(); persistRoster(); updateHeader(); updateRosterInfo();
+      box.innerHTML = `<p class="note">Backup restored: ${S.lines.length} lines, ${S.depts.length} departments${ROS ? ", " + f0(ROS.emps.length) + " employees" : ""}.</p>`; return;
+    }
+    const sheets = await readSheets(file);
+    const name = Object.keys(sheets).find(n => /plan|import|data/i.test(n)) || Object.keys(sheets)[0];
+    let rows = sheets[name]; const hi = findHeaderRow(rows); if (hi > 0) rows = rows.slice(hi);
+    showPreview(buildImport(rows));
+  } catch (err) { box.innerHTML = `<div class="confirm">${esc(err.message || "That file could not be read.")}</div>`; }
+}
+$("#fileIn").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if (f) handleFile(f); e.target.value = ""; });
+bindDrop($("#drop"), handleFile);
+
+/* ---------- Export ---------- */
+let downloads;
+function logExport(filename){
+  if (BE.mode !== "server") return;
+  const ev = /template/i.test(filename) ? "template_download" : /\.xlsx$/.test(filename) ? "export_xlsx" : /\.csv$/.test(filename) ? "export_csv" : "export_json";
+  api("audit", "POST", {event: ev, file: filename}).catch(() => {});
+}
+async function saveFile(filename, data){
+  const msg = $("#exportMsg");
+  try {
+    if (downloads === undefined) downloads = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+    logExport(filename);
+    if (downloads){ await downloads.save({filename, data}); msg.textContent = `Saved ${filename}.`; return; }
+    const blob = data instanceof Blob ? data : new Blob([data]);
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    msg.textContent = `Downloading ${filename}.`;
+  } catch (e) {
+    msg.textContent = e && e.code === "declined" ? "Download cancelled." : "Downloads are unavailable here. Use “Copy department summary” and paste into Excel.";
+  }
+}
+const fileStem = () => `Manpower-Budget-FY${S.fy}${S.org ? "-" + S.org.replace(/[^\w-]+/g, "-") : ""}`;
+function planRows(){
+  return [["Department","Position","Nationality","Current HC","Named exits","New hires","Start month","Other exits","Last month","Basic","Allowances","Closing HC","FY cost (OMR)"],
+    ...S.lines.map(l => { const r = R.lineRes.get(l.id) || {}; return [deptName(l.dept), l.role, l.nat === "O" ? "Omani" : "Expatriate", Math.round(r.open || 0), r.named || 0, l.hires, MONTHS[l.hireM - 1], l.exits, MONTHS[l.exitM - 1], l.basic, l.allow, Math.round(r.close || 0), Math.round(r.total || 0)]; })];
+}
+function deptRows(){
+  const head = ["Department", ...COST_COLS.map(c => c[1]), "Contingency", `FY${S.fy} total`, `FY${S.baseYear} budget`, "Change", "Ceiling", "Opening HC", "Hires", "Exits", "Closing HC", "Omanisation %"];
+  const row = (n, g, prior, ceil) => [n, ...COST_COLS.map(c => Math.round(g[c[0]])), Math.round(g.cont), Math.round(g.total), prior || "", prior ? Math.round(g.total - prior) : "", ceil || "", g.open, Math.round(g.hires), g.exits, Math.round(g.close), g.close ? +(g.closeO / g.close * 100).toFixed(1) : ""];
+  return [head, ...R.depts.map(g => row(g.d.name, g, num(g.d.prior), num(g.d.ceiling))), row("Total", R.tot, S.depts.reduce((s, d) => s + num(d.prior), 0), "")];
+}
+function exportXlsx(){
+  if (!window.XLSX){ $("#exportMsg").textContent = "Excel export is unavailable here. Use the CSV export instead."; switchTab("data"); return; }
+  const wb = XLSX.utils.book_new(), cf = 1 + S.a.contingency / 100, t = R.tot, br = bridge(S);
+  const summary = [
+    [`${S.org ? S.org + " · " : ""}Manpower budget FY${S.fy}`], [`Generated ${new Date().toLocaleDateString("en-GB")}. Amounts in OMR.${rosterOn() ? ` Built from employee file: ${ROS.sample ? "example data" : ROS.fileName} (${ROS.emps.length} employees).` : ""}`], [],
+    ["Total budget", Math.round(t.total)], ["Opening headcount", t.open], ["New hires", Math.round(t.hires)], ["Exits", t.exits], ["Closing headcount", Math.round(t.close)],
+    ["Omanisation at year end (%)", t.close ? +(t.closeO / t.close * 100).toFixed(1) : 0], ["Omanisation target (%)", S.a.omanTarget], ["Average cost per FTE", Math.round(t.fte ? t.total / t.fte : 0)], [],
+    ["Budget bridge"], ...br.map(b => [b.label, Math.round(b.v)]),
+  ];
+  const monthly = [["Department", ...MONTHS, "Total"], ...R.depts.map(g => [g.d.name, ...g.m.map(v => Math.round(v * cf)), Math.round(g.total)]), ["Total cost", ...t.m.map(Math.round), Math.round(t.total)], ["Headcount", ...t.h.map(v => Math.round(v))]];
+  const assump = [["Assumption","Value"], ...RATE_FIELDS.map(([k, lab]) => [lab, k === "incMonth" ? MONTHS[S.a[k] - 1] : S.a[k]]), [], ["Department","Overtime %", `FY${S.baseYear} budget`, "Ceiling"], ...S.depts.map(d => [d.name, d.ot, d.prior || "", d.ceiling || ""])];
+  const scen = [["Scenario","FY budget","vs base","Closing HC","Hires filled %","Delay (mo)","Increment %","Overtime % of plan","Bonus months"], ["Base plan", Math.round(t.total), 0, Math.round(t.close), 100, 0, S.a.incPct, 100, S.a.bonusMonths],
+    ...S.scen.map(sc => { const r = compute(S, scenOpts(sc)).tot; return [sc.name, Math.round(r.total), Math.round(r.total - t.total), Math.round(r.close), sc.hirePct, sc.delay, sc.incPct, sc.otPct, sc.bonusMonths]; })];
+  const add = (rows, name, widths) => { const ws = XLSX.utils.aoa_to_sheet(safeRows(rows)); ws["!cols"] = widths.map(w => ({wch: w})); XLSX.utils.book_append_sheet(wb, ws, name); };
+  add(summary, "Summary", [34, 16]);
+  add(deptRows(), "Department budget", [30, ...new Array(20).fill(13)]);
+  add(monthly, "Monthly phasing", [30, ...new Array(13).fill(11)]);
+  add(planRows(), "Plan lines", [28, 34, 12, ...new Array(10).fill(12)]);
+  if (rosterOn()){
+    const er = [["Employee ID","Name","Department","Section","Job title","Grade","Nationality","Gender","Date of birth","Joining date","Contract end","Age","Service (yrs)","Basic","Allowances","Increment %","Planned exit","Retires in FY","Contract ends in FY","FY cost (OMR)"]];
+    for (const e of ROS.emps){ const f = empFlags(e); er.push([e.i, e.n, deptName(empDept(e)), e.s, e.j, e.g, e.o ? "Omani" : "Expatriate", e.x, e.dob, e.jd, e.ce, ageAt(e) ?? "", svcAt(e) ?? "", e.bs, e.al, e.inc ?? S.a.incPct, e.ex ? "End " + MONTHS[e.ex - 1] : "Stays", f.ret ? MONTHS[f.ret - 1] : "", f.con ? MONTHS[f.con - 1] : "", Math.round(empCost(e))]); }
+    add(er, "Employees", [12, 24, 28, 18, 28, 8, 12, 8, 12, 12, 12, 6, 10, 10, 10, 11, 12, 12, 14, 14]);
+  }
+  add(scen, "Scenarios", [26, ...new Array(8).fill(14)]);
+  add(assump, "Assumptions", [52, 14, 14, 14]);
+  saveFile(fileStem() + ".xlsx", new Blob([XLSX.write(wb, {bookType: "xlsx", type: "array"})], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+}
+// Text starting with = + - @ could run as a formula when the file is opened in Excel: prefix it with '.
+const safeCell = v => typeof v === "string" && /^[=+\-@\t\r]/.test(v) ? "'" + v : v;
+const safeRows = rows => rows.map(r => r.map(safeCell));
+const toCSV = rows => safeRows(rows).map(r => r.map(v => { const s = String(v ?? ""); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(",")).join("\r\n");
+$("#btnExportXlsx").addEventListener("click", exportXlsx);
+$("#btnExportXlsx2").addEventListener("click", exportXlsx);
+$("#btnExportCsv").addEventListener("click", () => saveFile(fileStem() + "-plan.csv", "﻿" + toCSV(planRows())));
+$("#btnExportJson").addEventListener("click", () => saveFile(fileStem() + "-backup.json", JSON.stringify({plan: S, roster: ROS && !ROS.sample ? ROS : null, requests: REQ})));
+$("#btnTemplate").addEventListener("click", () => {
+  const rows = [["Department","Position","Nationality","Current HC","New hires","Start month","Exits","Last month","Basic","Allowances"],
+    ["Flight Operations","First Officers","Omani",190,20,"Mar",6,"Jul",2100,1100],["Cabin Services","Cabin Crew","Expatriate",180,0,"",25,"Jun",560,380]];
+  if (window.XLSX){ const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(rows); ws["!cols"] = [28,30,12,12,12,12,10,12,10,12].map(w => ({wch: w})); XLSX.utils.book_append_sheet(wb, ws, "Plan"); saveFile("Manpower-summary-template.xlsx", new Blob([XLSX.write(wb, {bookType: "xlsx", type: "array"})])); }
+  else saveFile("Manpower-summary-template.csv", toCSV(rows));
+});
+$("#btnCopy").addEventListener("click", async () => {
+  const tsv = deptRows().map(r => r.join("\t")).join("\n");
+  if (BE.mode === "server") api("audit", "POST", {event: "copy_summary"}).catch(() => {});
+  try { await navigator.clipboard.writeText(tsv); $("#exportMsg").textContent = "Department summary copied. Paste it into Excel."; }
+  catch { const ta = document.createElement("textarea"); ta.value = tsv; ta.style.width = "100%"; ta.rows = 6; $("#exportMsg").replaceChildren("Copying is blocked here. Select the text below and copy it:", ta); ta.select(); }
+});
+
+/* ---------- Reset ---------- */
+function askConfirm(label, fn){
+  const area = $("#resetArea"), prev = area.innerHTML;
+  area.innerHTML = `<div class="confirm"><span>${label} This replaces your current plan and employee file and cannot be undone.</span><button class="btn danger" id="cfYes" type="button">Yes, replace it</button><button class="btn" id="cfNo" type="button">Keep my plan</button></div>`;
+  $("#cfYes").onclick = () => { fn(); area.innerHTML = prev; bindReset(); };
+  $("#cfNo").onclick = () => { area.innerHTML = prev; bindReset(); };
+}
+function bindReset(){
+  $("#btnReset").onclick = () => askConfirm("Reset to example data?", () => { exampleReqs = null; S = sampleState(); ROS = sampleRoster(S); rosVer++; changed(); persistRoster(); updateHeader(); updateRosterInfo(); });
+  $("#btnBlank").onclick = () => askConfirm("Start a blank plan?", () => { S = blankState(); ROS = null; rosVer++; changed(); persistRoster(); updateHeader(); updateRosterInfo(); });
+}
+bindReset();
+
+/* ---------- Requests: planner review ---------- */
+const PRIO = {critical: ["bad", "Critical"], high: ["warn", "High"], normal: ["info", "Normal"]};
+const RTYPE = {new: "New position", replacement: "Replacement for a leaver", omanisation: "Omani replacing an expatriate"};
+const RSTAT = {pending: ["warn", "Waiting for decision"], approved: ["good", "✓ Approved"], rejected: ["bad", "Rejected"], changes: ["info", "Changes requested"], withdrawn: ["", "Withdrawn"]};
+const rqFilter = {status: "open", dept: ""};
+let exampleReqs = null;
+function sampleRequests(){
+  const t = Date.now() - 864e5;
+  const mk = (i, dept, by, title, grade, nat, count, startM, type, prio, basic, allow, why) => ({id: "ex" + i, example: true, owner: "example", dept, deptName: deptName(dept), by, title, grade, nat, count, startM, type, prio, basic, allow, why, status: "pending", note: "", createdAt: t - i * 36e5, updatedAt: t - i * 36e5});
+  return [
+    mk(1, "d3", "Head of Line Maintenance (example)", "Licensed Engineer B1", "T3", "O", 6, 4, "new", "critical", 1350, 650, "Two additional aircraft enter service in Q2. Line maintenance at the new outstation needs six more B1 engineers to meet the approved maintenance programme."),
+    mk(2, "d2", "Cabin Services Manager (example)", "Cabin Crew Member", "C1", "O", 25, 5, "new", "high", 520, 380, "The summer schedule adds about 1,900 block hours a month. Without these hires the crew-to-aircraft ratio falls below the approved minimum."),
+    mk(3, "d10", "IT Director (example)", "Cyber Security Analyst", "G3", "E", 2, 7, "new", "normal", 0, 0, "An audit finding requires a 24/7 security monitoring function. Omani analysts are in training; two experienced hires cover the first two years."),
+    mk(4, "d1", "Chief Pilot (example)", "First Officer", "P2", "O", 4, 9, "omanisation", "high", 2100, 1100, "Cadet programme graduates replace four expatriate first officers whose contracts end in FY2027."),
+  ].filter(r => S.depts.some(d => d.id === r.dept));
+}
+function allRequests(){
+  if (REQ.length) return REQ;
+  if (S.sample){ if (!exampleReqs) exampleReqs = sampleRequests(); return exampleReqs; }
+  return [];
+}
+function estReq(rq, a = S.a, ot){
+  const d = S.depts.find(x => x.id === rq.dept), r = newAcc(), n = num(rq.count), m = clampM(rq.startM);
+  costHeads(r, Array.from({length: 12}, (_, i) => i + 1 >= m ? n : 0), num(rq.basic), num(rq.allow), rq.nat === "O", num(ot ?? d?.ot) / 100, a, {}, a.incPct, m, n);
+  return finish(r).total;
+}
+const fDate = ms => ms ? new Date(ms).toLocaleDateString("en-GB", {day: "numeric", month: "short"}) : "";
+function onRequests(){
+  const pend = allRequests().filter(r => r.status === "pending").length, b = $("#reqBadge");
+  b.hidden = !pend; b.textContent = pend;
+  if (tab === "req") renderReq(); else if (tab === "overview") renderAlerts();
+}
+function renderReq(){
+  const all = allRequests();
+  const waiting = all.filter(r => r.status === "pending"), appr = all.filter(r => r.status === "approved");
+  const heads = l => l.reduce((s, r) => s + num(r.count), 0), cost = l => l.reduce((s, r) => s + estReq(r), 0);
+  const deptsIn = new Set(all.filter(r => r.status !== "withdrawn").map(r => r.dept));
+  $("#reqKpis").innerHTML = [
+    ["Waiting for decision", f0(waiting.length), `${f0(heads(waiting))} positions requested`],
+    ["Cost of waiting requests", "OMR " + fM(cost(waiting)), `FY${S.fy} estimate incl. on-costs`],
+    ["Approved into the plan", f0(heads(appr)) + " positions", `OMR ${fM(cost(appr))} in the budget`],
+    ["Departments that submitted", `${deptsIn.size} of ${S.depts.length}`, all[0]?.example ? "Example requests shown" : (S.reqDeadline ? "Deadline " + new Date(S.reqDeadline + "T00:00").toLocaleDateString("en-GB", {day: "numeric", month: "short"}) : "No deadline set")],
+  ].map(([l, v, d]) => `<div class="kpi"><span class="l">${l}</span><span class="v">${v}</span><span class="d">${d}</span></div>`).join("");
+  if (document.activeElement !== $("#rqNote")) $("#rqNote").value = S.reqNote || "";
+  if (document.activeElement !== $("#rqDeadline")) $("#rqDeadline").value = S.reqDeadline || "";
+  $("#rqOpen").checked = S.reqOpen !== false;
+  const link = location.origin + "/request";
+  $("#rqShare").innerHTML = BE.mode === "artifact"
+    ? "<b>How department heads get the form:</b> share this page from the Share menu and give them <b>Contributor</b> access. When they open it they see only the request form, never your plan, salaries or employee file."
+    : BE.mode === "server"
+    ? `<b>Form link for department heads:</b><br><code id="rqLink">${esc(link)}</code> <button class="btn sm" type="button" id="btnCopyLink">Copy link</button>${/localhost|127\.0\.0\.1/.test(location.hostname) ? `<br><span class="note">This address only works on this computer. To let colleagues open it, start the server with network sharing on (see the README) and share the link it prints.</span>` : ""}`
+    : "<b>This copy saves to this browser only,</b> so requests can only be tried out here. Run the localhost server (see the README) to let department heads submit from their own computers.";
+  // by department
+  const byD = new Map(S.depts.map(d => [d.id, {d, wh: 0, wc: 0, ah: 0, ac: 0}]));
+  for (const r of all){ const x = byD.get(r.dept); if (!x) continue; if (r.status === "pending"){ x.wh += num(r.count); x.wc += estReq(r); } if (r.status === "approved"){ x.ah += num(r.count); x.ac += estReq(r); } }
+  const rows = [...byD.values()].filter(x => x.wh || x.ah);
+  $("#tblReqDept").innerHTML = rows.length ? `<thead><tr><th>Department</th><th class="n">Waiting</th><th class="n">Waiting cost</th><th class="n">Approved</th><th class="n">Budget now</th><th class="n">Room under ceiling</th></tr></thead><tbody>${rows.map(x => {
+    const g = R.depts.find(y => y.d.id === x.d.id), ceil = num(x.d.ceiling), room = ceil ? ceil - (g ? g.total : 0) : null;
+    return `<tr><td>${esc(x.d.name)}</td><td class="n">${f0(x.wh)}</td><td class="n">${f0(x.wc)}</td><td class="n">${f0(x.ah)}</td><td class="n">${f0(g?.total)}</td><td class="n">${room === null ? '<span class="muted">No ceiling</span>' : room - x.wc >= 0 ? `<span class="pill good">✓ ${f0(room)}</span>` : `<span class="pill bad" title="Approving all waiting requests would exceed the ceiling">${f0(room)} · short ${f0(x.wc - room)}</span>`}</td></tr>`;
+  }).join("")}</tbody>` : `<tbody><tr><td class="muted" style="padding:16px">No requests yet.</td></tr></tbody>`;
+  $("#rqFDept").innerHTML = `<option value="">All departments</option>` + S.depts.map(d => `<option value="${d.id}"${d.id === rqFilter.dept ? " selected" : ""}>${esc(d.name)}</option>`).join("");
+  $("#rqFStatus").value = rqFilter.status;
+  const list = all.filter(r => (rqFilter.status === "open" ? r.status === "pending" || r.status === "changes" : !rqFilter.status || r.status === rqFilter.status) && (!rqFilter.dept || r.dept === rqFilter.dept))
+    .sort((a, b) => (PRIO_ORDER[a.prio] ?? 3) - (PRIO_ORDER[b.prio] ?? 3) || (a.createdAt || 0) - (b.createdAt || 0));
+  $("#rqSync").textContent = BE.mode === "server" ? "Refreshes every 30 seconds" : BE.mode === "artifact" ? "New requests appear automatically" : "";
+  $("#reqList").innerHTML = list.length ? list.map(reqCard).join("") : `<p class="note">${all.length ? "No requests match these filters." : "No requests yet. Share the form with department heads to start collecting them."}</p>`;
+}
+const PRIO_ORDER = {critical: 0, high: 1, normal: 2};
+function reqCard(r){
+  const st = RSTAT[r.status] || RSTAT.pending, pr = PRIO[r.prio] || PRIO.normal, open = r.status === "pending" || r.status === "changes";
+  const est = estReq(r);
+  return `<div class="req" data-rid="${esc(r.id)}">
+    <div class="req-top"><h3>${f0(r.count)} × ${esc(r.title)}</h3><span class="pill ${st[0]}">${st[1]}</span><span class="pill ${pr[0]}">${pr[1]}</span>${r.example ? '<span class="pill info">Example</span>' : ""}</div>
+    <div class="req-meta"><span><b>${esc(r.deptName || deptName(r.dept))}</b></span>${r.grade ? `<span>Grade ${esc(r.grade)}</span>` : ""}<span>${r.nat === "O" ? "Omani" : "Expatriate"}</span><span>Starts ${MONTHS[clampM(r.startM) - 1]}</span><span>${RTYPE[r.type] || "New position"}</span><span>From ${esc(r.by)}</span><span>Sent ${fDate(r.createdAt)}</span><span data-rest>${num(r.basic) > 0 ? `Est. FY cost OMR ${f0(est)}` : "No salary given"}</span></div>
+    <div class="req-why">${esc(r.why)}</div>
+    ${r.note ? `<div class="note"><b>Your note:</b> ${esc(r.note)}</div>` : ""}
+    <div class="req-act">${open ? `
+      <label class="note" for="b-${esc(r.id)}">Basic</label><input id="b-${esc(r.id)}" type="number" min="0" step="10" data-rf="basic" value="${num(r.basic) || ""}" placeholder="OMR / mo">
+      <label class="note" for="a-${esc(r.id)}">Allow.</label><input id="a-${esc(r.id)}" type="number" min="0" step="10" data-rf="allow" value="${num(r.allow) || ""}" placeholder="OMR / mo">
+      <label class="sr" for="n-${esc(r.id)}">Note to requester</label><input id="n-${esc(r.id)}" type="text" data-rf="note" maxlength="500" placeholder="Note to the requester (needed to reject or ask for changes)">
+      <button class="btn sm primary" type="button" data-ra="approve">Approve and add to plan</button><button class="btn sm" type="button" data-ra="changes">Ask for changes</button><button class="btn sm danger" type="button" data-ra="reject">Reject</button>`
+      : r.status === "approved" ? `<span class="note">Added to the Headcount plan as a new line.</span><button class="btn sm" type="button" data-ra="undo">Undo approval</button>`
+      : r.status === "rejected" ? `<button class="btn sm" type="button" data-ra="reopen">Reopen</button>` : ""}
+      <span class="note" data-rmsg role="status" style="color:var(--bad)"></span></div>
+  </div>`;
+}
+$("#reqList").addEventListener("input", e => {
+  const k = e.target.dataset.rf; if (k !== "basic" && k !== "allow") return;
+  const card = e.target.closest("[data-rid]"), r = allRequests().find(x => x.id === card.dataset.rid); if (!r) return;
+  r[k] = num(e.target.value);
+  card.querySelector("[data-rest]").textContent = num(r.basic) > 0 ? `Est. FY cost OMR ${f0(estReq(r))}` : "No salary given";
+});
+$("#reqList").addEventListener("click", async e => {
+  const act = e.target.dataset && e.target.dataset.ra; if (!act) return;
+  const card = e.target.closest("[data-rid]"), r = allRequests().find(x => x.id === card.dataset.rid); if (!r) return;
+  const msg = card.querySelector("[data-rmsg]"), noteEl = card.querySelector('[data-rf="note"]'), note = noteEl ? noteEl.value.trim() : "";
+  if (act === "approve"){
+    if (!(num(r.basic) > 0)){ msg.textContent = "Enter the basic salary before approving."; card.querySelector('[data-rf="basic"]').focus(); return; }
+    const d = S.depts.find(x => x.id === r.dept) || S.depts.find(x => x.name.toLowerCase() === String(r.deptName || "").toLowerCase());
+    if (!d){ msg.textContent = "This department is not in the plan any more. Add it on Assumptions first."; return; }
+    const l = {id: uid(), dept: d.id, role: r.title + (r.grade ? " · " + r.grade : ""), nat: r.nat === "E" ? "E" : "O", hc: 0, hires: Math.max(1, Math.round(num(r.count))), hireM: clampM(r.startM), exits: 0, exitM: 12, basic: num(r.basic), allow: num(r.allow), req: r.id};
+    S.lines.push(l); r.status = "approved"; r.lineId = l.id; if (note) r.note = note; r.decidedAt = Date.now(); changed();
+  } else if (act === "reject" || act === "changes"){
+    if (!note){ msg.textContent = "Add a note telling the requester why."; noteEl.focus(); return; }
+    r.status = act === "reject" ? "rejected" : "changes"; r.note = note; r.decidedAt = Date.now();
+  } else if (act === "undo"){
+    S.lines = S.lines.filter(l => l.id !== r.lineId); r.lineId = null; r.status = "pending"; changed();
+  } else if (act === "reopen") r.status = "pending";
+  e.target.disabled = true;
+  try { const saved = await saveRequest(r); if (saved && !r.example) Object.assign(r, saved); renderReq(); onRequests(); }
+  catch (err){ e.target.disabled = false; msg.textContent = "The decision was not saved: " + err.message; }
+});
+$("#rqFStatus").addEventListener("change", e => { rqFilter.status = e.target.value; renderReq(); });
+$("#rqFDept").addEventListener("change", e => { rqFilter.dept = e.target.value; renderReq(); });
+$("#rqOpen").addEventListener("change", e => { S.reqOpen = e.target.checked; persist(); });
+$("#rqDeadline").addEventListener("change", e => { S.reqDeadline = e.target.value; persist(); renderReq(); });
+$("#rqNote").addEventListener("input", e => { S.reqNote = e.target.value; persist(); });
+$("#v-req").addEventListener("click", async e => {
+  if (e.target.id === "btnPreviewForm") startForm(true);
+  if (e.target.id === "btnCopyLink"){ try { await navigator.clipboard.writeText($("#rqLink").textContent); e.target.textContent = "Copied"; } catch { const rg = document.createRange(); rg.selectNodeContents($("#rqLink")); getSelection().removeAllRanges(); getSelection().addRange(rg); e.target.textContent = "Press Ctrl+C"; } }
+});
+function releaseRequestLine(lineId){
+  const r = allRequests().find(x => x.lineId === lineId); if (!r) return;
+  r.status = "pending"; r.lineId = null; r.note = (r.note ? r.note + " " : "") + "(Removed from the plan.)";
+  saveRequest(r).catch(() => {}); onRequests();
+}
+
+/* ---------- Requests: department head form ---------- */
+let FCFG = null, fEditing = null;
+async function startForm(preview){
+  document.body.classList.add("form-mode"); $("#formApp").hidden = false; window.scrollTo(0, 0);
+  $("#btnBackPlanner").hidden = !preview;
+  $("#f-start").innerHTML = monthOpts(4);
+  $("#fIntro").textContent = "Loading the request form…";
+  if (!$("#f-by").value) $("#f-by").value = lsGet("manpower-planner-v1:by") || "";
+  try { FCFG = preview || BE.mode === "local" ? publicConfig() : await loadConfig(); } catch { FCFG = null; }
+  if (BE.mode === "server" && BE.user && !$("#f-by").value) $("#f-by").value = BE.user.name;
+  if (BE.mode === "artifact" && BE.user && !$("#f-by").value){ try { const me = await BE.user.me(); if (me && me.name) $("#f-by").value = me.name; } catch {} }
+  renderFormIntro(); renderMyReqs(); updateEst();
+}
+function renderFormIntro(){
+  const c = FCFG;
+  if (!c || !Array.isArray(c.depts) || !c.depts.length){ $("#fIntro").textContent = "The request form is not open yet. The planner needs to open the planner once to publish the department list. Try again later."; $("#reqForm").hidden = true; return; }
+  $("#fEyebrow").textContent = `${c.org ? c.org + " · " : ""}Manpower request · FY${c.fy}`;
+  const cur = $("#f-dept").value;
+  $("#f-dept").innerHTML = `<option value="">Choose your department</option>` + c.depts.map(d => `<option value="${esc(d.id)}"${d.id === cur ? " selected" : ""}>${esc(d.name)}</option>`).join("");
+  const parts = [c.open === false ? "<b>Requests are closed.</b> The planner is no longer accepting new requests for this budget." : `Request the positions your department needs in <b>FY${c.fy}</b>, one request per position type. The planner reviews each one and adds approved positions to the budget.`];
+  if (c.deadline) parts.push(`Deadline: <b>${new Date(c.deadline + "T00:00").toLocaleDateString("en-GB", {day: "numeric", month: "long", year: "numeric"})}</b>.`);
+  let html = parts.join(" ");
+  if (c.note) html += `<br><span style="white-space:pre-wrap">${esc(c.note)}</span>`;
+  $("#fIntro").innerHTML = html;
+  $("#reqForm").hidden = c.open === false && !fEditing;
+}
+function formItem(){
+  const v = id => $("#f-" + id).value.trim();
+  return {dept: v("dept"), by: v("by"), title: v("title"), grade: v("grade"), nat: v("nat"), count: Math.round(num(v("count"))), startM: +v("start") || 4, type: v("type"), prio: v("prio"), basic: num(v("basic")), allow: num(v("allow")), why: v("why")};
+}
+function updateEst(){
+  if (!FCFG || !FCFG.a){ $("#fEst").textContent = ""; return; }
+  const it = formItem(), d = (FCFG.depts || []).find(x => x.id === it.dept);
+  if (!(it.basic > 0) || !(it.count > 0)){ $("#fEst").innerHTML = "Add the expected basic salary to see an estimated cost for the budget year. You can leave it blank and the planner will set it."; return; }
+  const a = {...sampleState().a, ...FCFG.a}, cost = estReq(it, a, d ? d.ot : 0);
+  $("#fEst").innerHTML = `<b>Estimated FY${FCFG.fy} cost: OMR ${f0(cost)}</b> for ${f0(it.count)} position${it.count > 1 ? "s" : ""} from ${MONTHS[it.startM - 1]}, including allowances, social protection, benefits and recruitment.`;
+}
+$("#reqForm").addEventListener("input", updateEst);
+$("#reqForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const it = formItem(), miss = [];
+  if (!it.dept) miss.push("your department"); if (!it.by) miss.push("your name"); if (!it.title) miss.push("the position title");
+  if (!(it.count >= 1)) miss.push("the number of positions"); if (it.why.length < 15) miss.push("a justification of at least one sentence");
+  if (miss.length){ $("#fMsg").textContent = "Please add " + miss.join(", ") + "."; return; }
+  const d = FCFG.depts.find(x => x.id === it.dept);
+  const base = fEditing || {id: "rq-" + uid() + uid(), createdAt: Date.now(), owner: requesterToken(), note: ""};
+  const item = {...base, ...it, deptName: d.name, status: "pending"};
+  $("#fSubmit").disabled = true; $("#fMsg").textContent = "Sending…";
+  try {
+    await saveRequest(item); lsSet("manpower-planner-v1:by", it.by);
+    $("#fMsg").textContent = fEditing ? "Request updated." : "Request sent. Its status appears on the right.";
+    resetReqForm(true); renderMyReqs();
+    if (BE.mode === "local") { REQ = lsGet(LS_REQ) || []; onRequests(); }
+  } catch (err){
+    $("#fMsg").textContent = /invalid_argument|not_granted/.test(err.code || "") ? "Your access to this page is view-only. Ask the planner for Contributor access, then submit again." : "The request was not sent: " + (err.message || "try again") + ".";
+  }
+  $("#fSubmit").disabled = false;
+});
+function resetReqForm(keep){
+  ["title","grade","basic","allow","why"].forEach(k => $("#f-" + k).value = "");
+  $("#f-count").value = 1; fEditing = null;
+  $("#fTitle").textContent = "New request"; $("#fSubmit").textContent = "Submit request"; $("#fCancel").hidden = true;
+  if (!keep) $("#fMsg").textContent = "";
+  renderFormIntro(); updateEst();
+}
+$("#fCancel").addEventListener("click", () => resetReqForm());
+let myCache = [];
+async function renderMyReqs(){
+  const box = $("#myReqs");
+  try { myCache = (await myRequests()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)); }
+  catch { box.innerHTML = `<p class="note">Your earlier requests could not be loaded.</p>`; return; }
+  box.innerHTML = myCache.length ? myCache.map(r => {
+    const st = RSTAT[r.status] || RSTAT.pending, editable = r.status === "pending" || r.status === "changes";
+    return `<div class="req" data-mid="${esc(r.id)}"><div class="req-top"><h3>${f0(r.count)} × ${esc(r.title)}</h3><span class="pill ${st[0]}">${st[1]}</span></div>
+      <div class="req-meta"><span>${esc(r.deptName)}</span><span>${r.nat === "O" ? "Omani" : "Expatriate"}</span><span>Starts ${MONTHS[clampM(r.startM) - 1]}</span><span>Sent ${fDate(r.createdAt)}</span></div>
+      ${r.note ? `<div class="note"><b>Planner's note:</b> ${esc(r.note)}</div>` : ""}
+      ${editable ? `<div class="req-act"><button class="btn sm" type="button" data-ma="edit">Edit</button><button class="btn sm danger" type="button" data-ma="withdraw">Withdraw</button></div>` : ""}</div>`;
+  }).join("") : `<p class="note">Requests you send appear here with their status and any note from the planner.</p>`;
+}
+$("#myReqs").addEventListener("click", async e => {
+  const act = e.target.dataset && e.target.dataset.ma; if (!act) return;
+  const r = myCache.find(x => x.id === e.target.closest("[data-mid]").dataset.mid); if (!r) return;
+  if (act === "edit"){
+    fEditing = r; $("#reqForm").hidden = false;
+    $("#f-dept").value = r.dept; ["by","title","grade","nat","count","type","prio","why"].forEach(k => $("#f-" + k).value = r[k] ?? "");
+    $("#f-start").value = r.startM; $("#f-basic").value = r.basic || ""; $("#f-allow").value = r.allow || "";
+    $("#fTitle").textContent = "Edit request"; $("#fSubmit").textContent = "Save changes"; $("#fCancel").hidden = false; $("#fMsg").textContent = "";
+    updateEst(); $("#f-title").focus();
+  } else if (act === "withdraw"){
+    if (e.target.dataset.sure !== "1"){ e.target.dataset.sure = "1"; e.target.textContent = "Confirm withdraw"; return; }
+    try { await saveRequest({...r, status: "withdrawn"}); renderMyReqs(); if (BE.mode === "local"){ REQ = lsGet(LS_REQ) || []; onRequests(); } }
+    catch (err){ e.target.textContent = "Not withdrawn: " + err.message; }
+  }
+});
+$("#btnBackPlanner").addEventListener("click", () => {
+  document.body.classList.remove("form-mode"); $("#formApp").hidden = true;
+  if (location.hash === "#request") history.replaceState(null, "", location.pathname);
+  loadRequests(); switchTab("req");
+});
+
+/* ---------- Boot ---------- */
+const wantsForm = () => location.hash === "#request" || /\/request\/?$/.test(location.pathname);
+const ROLE_LABEL = {admin: "Administrator", planner: "Planner", viewer: "Viewer (read-only)", requester: "Department head"};
+let authMode = "login";
+function showAuth(mode, msg){
+  authMode = mode; document.body.classList.add("gated"); $("#gate").hidden = false;
+  const show = (id, on) => { $(id).hidden = !on; };
+  show("#gf-name", mode === "setup"); show("#gf-user", mode !== "change"); show("#gf-cur", mode === "change"); show("#gf-pass2", mode !== "login"); show("#gHint", mode !== "login");
+  $("#g-pass").autocomplete = mode === "login" ? "current-password" : "new-password";
+  $("#g-pass-l").textContent = mode === "login" ? "Password" : "New password";
+  $("#gTitle").textContent = mode === "setup" ? "Create the administrator account" : mode === "change" ? "Choose a new password" : "Sign in";
+  $("#gIntro").textContent = mode === "setup" ? "First run. This account manages users and can see the audit log. You can add planners and department heads after signing in."
+    : mode === "change" ? "Your password was set by an administrator or has to be changed. Choose one only you know."
+    : wantsForm() ? "Sign in to submit manpower requests for your department." : "Sign in to the Manpower Budget Planner.";
+  $("#gSubmit").textContent = mode === "setup" ? "Create account" : mode === "change" ? "Save new password" : "Sign in";
+  $("#gateMsg").textContent = msg || "";
+  ["#g-pass", "#g-pass2", "#g-cur"].forEach(id => $(id).value = "");
+  setStatus("local", "Signed out");
+  setTimeout(() => (mode === "change" ? $("#g-cur") : mode === "setup" ? $("#g-name") : ($("#g-user").value ? $("#g-pass") : $("#g-user"))).focus(), 0);
+}
+function authLost(){ if (BE.mode === "server" && !document.body.classList.contains("gated")) showAuth("login", "Your session ended. Sign in again; unsaved changes are kept and will be saved."); }
+$("#gForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = $("#gateMsg"), btn = $("#gSubmit");
+  const pw = $("#g-pass").value, pw2 = $("#g-pass2").value;
+  if (authMode !== "login" && pw !== pw2){ msg.textContent = "The two new passwords are different."; return; }
+  btn.disabled = true; msg.textContent = "";
+  try {
+    let r;
+    if (authMode === "login") r = await api("login", "POST", {username: $("#g-user").value.trim(), password: pw});
+    else if (authMode === "setup") r = await api("setup", "POST", {username: $("#g-user").value.trim(), name: $("#g-name").value.trim(), password: pw});
+    else r = await api("password", "POST", {current: $("#g-cur").value, next: pw});
+    if (r.csrf) BE.csrf = r.csrf;
+    BE.user = r.user;
+    if (BE.user.mustChange){ showAuth("change"); return; }
+    await afterSignIn();
+  } catch (err){ msg.textContent = err.message; }
+  finally { btn.disabled = false; $("#g-pass").value = ""; $("#g-pass2").value = ""; }
+});
+document.addEventListener("click", async e => {
+  if (!e.target.closest || !e.target.closest("[data-logout]")) return;
+  try { await api("logout", "POST", {}); } catch {}
+  location.reload();
+});
+async function serverSession(){
+  try { const r = await api("session"); BE.csrf = r.csrf; BE.user = r.user; return true; }
+  catch (e){ if (e.body && e.body.setup){ showAuth(e.body.setupAllowed ? "setup" : "login", e.body.setupAllowed ? "" : "No accounts exist yet. Open the planner on the server computer itself (http://localhost) to create the administrator account."); return false; } showAuth("login"); return false; }
+}
+// Screen lock: after the idle period the page signs out so an unattended screen does not show salaries.
+let lastActive = Date.now(), idleTimer = null;
+["mousemove", "keydown", "pointerdown", "wheel", "touchstart"].forEach(t => addEventListener(t, () => { lastActive = Date.now(); }, {passive: true}));
+function startIdleLock(minutes){
+  clearInterval(idleTimer);
+  idleTimer = setInterval(async () => {
+    if (document.body.classList.contains("gated") || Date.now() - lastActive < minutes * 60e3) return;
+    try { await api("logout", "POST", {}); } catch {}
+    showAuth("login", `Signed out after ${minutes} minutes without activity. Unsaved changes are kept.`);
+  }, 30e3);
+}
+function applyRoleUI(){
+  const u = BE.user, admin = u && u.role === "admin";
+  document.querySelectorAll('nav.tabs button[data-tab="users"], nav.tabs button[data-tab="audit"]').forEach(b => b.hidden = !admin);
+  $("#userBar").hidden = !u; $("#btnLogout2").hidden = !u;
+  const label = u ? `${u.name} · ${ROLE_LABEL[u.role] || u.role}` : "";
+  $("#userLabel").textContent = label; $("#userLabel2").textContent = label;
+  $("#roBanner").hidden = !(u && u.role === "viewer");
+  document.body.classList.toggle("readonly", !!(u && u.role === "viewer"));
+}
+async function afterSignIn(){
+  document.body.classList.remove("gated"); $("#gate").hidden = true;
+  applyRoleUI(); startIdleLock(30);
+  const role = BE.user.role;
+  if (role === "requester" || wantsForm()){
+    BE.owner = role !== "requester" && !wantsForm() ? true : false;
+    startForm(false); return;
+  }
+  BE.owner = role !== "viewer";
+  if (!BE.ready){
+    try { await loadPlannerData(); }
+    catch (e){ if (e.status === 401 || e.code === "must_change") return; setStatus("local", "Could not load the saved plan: " + e.message); return; }
+    BE.ready = true;
+  } else {
+    // Re-signed in after a timeout: save anything that was waiting.
+    if (BE.pending.plan) persist();
+    if (BE.pending.roster) persistRoster();
+  }
+  renderAll(); updateRosterInfo(); updateStorageNote();
+  setStatus(BE.owner ? savedState() : "local", BE.owner ? savedText() : "Read-only");
+  if (BE.owner) publishConfig(true);
+  loadRequests();
+}
+function serverSaveError(e){
+  if (BE.mode !== "server") return false;
+  if (e.status === 401){ setStatus("busy", "Waiting for sign-in to save"); return true; }
+  if (e.status === 409){
+    const b = $("#conflictBanner");
+    b.innerHTML = `<span>${esc(e.message)}</span><button class="btn sm" type="button" id="btnConflictReload">Reload the latest version</button>`;
+    b.hidden = false; $("#btnConflictReload").onclick = () => location.reload();
+    setStatus("local", "Not saved: newer version on the server"); return true;
+  }
+  if (e.status === 403){ setStatus("local", "Not saved: " + e.message); return true; }
+  return false;
+}
+async function boot(){
+  if (wantsForm()){ document.body.classList.add("form-mode"); $("#formApp").hidden = false; }
+  await detectBackend();
+  if (BE.mode === "server"){
+    // Nothing from the example plan is shown until the user has signed in.
+    document.body.classList.add("gated");
+    if (await serverSession()){ if (BE.user.mustChange) showAuth("change"); else await afterSignIn(); }
+    return;
+  }
+  if (wantsForm() || (BE.mode === "artifact" && !BE.owner)){
+    if (BE.mode !== "local" && !(BE.mode === "artifact" && BE.owner)) BE.owner = false;
+    startForm(BE.owner); return;
+  }
+  try { await loadPlannerData(); }
+  catch (e){ setStatus("local", "Could not load the saved plan"); return; }
+  BE.ready = true;
+  renderAll(); updateRosterInfo(); updateStorageNote();
+  setStatus(savedState(), savedText());
+  publishConfig(true); loadRequests();
+}
+
+/* ---------- Users & audit (admin, localhost server) ---------- */
+let USERS = [];
+function deptChips(container, selected){
+  container.innerHTML = S.depts.map(d => `<label class="chip"><input type="checkbox" value="${esc(d.id)}"${selected.includes(d.id) ? " checked" : ""}>${esc(d.name)}</label>`).join("") || '<span class="note">No departments in the plan yet.</span>';
+}
+const chipValues = container => [...container.querySelectorAll("input:checked")].map(i => i.value);
+async function renderUsers(){
+  deptChips($("#u-depts"), chipValues($("#u-depts")));
+  $("#u-depts-f").hidden = $("#u-role").value !== "requester";
+  try { USERS = (await api("users")).users; } catch (e){ $("#tblUsers").innerHTML = `<tbody><tr><td>${esc(e.message)}</td></tr></tbody>`; return; }
+  const dn = id => (S.depts.find(d => d.id === id) || {}).name || id;
+  $("#tblUsers").innerHTML = `<thead><tr><th>User</th><th>Role</th><th>Departments</th><th>Status</th><th>Last sign-in</th><th class="n">Sessions</th><th>Actions</th></tr></thead><tbody>` + USERS.map(u => {
+    const st = u.disabled ? '<span class="pill">Disabled</span>' : u.lockedUntil ? '<span class="pill bad">Locked</span>' : u.mustChange ? '<span class="pill warn">Temporary password</span>' : '<span class="pill good">Active</span>';
+    const me = BE.user && u.username === BE.user.username;
+    return `<tr data-u="${esc(u.username)}"><td><b>${esc(u.name)}</b><br><span class="note">${esc(u.username)}${me ? " (you)" : ""}</span></td>
+      <td class="cell-in"><select data-ua="role" aria-label="Role for ${esc(u.username)}">${Object.entries(ROLE_LABEL).map(([k, v]) => `<option value="${k}"${k === u.role ? " selected" : ""}>${esc(v)}</option>`).join("")}</select></td>
+      <td style="white-space:normal;min-width:180px">${u.role === "requester" ? `${u.depts.length ? u.depts.map(d => `<span class="pill info">${esc(dn(d))}</span>`).join(" ") : '<span class="note">All departments</span>'} <button class="btn sm" type="button" data-ua="depts">Change</button><div class="chips" data-chips hidden style="margin-top:6px"></div>` : '<span class="note">Not applicable</span>'}</td>
+      <td>${st}</td><td>${u.lastLogin ? new Date(u.lastLogin).toLocaleString("en-GB", {dateStyle: "medium", timeStyle: "short"}) : '<span class="note">Never</span>'}</td><td class="n">${u.sessions}</td>
+      <td><div class="toolbar"><button class="btn sm" type="button" data-ua="reset">Reset password</button>${u.lockedUntil ? '<button class="btn sm" type="button" data-ua="unlock">Unlock</button>' : ""}${u.sessions ? '<button class="btn sm" type="button" data-ua="revoke">Sign out everywhere</button>' : ""}${me ? "" : `<button class="btn sm ${u.disabled ? "" : "danger"}" type="button" data-ua="${u.disabled ? "enable" : "disable"}">${u.disabled ? "Enable" : "Disable"}</button>`}</div></td></tr>`;
+  }).join("") + "</tbody>";
+}
+function showTemp(name, pw){
+  $("#uTemp").innerHTML = `<div class="callout" style="margin-top:14px;display:grid;gap:8px"><b>One-time password for ${esc(name)}</b><span class="temp-pw">${esc(pw)}</span><span class="note">Give it to them in person or by phone, not by email. It works once: they must choose their own password when they sign in. It is not shown again.</span><div class="toolbar"><button class="btn sm" type="button" id="btnTempCopy">Copy</button><button class="btn sm" type="button" id="btnTempHide">Done, hide it</button></div></div>`;
+  $("#btnTempCopy").onclick = async () => { try { await navigator.clipboard.writeText(pw); $("#btnTempCopy").textContent = "Copied"; } catch { $("#btnTempCopy").textContent = "Select and copy it"; } };
+  $("#btnTempHide").onclick = () => { $("#uTemp").innerHTML = ""; };
+}
+$("#u-role").addEventListener("change", () => { $("#u-depts-f").hidden = $("#u-role").value !== "requester"; });
+$("#uForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const body = {username: $("#u-user").value.trim().toLowerCase(), name: $("#u-name").value.trim(), role: $("#u-role").value, depts: $("#u-role").value === "requester" ? chipValues($("#u-depts")) : []};
+  if (!body.username){ $("#uMsg").textContent = "Enter a username."; return; }
+  try { const r = await api("users", "POST", body); $("#uMsg").textContent = `Created ${r.user.username}.`; $("#u-user").value = ""; $("#u-name").value = ""; showTemp(r.user.name, r.tempPassword); renderUsers(); }
+  catch (err){ $("#uMsg").textContent = err.message; }
+});
+$("#tblUsers").addEventListener("change", async e => {
+  if (e.target.dataset.ua !== "role") return;
+  const un = e.target.closest("[data-u]").dataset.u;
+  try { await api("users/" + encodeURIComponent(un), "PUT", {role: e.target.value}); } catch (err){ alertRow(un, err.message); }
+  renderUsers();
+});
+function alertRow(un, msg){ const tr = document.querySelector(`#tblUsers tr[data-u="${CSS.escape(un)}"] td:last-child`); if (tr) tr.insertAdjacentHTML("beforeend", `<p class="note" style="color:var(--bad)">${esc(msg)}</p>`); }
+$("#tblUsers").addEventListener("click", async e => {
+  const act = e.target.dataset && e.target.dataset.ua; if (!act || act === "role") return;
+  const tr = e.target.closest("[data-u]"), un = tr.dataset.u, u = USERS.find(x => x.username === un);
+  if (act === "depts"){
+    const box = tr.querySelector("[data-chips]");
+    if (box.hidden){ deptChips(box, u.depts); box.insertAdjacentHTML("beforeend", '<button class="btn sm primary" type="button" data-ua="saveDepts">Save departments</button>'); box.hidden = false; }
+    else box.hidden = true;
+    return;
+  }
+  const body = act === "saveDepts" ? {depts: chipValues(tr.querySelector("[data-chips]"))} : act === "reset" ? {resetPassword: true} : act === "unlock" ? {unlock: true} : act === "revoke" ? {revokeSessions: true} : {disabled: act === "disable"};
+  if ((act === "disable" || act === "reset") && e.target.dataset.sure !== "1"){ e.target.dataset.sure = "1"; e.target.textContent = act === "disable" ? "Confirm disable" : "Confirm reset"; return; }
+  try { const r = await api("users/" + encodeURIComponent(un), "PUT", body); if (r.tempPassword) showTemp(r.user.name, r.tempPassword); await renderUsers(); }
+  catch (err){ alertRow(un, err.message); }
+});
+let AUDIT = null;
+async function renderAudit(reload){
+  if (reload || !AUDIT){ try { AUDIT = await api("audit?limit=2000"); } catch (e){ $("#tblAudit").innerHTML = `<tbody><tr><td>${esc(e.message)}</td></tr></tbody>`; return; } }
+  $("#auditState").innerHTML = AUDIT.ok ? `<span class="pill good">✓ Chain intact</span> <span class="note">${f0(AUDIT.total)} entries</span>` : `<span class="pill bad">Tampering detected at line ${f0(AUDIT.brokenAt)}</span> <span class="note">Entries before that line are verified. Report this to IT security.</span>`;
+  const q = ($("#auditQ").value || "").toLowerCase();
+  const rows = AUDIT.entries.filter(e => !q || `${e.actor} ${e.event} ${e.ip} ${JSON.stringify(e.detail)}`.toLowerCase().includes(q)).slice(0, 1000);
+  $("#tblAudit").innerHTML = `<thead><tr><th>Time</th><th>User</th><th>Event</th><th>Details</th><th>IP address</th></tr></thead><tbody>` + rows.map(e => `<tr><td>${esc(new Date(e.ts).toLocaleString("en-GB", {dateStyle: "medium", timeStyle: "medium"}))}</td><td>${esc(e.actor)}</td><td>${esc(e.event.replace(/_/g, " "))}</td><td style="white-space:normal;max-width:420px" class="note">${esc(Object.entries(e.detail || {}).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" · "))}</td><td class="note">${esc(e.ip)}</td></tr>`).join("") + "</tbody>";
+}
+$("#auditQ").addEventListener("input", () => renderAudit(false));
+$("#btnAuditReload").addEventListener("click", () => renderAudit(true));
+function applyReadonly(){
+  if (!(BE.user && BE.user.role === "viewer")) return;
+  document.querySelectorAll("#v-plan input:not(#fSearch), #v-plan select:not(#fDept), #v-plan button, #v-assump input, #v-assump select, #v-assump textarea, #v-assump button, #v-scen input, #v-scen button, #tblEmp input, #tblEmp select, #empFlags button, #v-req .req-act input, #v-req .req-act button, #rqOpen, #rqDeadline, #rqNote, #wizBody button, #wizBody input, #wizBody textarea, #resetArea button, #drop button, #fileIn")
+    .forEach(el => { el.disabled = true; });
+}
+
+/* ---------- Tabs & render ---------- */
+let tab = "overview";
+function switchTab(t){
+  if ((t === "users" || t === "audit") && !(BE.user && BE.user.role === "admin")) t = "overview";
+  tab = t;
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
+  document.querySelectorAll("section.view").forEach(s => s.hidden = s.id !== "v-" + t);
+  renderTab();
+  try { localStorage.setItem(LS_KEY + ":tab", t); } catch {}
+}
+document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
+document.addEventListener("click", e => { const g = e.target.dataset && e.target.dataset.goto; if (g) switchTab(g); });
+function renderTab(){
+  if (tab === "overview") renderOverview();
+  else if (tab === "emp") renderEmp();
+  else if (tab === "plan") renderPlan();
+  else if (tab === "budget") renderBudget();
+  else if (tab === "scen") renderScen();
+  else if (tab === "assump") renderAssump();
+  else if (tab === "req") renderReq();
+  else if (tab === "users") renderUsers();
+  else if (tab === "audit") renderAudit(true);
+  else if (tab === "data") updateRosterInfo();
+  applyReadonly();
+}
+function updateHeader(){
+  $("#hdrEyebrow").textContent = `${S.org ? S.org + " · " : ""}Manpower plan · FY${S.fy} · OMR${rosterOn() ? ` · ${f0(ROS.emps.length)} employees on file` : ""}`;
+}
+function recalc(render = true){ R = compute(S); updateHeader(); if (render && (tab === "overview" || tab === "budget")) renderTab(); }
+function renderAll(){ R = compute(S); updateHeader(); renderTab(); }
+
+S = normalise(lsGet(LS_KEY) || sampleState());
+ROS = lsGet(LS_ROS);
+if (ROS && !Array.isArray(ROS.emps)) ROS = null;
+if (!ROS && S.sample) ROS = sampleRoster(S);
+rosVer++;
+R = compute(S);
+resetWizard();
+try { const t = localStorage.getItem(LS_KEY + ":tab"); if (t && document.getElementById("v-" + t)) tab = t; } catch {}
+updateHeader(); switchTab(tab);
+setStatus("local", "Saved in this browser");
+boot();
+if (window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => renderTab());
+})();
+</script>
+</body>
+</html>

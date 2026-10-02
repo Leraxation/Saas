@@ -30,6 +30,14 @@ A dual-deck DJ mixer for YouTube, at **`/mixer`**. Paste any YouTube link on eac
 
 Playback uses the official YouTube IFrame Player API — nothing is downloaded or re-hosted.
 
+## Bonus: Manpower Budget Planner (`manpower-planner/`)
+
+A standalone manpower planning and budgeting tool with a request form for department heads. It runs on localhost with plain Node.js (no dependencies, no database). See [`manpower-planner/README.md`](manpower-planner/README.md).
+
+```bash
+cd manpower-planner && node server.js   # http://localhost:4000, request form at /request
+```
+
 ## Quick start (demo mode)
 
 ```bash
