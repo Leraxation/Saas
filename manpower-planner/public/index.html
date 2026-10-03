@@ -164,6 +164,13 @@ body.form-mode > header.top, body.form-mode > main{display:none!important}
 body.gated main, body.gated #formApp, body.gated nav.tabs, body.gated #btnExportXlsx, body.gated #userBar{display:none!important}
 .temp-pw{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:18px;font-weight:700;letter-spacing:.04em;padding:6px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--line-2);user-select:all}
 textarea{width:100%;resize:vertical}
+.srcbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:10px 14px;border-radius:var(--r);margin-bottom:18px;font-size:13px;border:1px solid var(--line-2);background:var(--surface-2);color:var(--fg)}
+.srcbar.example{background:var(--warn-soft);border-color:var(--warn)}
+.srcbar.real{background:var(--good-soft);border-color:var(--good)}
+.srcbar .grow{flex:1 1 260px;min-width:0}
+#wImportBar{position:sticky;bottom:0;z-index:3}
+.import-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:12px;padding:12px 14px;border:1px solid var(--accent);border-radius:var(--r);background:var(--surface);box-shadow:0 -6px 18px rgba(0,0,0,.08)}
+body.form-mode #srcBar, body.form-mode #pendingBar{display:none!important}
 .flagrow .t b{font-family:var(--f-display);font-size:18px;margin-right:6px;font-variant-numeric:tabular-nums}
 </style>
 </head>
@@ -215,11 +222,10 @@ textarea{width:100%;resize:vertical}
 <main class="wrap">
   <div class="callout" id="roBanner" hidden style="margin-bottom:18px"><b>Read-only access.</b> You can review the plan and export it. Changes are not saved.</div>
   <div class="confirm" id="conflictBanner" hidden style="margin-bottom:18px"></div>
+  <div class="srcbar" id="srcBar" role="status"></div>
+  <div class="confirm" id="pendingBar" hidden style="margin-bottom:18px"></div>
   <!-- OVERVIEW -->
   <section class="view" id="v-overview">
-    <div id="sampleBanner" class="callout" hidden>
-      You are looking at <b>example data</b>: a generated file of 3,100 employees across 11 departments, with no real people in it. Load your own employee master file on the <b>Import &amp; export</b> tab and every screen recalculates from it.
-    </div>
     <div class="kpis" id="kpis"></div>
     <div class="grid2">
       <div class="panel">
@@ -738,7 +744,7 @@ function empFlags(e){
 /* ---------- State & persistence ---------- */
 let S = null, R = null;
 // Where data lives: "artifact" (claude.ai page), "server" (local Node server) or "local" (this browser only).
-const BE = {mode: "local", db: null, base: null, uid: null, user: null, owner: true, ready: false, csrf: "", role: "", ver: {plan: 0, roster: 0}, pending: {plan: false, roster: false}};
+const BE = {mode: "local", db: null, base: null, uid: null, user: null, owner: true, ready: false, csrf: "", role: "", ver: {plan: 0, roster: 0}, pending: {plan: false, roster: false}, queued: {plan: false, roster: false}};
 let saveTimer = null, rosTimer = null;
 const LS_REQ = "manpower-planner-v1:requests", LS_TOKEN = "manpower-planner-v1:token";
 const lsGet = k => { try { const t = localStorage.getItem(k); return t ? JSON.parse(t) : null; } catch { return null; } };
@@ -766,8 +772,9 @@ async function api(path, method = "GET", body){
 const savedText = () => BE.mode === "artifact" ? "Saved to your account" : BE.mode === "server" ? "Saved on the server" : "Saved in this browser";
 const savedState = () => BE.mode === "local" ? "local" : "ok";
 function persist(){
-  if (!BE.owner || !BE.ready) return;
+  if (!BE.owner) return;
   S.savedAt = Date.now();
+  if (!BE.ready){ BE.queued.plan = true; return; }
   clearTimeout(saveTimer); setStatus("busy", "Saving…");
   saveTimer = setTimeout(async () => {
     try {
@@ -780,8 +787,9 @@ function persist(){
   }, 900);
 }
 function persistRoster(){
-  if (!BE.owner || !BE.ready) return;
+  if (!BE.owner) return;
   if (ROS) ROS.savedAt = Date.now();
+  if (!BE.ready){ BE.queued.roster = true; return; }
   clearTimeout(rosTimer); setStatus("busy", "Saving…");
   rosTimer = setTimeout(async () => {
     try {
@@ -836,8 +844,9 @@ async function loadPlannerData(){
           ROS = {sample: !!meta.sample, fileName: meta.fileName, importedAt: meta.importedAt, savedAt: meta.savedAt, groupBy: meta.groupBy, emps};
         }
         lsSet(LS_ROS, ROS);
-      } else if (ROS && !ROS.sample) persistRoster();
-    } else if (ROS && !ROS.sample) persistRoster();
+      } else if (ROS && !ROS.sample) BE.queued.roster = true;
+    } else if (ROS && !ROS.sample) BE.queued.roster = true;
+    if (!pSnap.exists && !S.sample) BE.queued.plan = true;
   } else if (BE.mode === "server"){
     const [p, r] = await Promise.all([api("plan"), api("roster")]);
     S = p.data ? normalise(p.data) : sampleState();
@@ -845,6 +854,31 @@ async function loadPlannerData(){
     BE.ver.plan = p.version || 0; BE.ver.roster = r.version || 0;
   }
   rosVer++;
+  if (repairData()){ BE.queued.plan = true; BE.queued.roster = true; }
+}
+function flushQueued(){
+  const q = BE.queued; BE.queued = {plan: false, roster: false};
+  if (q.plan) persist();
+  if (q.roster) persistRoster();
+}
+// Saved data from different versions can disagree (employees pointing at plan lines that no longer
+// exist). Repair it so every figure is built from the data actually on file.
+function repairData(){
+  if (!ROS || !Array.isArray(ROS.emps) || !ROS.emps.length) return false;
+  const ids = new Set(S.lines.map(l => l.id));
+  const orphans = ROS.emps.filter(e => !ids.has(e.k));
+  if (!orphans.length) return false;
+  if (ROS.sample){ ROS = S.sample ? sampleRoster(S) : null; rosVer++; return true; }
+  const name = "Unassigned (check employee file)";
+  let d = S.depts.find(x => x.name === name);
+  if (!d){ d = {id: "d" + uid(), name, ot: 0, prior: 0, ceiling: 0}; S.depts.push(d); }
+  for (const nat of ["O", "E"]){
+    const em = orphans.filter(e => (e.o ? "O" : "E") === nat); if (!em.length) continue;
+    const l = {id: uid(), dept: d.id, role: "Employees not matched to a plan line", nat, hc: em.length, hires: 0, hireM: 4, exits: 0, exitM: 12,
+      basic: Math.round(em.reduce((a, e) => a + e.bs, 0) / em.length), allow: Math.round(em.reduce((a, e) => a + e.al, 0) / em.length)};
+    S.lines.push(l); em.forEach(e => { e.k = l.id; });
+  }
+  rosVer++; return true;
 }
 function updateStorageNote(){
   $("#storageNote").textContent = BE.mode === "artifact"
@@ -1051,7 +1085,6 @@ function renderOverview(){
     {l:"Average cost per FTE", v:"OMR " + f0(perFte), d:`${f0(t.fte)} average FTE across the year`},
   ];
   $("#kpis").innerHTML = k.map(x => `<div class="kpi"><span class="l">${x.l}</span><span class="v">${x.v}</span><span class="d">${x.d}</span></div>`).join("");
-  $("#sampleBanner").hidden = !S.sample;
   chartBridge(); chartDept(); chartOman(); chartMonth(); renderAlerts();
 }
 function renderAlerts(){
@@ -1526,6 +1559,7 @@ function renderWizard(){
         <label><input type="checkbox" id="wKeep"${W.keepOther ? " checked" : ""}> Keep current plan lines that are not in the file</label>
       </div></div>
       <div id="wCheck"></div>
+      <div id="wImportBar"></div>
     </div>`;
   renderWizCheck();
 }
@@ -1567,7 +1601,7 @@ function buildRoster(){
 }
 function renderWizCheck(){
   const missing = EMP_FIELDS.filter(f => f.req && W.map[f.k] == null);
-  if (missing.length){ W.res = null; $("#wCheck").innerHTML = `<div class="confirm">Match ${missing.map(f => f.label).join(", ")} to continue.</div>`; setSteps(1); return; }
+  if (missing.length){ W.res = null; $("#wImportBar").innerHTML = ""; $("#wCheck").innerHTML = `<div class="confirm">Match ${missing.map(f => f.label).join(", ")} to continue.</div>`; setSteps(1); return; }
   const res = buildRoster(); W.res = res;
   const om = res.emps.filter(e => e.o).length, gross = res.emps.reduce((s, e) => s + e.bs + e.al, 0);
   const st = (v, l, cls = "") => `<div class="vstat ${v && cls ? cls : ""}"><b>${f0(v)}</b><span>${l}</span></div>`;
@@ -1577,7 +1611,9 @@ function renderWizCheck(){
   $("#wCheck").innerHTML = `<h3 style="margin-bottom:8px">Check before importing</h3>
     <div class="vstats">${st(res.emps.length, "employees to import")}${st(res.deptNames.length, "departments")}${st(res.groups.size, `plan lines (department × ${grpLabel} × nationality)`)}${st(om, `Omani (${fPct(res.emps.length ? om / res.emps.length * 100 : 0)})`)}${st(res.vacant, "vacant posts")}${st(res.excluded, "left or inactive, skipped")}${st(res.noDept, "rows with no department, skipped", "bad")}${st(res.noBasic, "employees with no basic salary", "bad")}${st(res.dup, "duplicate employee IDs", "warn")}${st(res.badDate, "dates not understood", "warn")}${res.noNat ? st(res.noNat, "blank nationality (counted as expatriate)", "warn") : ""}</div>
     <div class="tbl-wrap" style="margin-top:12px;max-height:320px"><table><thead><tr><th>Department in file</th><th class="n">Employees</th><th class="n">Omani %</th><th class="n">Monthly gross</th><th>Settings</th></tr></thead><tbody>${[...byDept].sort((a, b) => b[1].n - a[1].n).map(([d, x]) => `<tr><td>${esc(d)}</td><td class="n">${f0(x.n)}</td><td class="n">${fPct(x.o / x.n * 100)}</td><td class="n">${f0(x.g)}</td><td>${!S.sample && S.depts.some(dd => dd.name.toLowerCase() === d.toLowerCase()) ? '<span class="pill good">Keeps current settings</span>' : '<span class="pill info">New department</span>'}</td></tr>`).join("")}</tbody><tfoot><tr class="total"><td>Total</td><td class="n">${f0(res.emps.length)}</td><td class="n">${fPct(res.emps.length ? om / res.emps.length * 100 : 0)}</td><td class="n">${f0(gross)}</td><td></td></tr></tfoot></table></div>
-    <div class="toolbar" style="margin-top:12px"><button class="btn primary" id="wImport" type="button"${res.emps.length ? "" : " disabled"}>Import ${f0(res.emps.length)} employees</button><span class="note">Replaces the current employee file${S.sample ? " and the example data" : ". Planned hires and exits on matching lines are kept"}.</span></div>`;
+    `;
+  $("#wImportBar").innerHTML = `<div class="import-bar"><b>Last step:</b><button class="btn primary" id="wImport" type="button"${res.emps.length ? "" : " disabled"}>Import ${f0(res.emps.length)} employees</button><span class="note">Nothing changes until you click this. It replaces the current employee file${S.sample ? " and the example data" : "; planned hires and exits on matching lines are kept"}.</span></div>`;
+  updatePendingBar();
   setSteps(2);
 }
 function applyRoster(){
@@ -1623,7 +1659,8 @@ function applyRoster(){
     emps: res.emps.map(({key, ...e}) => ({...e, k: lineByKey.get(key).id}))};
   rosVer++; changed(); persistRoster();
   resetWizard(`Imported ${f0(ROS.emps.length)} employees into ${f0(S.lines.length)} plan lines across ${S.depts.length} departments. Next: set overtime rates and prior-year budgets on Assumptions, then review retirements and contract ends on Employees.`);
-  updateHeader();
+  justImported = {name: ROS.fileName, until: Date.now() + 15000};
+  switchTab("overview"); window.scrollTo(0, 0);
 }
 function resetWizard(msg){
   setSteps(0); W = null;
@@ -2200,7 +2237,7 @@ async function afterSignIn(){
   if (!BE.ready){
     try { await loadPlannerData(); }
     catch (e){ if (e.status === 401 || e.code === "must_change") return; setStatus("local", "Could not load the saved plan: " + e.message); return; }
-    BE.ready = true;
+    BE.ready = true; flushQueued();
   } else {
     // Re-signed in after a timeout: save anything that was waiting.
     if (BE.pending.plan) persist();
@@ -2237,8 +2274,8 @@ async function boot(){
     startForm(BE.owner); return;
   }
   try { await loadPlannerData(); }
-  catch (e){ setStatus("local", "Could not load the saved plan"); return; }
-  BE.ready = true;
+  catch (e){ setStatus("local", "Could not load the saved plan"); BE.ready = true; flushQueued(); return; }
+  BE.ready = true; flushQueued();
   renderAll(); updateRosterInfo(); updateStorageNote();
   setStatus(savedState(), savedText());
   publishConfig(true); loadRequests();
@@ -2338,9 +2375,32 @@ function renderTab(){
   else if (tab === "users") renderUsers();
   else if (tab === "audit") renderAudit(true);
   else if (tab === "data") updateRosterInfo();
-  applyReadonly();
+  applyReadonly(); renderSrcBar(); updatePendingBar();
 }
+let justImported = null;
+function renderSrcBar(){
+  const bar = $("#srcBar"); if (!bar) return;
+  const dc = S.depts.length, fresh = justImported && Date.now() < justImported.until;
+  if (S.sample){
+    bar.className = "srcbar example";
+    bar.innerHTML = `<span class="grow"><b>Example data.</b> These figures come from ${rosterOn() ? f0(ROS.emps.length) + " generated employees" : "example plan lines"}, not your company. Load your employee file to replace them everywhere.</span><button class="btn sm primary" type="button" data-goto="data">Load your employee file</button>`;
+  } else if (rosterOn()){
+    bar.className = "srcbar real";
+    bar.innerHTML = `<span class="grow">${fresh ? "<b>✓ Updated.</b> " : ""}<b>Built from ${esc(ROS.fileName || "your employee file")}</b>: ${f0(ROS.emps.length)} employees, ${f0(dc)} departments${ROS.importedAt ? ", imported " + new Date(ROS.importedAt).toLocaleDateString("en-GB", {day: "numeric", month: "short", year: "numeric"}) : ""}. Every figure combines this file with your plan entries.</span><button class="btn sm" type="button" data-goto="emp">See employees</button>`;
+  } else {
+    bar.className = "srcbar";
+    bar.innerHTML = `<span class="grow"><b>Built from summary plan lines</b> (no employee file loaded): ${f0(R ? R.tot.open : 0)} staff in ${f0(dc)} departments at each line's average pay.</span><button class="btn sm" type="button" data-goto="data">Load your employee file</button>`;
+  }
+}
+function updatePendingBar(){
+  const bar = $("#pendingBar"); if (!bar) return;
+  const pending = W && W.res && W.res.emps.length && tab !== "data";
+  bar.hidden = !pending;
+  if (pending) bar.innerHTML = `<span><b>${esc(W.fileName)} is checked but not imported yet.</b> The figures still use the previous data.</span><button class="btn sm primary" type="button" id="btnFinishImport">Finish the import</button>`;
+}
+document.addEventListener("click", e => { if (e.target.id === "btnFinishImport"){ switchTab("data"); setTimeout(() => { const b = $("#wImport"); if (b){ b.scrollIntoView({block: "center"}); b.focus(); } }, 0); } });
 function updateHeader(){
+  renderSrcBar();
   $("#hdrEyebrow").textContent = `${S.org ? S.org + " · " : ""}Manpower plan · FY${S.fy} · OMR${rosterOn() ? ` · ${f0(ROS.emps.length)} employees on file` : ""}`;
 }
 function recalc(render = true){ R = compute(S); updateHeader(); if (render && (tab === "overview" || tab === "budget")) renderTab(); }
@@ -2351,6 +2411,7 @@ ROS = lsGet(LS_ROS);
 if (ROS && !Array.isArray(ROS.emps)) ROS = null;
 if (!ROS && S.sample) ROS = sampleRoster(S);
 rosVer++;
+if (repairData()){ BE.queued.plan = true; BE.queued.roster = true; }
 R = compute(S);
 resetWizard();
 try { const t = localStorage.getItem(LS_KEY + ":tab"); if (t && document.getElementById("v-" + t)) tab = t; } catch {}
