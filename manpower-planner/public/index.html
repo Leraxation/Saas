@@ -124,6 +124,13 @@ button.icon:hover{color:var(--bad);background:var(--bad-soft)}
 .dropzone{border:2px dashed var(--line-2);border-radius:var(--r);padding:22px;text-align:center;color:var(--fg-2);background:var(--surface-2)}
 .dropzone.over{border-color:var(--accent);background:var(--accent-soft)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.pick{position:relative;display:inline-flex;overflow:hidden;border-radius:6px;vertical-align:middle}
+.pick .btn{min-height:44px;padding-inline:18px;pointer-events:none}
+.pick input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:100px;margin:0}
+.pick:focus-within .btn{outline:2px solid var(--accent);outline-offset:2px}
+.pick:hover .btn{border-color:var(--fg-3)}
+.mobile-help{display:none}
+@media (pointer:coarse), (max-width:700px){.mobile-help{display:block}}
 .steps{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--fg-3);margin:0 0 12px;padding:0;list-style:none;counter-reset:st}
 .steps li{counter-increment:st;display:flex;gap:6px;align-items:center}
 .steps li::before{content:counter(st);display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--surface-2);font-weight:700;font-size:11px;color:var(--fg-2)}
@@ -388,8 +395,7 @@ body.form-mode #srcBar, body.form-mode #pendingBar{display:none!important}
       <div class="panel-head"><h2>Summary plan or backup</h2><p>Already-summarised headcount lines (.xlsx/.csv), or a planner backup (.json)</p></div>
       <div class="dropzone" id="drop">
         <p style="margin:0 0 10px">Drop a file here, or</p>
-        <button class="btn" type="button" data-pick="fileIn">Choose file</button>
-        <input id="fileIn" type="file" accept=".xlsx,.xls,.xlsm,.csv,.json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,application/json" class="sr" tabindex="-1">
+        <span class="pick"><span class="btn">Choose file</span><input id="fileIn" type="file" aria-label="Choose a summary plan or backup file"></span>
       </div>
       <div id="importPreview" style="margin-top:14px"></div>
       <p class="note" style="margin-top:12px;max-width:90ch">Columns recognised: Department, Position (or Grade), Nationality, Current HC, New hires, Start month, Exits, Last month, Basic, Allowances. Importing a summary plan with “Replace” removes any loaded employee file.</p>
@@ -1517,6 +1523,9 @@ function guessMap(headers){
   return {map, allow};
 }
 async function startWizard(file, preSheets){
+  if (!preSheets && !/\.(xlsx|xlsm|xls|csv|tsv|txt)$/i.test(file.name || "")){
+    resetWizard(); $("#wizMsg").innerHTML = `<div class="confirm" style="margin-top:12px">“${esc(file.name || "That file")}” is not an Excel or CSV file. Choose the .xlsx, .xls or .csv export of your employee list.</div>`; return;
+  }
   if (!preSheets && $("#wizMsg")) $("#wizMsg").innerHTML = `<p class="note" style="margin-top:12px">Reading ${esc(file.name)}…</p>`;
   try {
     const sheets = preSheets || await readSheets(file);
@@ -1667,8 +1676,11 @@ function resetWizard(msg){
   $("#wizBody").innerHTML = `
     <div class="dropzone" id="dropEmp">
       <p style="margin:0 0 10px">Drop your employee file here, or</p>
-      <button class="btn primary" type="button" data-pick="fileEmp">Choose file</button>
-      <input id="fileEmp" type="file" accept=".xlsx,.xls,.xlsm,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/vnd.ms-excel.sheet.macroEnabled.12,text/csv" class="sr" tabindex="-1">
+      <span class="pick"><span class="btn primary">Choose file</span><input id="fileEmp" type="file" aria-label="Choose your employee file"></span>
+      <div class="mobile-help note" style="margin-top:12px;text-align:left;max-width:60ch;margin-inline:auto">
+        <b>On a phone:</b> tap <b>Choose file</b> and pick the file from Files, Drive or OneDrive. An attachment in an email has to be saved to Files first.
+        If nothing opens inside the Claude app, open this page in Safari or Chrome instead, or attach the file in your chat with Claude and ask for it to be loaded into your planner.
+      </div>
       <p class="note" style="margin-top:12px">Any column layout works: you match the columns in the next step. Typical columns are Employee ID, Name, Department, Section, Job title, Grade, Nationality, Gender, Date of birth, Joining date, Contract end, Basic, and each allowance.</p>
     </div>
     <div id="wizMsg">${msg ? `<div class="callout" style="margin-top:12px">${esc(msg)}</div>` : ""}</div>
@@ -1676,7 +1688,7 @@ function resetWizard(msg){
     <details style="margin-top:10px">
       <summary style="cursor:pointer;font-weight:600;font-size:13px">Can't upload the file? Paste from Excel instead</summary>
       <div class="stack" style="gap:8px;margin-top:8px">
-        <p class="note">In Excel, click any cell in the employee sheet, press <b>Ctrl+A</b> then <b>Ctrl+C</b>. Click in the box below and press <b>Ctrl+V</b>. Include the header row.</p>
+        <p class="note">In Excel, click any cell in the employee sheet, press <b>Ctrl+A</b> then <b>Ctrl+C</b>. Click in the box below and press <b>Ctrl+V</b>. Include the header row. On a phone: in the Excel app, select the columns, tap Copy, then press and hold in the box below and tap Paste.</p>
         <label class="sr" for="pasteEmp">Pasted employee data</label>
         <textarea id="pasteEmp" rows="5" spellcheck="false" placeholder="Paste the employee sheet here (header row first)"></textarea>
         <div class="toolbar"><button class="btn" type="button" id="btnPasteEmp">Use pasted data</button></div>
@@ -1687,7 +1699,8 @@ function resetWizard(msg){
       <button class="btn danger" id="btnDropRoster" type="button" hidden>Remove employee file</button>
     </div>
     <p class="note" id="rosterInfo" style="margin-top:10px"></p>`;
-  $("#fileEmp").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if (f) startWizard(f); e.target.value = ""; });
+  const onEmp = e => { const f = e.target.files && e.target.files[0]; if (f){ e.target.value = ""; startWizard(f); } };
+  $("#fileEmp").addEventListener("change", onEmp); $("#fileEmp").addEventListener("input", onEmp);
   $("#btnPasteEmp").addEventListener("click", () => {
     const t = $("#pasteEmp").value;
     if (!t.trim()){ $("#wizMsg").innerHTML = `<div class="confirm" style="margin-top:12px">Paste the employee sheet into the box first.</div>`; return; }
@@ -1819,6 +1832,7 @@ function applyImport(replace){
 $("#importPreview").addEventListener("click", e => { if (e.target.id === "impReplace") applyImport(true); if (e.target.id === "impAppend") applyImport(false); if (e.target.id === "impCancel"){ pending = null; $("#importPreview").innerHTML = ""; } });
 async function handleFile(file){
   const box = $("#importPreview");
+  if (!/\.(xlsx|xlsm|xls|csv|tsv|txt|json)$/i.test(file.name || "")){ box.innerHTML = `<div class="confirm">“${esc(file.name || "That file")}” is not an Excel, CSV or backup (.json) file.</div>`; return; }
   try {
     if (file.name.toLowerCase().endsWith(".json")){
       const data = JSON.parse(await file.text());
@@ -1835,7 +1849,8 @@ async function handleFile(file){
     showPreview(buildImport(rows));
   } catch (err) { box.innerHTML = `<div class="confirm">${esc(err.message || "That file could not be read.")}</div>`; }
 }
-$("#fileIn").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if (f) handleFile(f); e.target.value = ""; });
+const onSummary = e => { const f = e.target.files && e.target.files[0]; if (f){ e.target.value = ""; handleFile(f); } };
+$("#fileIn").addEventListener("change", onSummary); $("#fileIn").addEventListener("input", onSummary);
 bindDrop($("#drop"), handleFile);
 
 /* ---------- Export ---------- */
