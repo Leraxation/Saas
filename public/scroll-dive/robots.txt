@@ -1,0 +1,7 @@
+# This build carries placeholder fares, timings and contact details.
+# Indexing them under the Oman Air name would be misleading, so crawling is
+# blocked. Before launch: replace the placeholder content, delete the
+# "noindex" meta in src/partials/shell.html, and swap the rule below for
+# "Allow: /".
+User-agent: *
+Disallow: /
