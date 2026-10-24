@@ -56,22 +56,43 @@ export async function POST(request: NextRequest) {
 
     const client = new Anthropic();
 
-    const response = await client.messages.create({
+    const params = {
       model: "claude-opus-4-8",
       max_tokens: 4096,
       system: [
-        { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
-        { type: "text", text: `Current Outlook data:\n${JSON.stringify(context)}` },
+        { type: "text" as const, text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" as const } },
+        { type: "text" as const, text: `Current Outlook data:\n${JSON.stringify(context)}` },
       ],
       messages: messages.slice(-12).map((m) => ({
         role: m.role,
         content: m.content,
       })),
-    });
+    };
+
+    // Optional Everygen integration: when EVERYGEN_MCP_URL is set, Claude can call
+    // that remote MCP server's tools through Anthropic's MCP connector.
+    const mcpUrl = process.env.EVERYGEN_MCP_URL;
+    const response = mcpUrl
+      ? await client.beta.messages.create({
+          ...params,
+          betas: ["mcp-client-2025-11-20"],
+          mcp_servers: [
+            {
+              type: "url",
+              url: mcpUrl,
+              name: "everygen",
+              ...(process.env.EVERYGEN_MCP_TOKEN
+                ? { authorization_token: process.env.EVERYGEN_MCP_TOKEN }
+                : {}),
+            },
+          ],
+          tools: [{ type: "mcp_toolset", mcp_server_name: "everygen" }],
+        })
+      : await client.messages.create(params);
 
     const text = response.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map((block) => block.text)
+      .filter((block) => block.type === "text")
+      .map((block) => (block as { text: string }).text)
       .join("");
 
     return NextResponse.json({ reply: text });
