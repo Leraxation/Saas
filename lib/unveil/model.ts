@@ -103,6 +103,19 @@ function dressMaterial(m: THREE.MeshStandardMaterial) {
   m.userData.envScale = m.envMapIntensity || 1;
 }
 
+function decodeDataUri(uri: string): ArrayBuffer {
+  const comma = uri.indexOf(",");
+  const meta = uri.slice(0, comma);
+  const payload = uri.slice(comma + 1);
+  if (!/;base64$/i.test(meta)) {
+    return new TextEncoder().encode(decodeURIComponent(payload)).buffer;
+  }
+  const bin = atob(payload);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
 export async function loadCarModel(url: string): Promise<CarParts> {
   // Loaders are imported on demand: dead weight until a model is configured.
   const [{ GLTFLoader }, { MeshoptDecoder }] = await Promise.all([
@@ -111,7 +124,9 @@ export async function loadCarModel(url: string): Promise<CarParts> {
   ]);
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
-  const gltf = await loader.loadAsync(url);
+  // An inlined model (data: URI) is decoded here and parsed from memory: a
+  // sandboxed host may refuse fetch() even for data: URLs.
+  const gltf = url.startsWith("data:") ? await loader.parseAsync(decodeDataUri(url), "") : await loader.loadAsync(url);
   const src = gltf.scene;
   src.rotation.y = MODEL_MANIFEST.rotationY;
   src.updateMatrixWorld(true);

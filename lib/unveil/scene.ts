@@ -117,6 +117,8 @@ export class UnveilScene {
   readonly ready: Promise<void>;
   /** The production model: loading, on stage, or failed (nothing is shown in its place). */
   modelStatus: "loading" | "ready" | "failed" | "none" = "loading";
+  /** Why the model failed, for the notice on the page. */
+  modelError = "";
   onFrame?: (scene: UnveilScene) => void;
 
   constructor(canvas: HTMLCanvasElement, opts: SceneOptions = {}) {
@@ -231,6 +233,7 @@ export class UnveilScene {
       // No stand-in: an empty stage and a notice beat a car that is not the car.
       console.error("[unveil] car model failed to load:", err);
       this.modelStatus = "failed";
+      this.modelError = err instanceof Error ? err.message : String(err);
     }
   }
 

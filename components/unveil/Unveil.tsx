@@ -23,6 +23,7 @@ export default function Unveil() {
   const counterRef = useRef<HTMLSpanElement>(null);
   const titleRef = useRef<HTMLSpanElement>(null);
   const railRef = useRef<HTMLSpanElement>(null);
+  const modelErrorRef = useRef<HTMLSpanElement>(null);
   const [webgl, setWebgl] = useState<"pending" | "ok" | "missing">("pending");
 
   useEffect(() => {
@@ -56,6 +57,7 @@ export default function Unveil() {
         if (disposed) return;
         pin.dataset.model = scene.modelStatus;
         if (scene.modelStatus !== "failed") canvas.dataset.ready = "true";
+        else if (modelErrorRef.current) modelErrorRef.current.textContent = scene.modelError;
       });
 
       const ro = new ResizeObserver(([entry]) => {
@@ -153,6 +155,7 @@ export default function Unveil() {
         </div>
         <div className="u-model u-model--failed" role="alert">
           <span>The 3D model could not be loaded. Reload the page to try again.</span>
+          <span className="u-model__err" ref={modelErrorRef} />
         </div>
 
         {/* Chrome */}
