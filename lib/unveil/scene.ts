@@ -196,12 +196,14 @@ export class UnveilScene {
     this.ring.position.y = 0.004;
     this.scene.add(this.ring);
 
-    // Car and cover. The procedural car is built synchronously so the first
-    // frame is never empty; a glTF, when configured, swaps in once loaded.
+    // Car and cover. The procedural car is built synchronously and kept as
+    // the fallback; when a glTF is configured the stage waits for it (the
+    // canvas fades in on `ready`) so the viewer never sees a swap.
     this.car = buildCar();
-    this.scene.add(this.car.root);
     this.cover = buildCover(this.car.root);
-    this.scene.add(this.cover.mesh);
+    if (!CAR_MODEL_URL) {
+      this.scene.add(this.car.root, this.cover.mesh);
+    }
 
     this.ready = this.maybeLoadModel();
 
@@ -213,16 +215,15 @@ export class UnveilScene {
     try {
       const loaded = await loadCarModel(CAR_MODEL_URL);
       if (this.disposed) return;
-      this.scene.remove(this.car.root);
-      this.scene.remove(this.cover.mesh);
       this.cover.dispose();
       this.car = loaded;
-      this.scene.add(this.car.root);
       this.cover = buildCover(this.car.root);
-      this.scene.add(this.cover.mesh);
+      this.scene.add(this.car.root, this.cover.mesh);
       this.apply();
     } catch (err) {
-      console.warn("[unveil] glTF car failed to load, keeping the procedural model:", err);
+      console.warn("[unveil] car model failed to load, showing the procedural car:", err);
+      if (this.disposed) return;
+      this.scene.add(this.car.root, this.cover.mesh);
     }
   }
 
@@ -276,7 +277,7 @@ export class UnveilScene {
     car.battery.position.y = 0.27 - 0.2 * e;
     // Stage motion: the car rolls and turns as one; wheels turn by the
     // distance rolled, and the front pair steer.
-    const wheelR = car.wheelRest[0].y;
+    const wheelR = car.wheelRest[0]?.y ?? 0.36;
     car.root.rotation.y = p.yaw;
     car.root.position.z = p.roll;
     this.ring.position.z = p.roll;

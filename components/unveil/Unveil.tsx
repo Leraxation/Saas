@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ASSET_NOTES, CALLOUTS, CHAPTER_COPY, MARQUE, SPECS } from "@/lib/unveil/content";
+import { ASSET_NOTES, CALLOUTS, CHAPTER_COPY, MARQUE, PHOTOS, SPECS } from "@/lib/unveil/content";
 import { CHAPTERS } from "@/lib/unveil/timeline";
 
 /**
@@ -51,6 +51,9 @@ export default function Unveil() {
         return;
       }
       setWebgl("ok");
+      scene.ready.then(() => {
+        if (!disposed) canvas.dataset.ready = "true";
+      });
 
       const ro = new ResizeObserver(([entry]) => {
         const { width, height } = entry.contentRect;
@@ -272,11 +275,11 @@ export default function Unveil() {
         <div className="u-after__head">
           <p className="u-kicker">Specification</p>
           <h2 className="u-h2">
-            {MARQUE.model} <span className="u-h2__thin">— concept targets</span>
+            {MARQUE.model} <span className="u-h2__thin">— factory figures</span>
           </h2>
           <p className="u-note">
-            Every figure below is a design target for a car that does not exist. Treat the numbers as the brief, not the
-            homologation sheet.
+            Manufacturer figures for the 458 Italia as launched. The car on the floor is a {MARQUE.year} coupé in Rosso
+            Corsa; confirm its own service history and options at the viewing.
           </p>
         </div>
         <dl className="u-specs">
@@ -292,12 +295,39 @@ export default function Unveil() {
         </dl>
 
         <div className="u-after__head">
+          <p className="u-kicker">The car itself</p>
+          <h2 className="u-h2">
+            As photographed, <span className="u-h2__thin">and in the showroom</span>
+          </h2>
+          <p className="u-note">
+            The owner&rsquo;s photograph, and the same car composited into an indoor showroom by an AI image edit. The 3D car
+            above is a model of the same 458 Italia, re-painted to match.
+          </p>
+        </div>
+        <div className="u-photos">
+          {PHOTOS.map((ph) => (
+            <figure key={ph.src} className="u-photo">
+              <img
+                src={ph.src}
+                alt={ph.alt}
+                loading="lazy"
+                onError={(e) => {
+                  const fig = e.currentTarget.closest("figure");
+                  if (fig) fig.hidden = true;
+                }}
+              />
+              <figcaption>{ph.caption}</figcaption>
+            </figure>
+          ))}
+        </div>
+
+        <div className="u-after__head">
           <p className="u-kicker">What you just watched</p>
           <h2 className="u-h2">
             Procedural, <span className="u-h2__thin">and what would replace it</span>
           </h2>
           <p className="u-note">
-            Nothing on this page was loaded from a model library. That is a ceiling as much as a feature: the table says
+            The car is a real model; the silk, the studio and the lights are built from numbers at load time. The table says
             what each element is today and the external asset that would take it the rest of the way.
           </p>
         </div>
@@ -318,7 +348,7 @@ export default function Unveil() {
 
         <footer className="u-footer">
           <span className="u-wordmark__name">{MARQUE.wordmark}</span>
-          <span>Vespera is a fictional car. The silk is a shader.</span>
+          <span>Nocturne Automobili is a fictional showroom. 458 Italia model by vicent091036 via Sketchfab and the three.js examples. The silk is a shader.</span>
         </footer>
       </section>
     </div>

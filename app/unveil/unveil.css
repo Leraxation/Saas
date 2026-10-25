@@ -57,6 +57,11 @@
   width: 100%;
   height: 100%;
   display: block;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+.u-canvas[data-ready="true"] {
+  opacity: 1;
 }
 
 .u-vignette {
@@ -565,6 +570,39 @@
   font-family: var(--mono);
   font-size: 0.64rem;
   letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bone-3);
+}
+
+/* ── Photographs ────────────────────────────────────────────────────────── */
+
+.u-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1rem;
+  max-width: 60rem;
+  margin: 0 auto clamp(4rem, 10vh, 7rem);
+}
+.u-photo {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.u-photo img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border: 1px solid var(--hair);
+  background: var(--ink-2);
+}
+.u-photo figcaption {
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--bone-3);
 }

@@ -1,6 +1,6 @@
-# Nocturne Vespera — The Unveiling
+# Nocturne · 458 Italia — The Unveiling
 
-A scroll-controlled, pinned 3D sequence: a grand tourer under a silk cover,
+A scroll-controlled, pinned 3D sequence: a Ferrari 458 Italia under a silk cover,
 the cover pulled away as you scroll, the car taken apart into its three
 assemblies and put back together, all in one continuous camera move. Scroll
 back and every frame runs in reverse.
@@ -18,7 +18,7 @@ hand-off list for a production build.
 
 | Element | Today | External asset that replaces it | Where it plugs in |
 |---|---|---|---|
-| **The car** | Procedural. A lofted superellipse body with keyframed width/height/roundness, a tapered glass canopy, wheel wells carved analytically, lamps laid flush on the surface. A design-studio clay, not a production car. | A licensed **glTF/GLB** of the real vehicle: ≤ 250k triangles, PBR materials, wheels/glass/lamps as *named* nodes. Sketchfab and TurboSquid sell CC-BY / royalty-free models suitable for web; check the licence allows commercial web use. | `lib/unveil/model.ts` → set `CAR_MODEL_URL = "/unveil/car.glb"`, tune `MODEL_MANIFEST` name patterns. The procedural car is always built first; the glTF swaps in when loaded. |
+| **The car** | `public/unveil/car.glb`: the Ferrari 458 Italia by [vicent091036](https://sketchfab.com/models/57bf6cc56931426e87494f554df1dab6) that ships with the three.js examples, Draco-decoded and recompressed with meshopt (13 MB → 2.2 MB). Paint, glass and lamps are re-materialled; wheels are regrouped about their hubs so they roll and steer. **Check the model's licence on Sketchfab before commercial use.** | A scan or OEM-grade model of the owner's exact car. The procedural Vespera (`lib/unveil/car.ts`) remains as the fallback when the file fails to load, or when `CAR_MODEL_URL` is null. | `lib/unveil/model.ts` → `CAR_MODEL_URL`, `MODEL_MANIFEST` |
 | **The cover** | Procedural drape. A height field is rasterised from the car's triangles, relaxed into a taut tent (chamfer distance transform), blurred, wrinkled, and then displaced on the GPU by a closed-form sweep: a hem travels nose → tail, the uncovered fabric folds back, rises into an arc and flutters. Per-vertex normals are rebuilt by finite differences so the fabric lights correctly mid-pull. **It is not a cloth simulation**: nothing collides, nothing has mass, the fabric never catches on a mirror. | A **baked cloth simulation** (Blender cloth, Houdini Vellum, Marvelous Designer) exported as glTF with per-frame morph targets, or an alembic cache (`.abc`, via `three/examples/jsm/loaders` + a morph pipeline). Scrub the bake with the same `pull` scalar. | `lib/unveil/cover.ts` (shader), `lib/unveil/heightfield.ts` (rest shape). Replace `buildCover` with a loader that maps `pull` → morph influence / frame index. |
 | **The studio** | Three.js `RoomEnvironment` through PMREM for reflections; a canvas-drawn floor texture; four lights (top spot, warm key, cold rim spot, hemisphere fill) and a floor ring, all driven by the timeline. | A real **studio HDRI** (Poly Haven, CC0, 2k is plenty) for `scene.environment`; a 4k floor **normal + roughness** set. | `lib/unveil/scene.ts` → the `PMREMGenerator` block and `makeFloorTexture`. |
 | **Sound** | None. | A fabric-slide bed and a two-note sting, started on first interaction, scrubbed with the timeline. | `components/unveil/Unveil.tsx` effect. |
@@ -71,18 +71,19 @@ on its own. The sequence itself still scrubs; it is user-driven motion.
 
 ---
 
-## Dropping in a real car model
+## Swapping the car model
 
-1. Put the file at `public/unveil/car.glb` (Draco-compressed is fine; the
-   decoder loads from Google's CDN).
-2. In `lib/unveil/model.ts` set `CAR_MODEL_URL = "/unveil/car.glb"`.
-3. Make sure node names let `MODEL_MANIFEST` find the parts: wheels
-   (`wheel|tire|tyre|rim`), skateboard (`chassis|floor|underbody|battery`),
-   canopy (`glass|window|windshield|canopy`), lamps (`headlight|headlamp`,
-   `taillight|taillamp`). Unmatched nodes stay with the body.
-4. The model is scaled to 4.7 m long and set on the floor automatically; if
-   the file's nose points down −Z rather than +Z, set `rotationY: Math.PI`.
-5. The cover re-rasterises itself from the loaded triangles. Nothing else
+1. Put the file at `public/unveil/car.glb`. Use meshopt compression
+   (`gltf-transform optimize in.glb out.glb --compress meshopt`): the decoder
+   is bundled with three, so nothing is fetched from a CDN. Draco also works
+   in the Next route but not in the published preview, whose sandbox blocks
+   the decoder download.
+2. Make sure node and material names let `MODEL_MANIFEST` find the parts:
+   wheel groups (`wheel_fl` … or `tire|rim_*`), chassis
+   (`chassis|underbody|battery`), glasshouse (`glass`), lamp materials
+   (`projector|headlight`, `taillight`). Unmatched nodes stay with the body.
+3. Set `fitLength` to the real length and `rotationY` so the nose points +Z.
+4. The cover re-rasterises itself from the loaded triangles. Nothing else
    changes.
 
 ## Files
