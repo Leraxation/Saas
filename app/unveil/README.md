@@ -62,7 +62,7 @@ on its own. The sequence itself still scrubs; it is user-driven motion.
 
 - Renders only while the pinned stage is on screen (IntersectionObserver +
   `visibilitychange`).
-- Device pixel ratio capped at 1.75.
+- Device pixel ratio capped at 2; 2048² shadow maps on the key and top lights.
 - Height-field rasterisation is CPU, O(triangles), a few ms for the
   procedural car; the drape relaxation is two chamfer passes on a 144 × 256
   grid.
@@ -77,7 +77,10 @@ on its own. The sequence itself still scrubs; it is user-driven motion.
    (`gltf-transform optimize in.glb out.glb --compress meshopt`): the decoder
    is bundled with three, so nothing is fetched from a CDN. Draco also works
    in the Next route but not in the published preview, whose sandbox blocks
-   the decoder download.
+   the decoder download. The preview itself is built from a decoder-free
+   copy (`gltf-transform weld` + `quantize`, ~9 MB) inlined as a data: URI
+   through `window.__UNVEIL_CAR_URL`, since that sandbox cannot serve .glb
+   files or, reliably, WebAssembly.
 2. Make sure node and material names let `MODEL_MANIFEST` find the parts:
    wheel groups (`wheel_fl` … or `tire|rim_*`), chassis
    (`chassis|underbody|battery`), glasshouse (`glass`), lamp materials

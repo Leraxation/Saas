@@ -84,6 +84,45 @@
   font-size: 0.95rem;
 }
 
+/* Model status: shown while the car loads, or if it never arrives. */
+.u-model {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--bone-2);
+  text-align: center;
+  z-index: 3;
+  pointer-events: none;
+}
+.u-pin[data-model="loading"] .u-model--loading,
+.u-pin[data-model="failed"] .u-model--failed {
+  display: flex;
+}
+.u-model__bar {
+  display: block;
+  width: 7rem;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--copper-hi), transparent);
+  animation: u-model-sweep 1.6s ease-in-out infinite;
+}
+@keyframes u-model-sweep {
+  0% { transform: scaleX(0.2); opacity: 0.3; }
+  50% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(0.2); opacity: 0.3; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .u-model__bar { animation: none; }
+}
+
 /* ── Chrome ─────────────────────────────────────────────────────────────── */
 
 .u-chrome {

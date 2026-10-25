@@ -51,8 +51,11 @@ export default function Unveil() {
         return;
       }
       setWebgl("ok");
+      pin.dataset.model = "loading";
       scene.ready.then(() => {
-        if (!disposed) canvas.dataset.ready = "true";
+        if (disposed) return;
+        pin.dataset.model = scene.modelStatus;
+        if (scene.modelStatus !== "failed") canvas.dataset.ready = "true";
       });
 
       const ro = new ResizeObserver(([entry]) => {
@@ -144,6 +147,13 @@ export default function Unveil() {
             <p>This stage needs WebGL. The copy below still reads; the car does not.</p>
           </div>
         )}
+        <div className="u-model u-model--loading" role="status">
+          <span className="u-model__bar" aria-hidden="true" />
+          <span>Loading the 458 Italia</span>
+        </div>
+        <div className="u-model u-model--failed" role="alert">
+          <span>The 3D model could not be loaded. Reload the page to try again.</span>
+        </div>
 
         {/* Chrome */}
         <header className="u-chrome u-chrome--top">

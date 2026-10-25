@@ -115,12 +115,14 @@ export class UnveilScene {
   private readonly warm = new THREE.Color("#ffe9cf");
   private readonly cold = new THREE.Color("#bcd7ff");
   readonly ready: Promise<void>;
+  /** The production model: loading, on stage, or failed (nothing is shown in its place). */
+  modelStatus: "loading" | "ready" | "failed" | "none" = "loading";
   onFrame?: (scene: UnveilScene) => void;
 
   constructor(canvas: HTMLCanvasElement, opts: SceneOptions = {}) {
     this.canvas = canvas;
     this.reduced = !!opts.reducedMotion;
-    const maxDpr = opts.maxDpr ?? 1.75;
+    const maxDpr = opts.maxDpr ?? 2;
 
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxDpr));
@@ -146,7 +148,7 @@ export class UnveilScene {
     this.top = new THREE.SpotLight(0xfff3e2, 45, 18, 0.36, 0.75, 1.5);
     this.top.position.set(0.3, 7.5, 0.6);
     this.top.castShadow = true;
-    this.top.shadow.mapSize.set(1024, 1024);
+    this.top.shadow.mapSize.set(2048, 2048);
     this.top.shadow.bias = -0.0005;
     this.top.shadow.radius = 4;
     this.scene.add(this.top, this.top.target);
@@ -212,7 +214,10 @@ export class UnveilScene {
 
   private async maybeLoadModel() {
     const url = resolveCarModelUrl();
-    if (!url) return;
+    if (!url) {
+      this.modelStatus = "none";
+      return;
+    }
     try {
       const loaded = await loadCarModel(url);
       if (this.disposed) return;
@@ -220,11 +225,12 @@ export class UnveilScene {
       this.car = loaded;
       this.cover = buildCover(this.car.root);
       this.scene.add(this.car.root, this.cover.mesh);
+      this.modelStatus = "ready";
       this.apply();
     } catch (err) {
-      console.warn("[unveil] car model failed to load, showing the procedural car:", err);
-      if (this.disposed) return;
-      this.scene.add(this.car.root, this.cover.mesh);
+      // No stand-in: an empty stage and a notice beat a car that is not the car.
+      console.error("[unveil] car model failed to load:", err);
+      this.modelStatus = "failed";
     }
   }
 
