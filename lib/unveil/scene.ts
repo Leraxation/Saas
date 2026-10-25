@@ -45,6 +45,12 @@ export type SceneParams = {
   fov: number;
   /** Key light warmth, 0 = cold cyan rim-heavy, 1 = warm studio. */
   warmth: number;
+  /** Car motion on the stage: metres rolled forward (wheels turn to match). */
+  roll: number;
+  /** Turntable yaw of the whole car, radians. */
+  yaw: number;
+  /** Front-wheel steering angle, radians. */
+  steer: number;
 };
 
 export const INITIAL_PARAMS: SceneParams = {
@@ -70,6 +76,9 @@ export const INITIAL_PARAMS: SceneParams = {
   tz: 0.1,
   fov: 34,
   warmth: 0.6,
+  roll: 0,
+  yaw: 0,
+  steer: 0,
 };
 
 export type Anchor = { x: number; y: number; visible: boolean; depth: number };
@@ -265,11 +274,19 @@ export class UnveilScene {
     car.canopy.position.y = 0.3 * e;
     car.skateboard.position.y = -0.3 * e;
     car.battery.position.y = 0.27 - 0.2 * e;
+    // Stage motion: the car rolls and turns as one; wheels turn by the
+    // distance rolled, and the front pair steer.
+    const wheelR = car.wheelRest[0].y;
+    car.root.rotation.y = p.yaw;
+    car.root.position.z = p.roll;
+    this.ring.position.z = p.roll;
     car.wheels.forEach((w, i) => {
       const rest = car.wheelRest[i];
       const side = rest.x < 0 ? -1 : 1;
       w.position.set(rest.x + side * 1.05 * e, rest.y + 0.08 * e, rest.z);
-      w.rotation.x = e * 1.6;
+      w.rotation.order = "YXZ";
+      w.rotation.y = i < 2 ? p.steer : 0;
+      w.rotation.x = p.roll / wheelR + e * 1.6;
     });
 
     car.headlamp.emissiveIntensity = p.headlamp;
@@ -296,8 +313,9 @@ export class UnveilScene {
     // still fits the narrow frame.
     const aspect = this.camera.aspect;
     const rad = p.rad * (aspect < 1.25 ? Math.pow(1.25 / aspect, 0.8) : 1);
-    this.camera.position.set(p.tx + Math.sin(ang) * rad, h, p.tz + Math.cos(ang) * rad);
-    this.camera.lookAt(p.tx, p.ty, p.tz);
+    const tz = p.tz + p.roll;
+    this.camera.position.set(p.tx + Math.sin(ang) * rad, h, tz + Math.cos(ang) * rad);
+    this.camera.lookAt(p.tx, p.ty, tz);
     if (this.camera.fov !== p.fov) {
       this.camera.fov = p.fov;
       this.camera.updateProjectionMatrix();

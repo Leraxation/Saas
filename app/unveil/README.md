@@ -29,7 +29,7 @@ hand-off list for a production build.
 ## How the sequence is built
 
 One GSAP timeline, ten beats long, scrubbed by one `ScrollTrigger` that pins
-the stage for 7.5 viewport heights (`SCROLL_LENGTH` in `lib/unveil/timeline.ts`).
+the stage for 9 viewport heights (`SCROLL_LENGTH` in `lib/unveil/timeline.ts`).
 
 Every number the scene reads lives in one object, `SceneParams`
 (`lib/unveil/scene.ts`): cover pull, lift and opacity; exploded-view amount;
@@ -43,10 +43,10 @@ function of scroll position and reverses exactly.
 |---|---|---|
 | 0.0 – 0.8 | 0 – 8 % | Hold under a single top light. Camera creeps in. |
 | 0.8 – 3.6 | 8 – 36 % | The pull. Key, rim, fill and the floor ring wake as the fabric travels; lamps strike at 27 %; the cover lifts clear and fades. Camera drops from a high frontal to a low raking three-quarter. |
-| 3.8 – 5.4 | 38 – 54 % | Orbit around the tail. Rim light dominates. |
+| 3.8 – 5.4 | 38 – 54 % | The car rolls forward and turns on the stage, wheels turning by the distance covered, while the camera swings around the tail. Rim light dominates. |
 | 5.4 – 7.4 | 54 – 74 % | Anatomy. Body lifts, canopy a little further, skateboard drops, wheels roll outward and spin. Cells glow. Callouts draw out from their parts (anchored every frame by projecting 3D points). |
 | 7.4 – 9.0 | 74 – 90 % | Assembly. Everything returns; camera descends to a low front three-quarter; light warms. |
-| 9.0 – 10 | 90 – 100 % | Finale: dead-on low front, headlamps up, wordmark and invitation. |
+| 9.0 – 10 | 90 – 100 % | Finale: the car rolls toward the lens, front wheels steer and square up, headlamps up, wordmark and invitation. |
 
 Type is scrubbed too: lines are unmasked with `clip-path` wipes and the
 display words tighten their tracking as they land. Nothing fades in on a

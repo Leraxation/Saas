@@ -19,7 +19,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 export const TOTAL = 10;
 /** How far the user scrolls while the stage is pinned, in viewport heights. */
-export const SCROLL_LENGTH = 7.5;
+export const SCROLL_LENGTH = 9;
 
 export const CHAPTERS = [
   { id: "cover", at: 0.0, index: "01", title: "Under cover" },
@@ -88,11 +88,16 @@ export function buildTimeline(p: SceneParams, dom: TimelineDom, opts: { reducedM
   tl.to(p, { ang: 1.12, rad: 5.2, h: 0.78, fov: 38, ty: 0.5, duration: 1.4, ease: "sine.inOut" }, 2.4);
 
   /* ── Beat 3.8–5.4 · Orbit ─────────────────────────────────────────────── */
+  // The car rolls forward and turns on the stage while the camera swings
+  // around its tail; the wheels turn by the distance covered.
+  tl.to(p, { roll: 1.1, duration: 1.8, ease: "power1.inOut" }, 3.7);
+  tl.to(p, { yaw: -0.55, duration: 1.7, ease: "sine.inOut" }, 3.8);
   tl.to(p, { ang: 3.85, rad: 6.0, h: 1.25, duration: 1.6, ease: "power1.inOut" }, 3.8);
   tl.to(p, { key: 0.75, warmth: 0.45, duration: 1.2, ease: "sine.inOut" }, 4.0);
   tl.to(p, { rim: 1.7, duration: 1.0, ease: "sine.inOut" }, 4.2);
 
   /* ── Beat 5.4–7.4 · Anatomy ───────────────────────────────────────────── */
+  tl.to(p, { yaw: 0, duration: 1.4, ease: "sine.inOut" }, 5.4);
   tl.to(p, { explode: 1, duration: 1.5, ease: "power2.inOut" }, 5.6);
   tl.to(p, { cells: 1.6, duration: 0.6, ease: "sine.out" }, 6.2);
   tl.to(p, { ang: 5.6, rad: 7.7, h: 3.6, fov: 40, ty: 0.75, duration: 2.0, ease: "sine.inOut" }, 5.4);
@@ -105,6 +110,10 @@ export function buildTimeline(p: SceneParams, dom: TimelineDom, opts: { reducedM
   tl.to(p, { key: 1.25, warmth: 0.9, fill: 0.3, rim: 1.0, ring: 0.7, exposure: 1.05, duration: 1.4, ease: "sine.inOut" }, 7.6);
 
   /* ── Beat 9.0–10 · Finale ─────────────────────────────────────────────── */
+  // Once whole again the car rolls toward the lens and squares its wheels.
+  tl.to(p, { roll: 1.8, duration: 1.6, ease: "power2.out" }, 8.6);
+  tl.to(p, { steer: 0.28, duration: 0.7, ease: "sine.inOut" }, 8.8);
+  tl.to(p, { steer: 0, duration: 0.6, ease: "sine.inOut" }, 9.5);
   tl.to(p, { ang: 6.32, rad: 8.2, h: 0.8, fov: 28, ty: 0.15, duration: 1.0, ease: "sine.inOut" }, 9.0);
   tl.to(p, { headlamp: 4.5, duration: 0.5, ease: "sine.inOut" }, 9.3);
 
