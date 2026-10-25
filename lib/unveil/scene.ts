@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { buildCar, type CarParts } from "./car";
 import { buildCover, type Cover } from "./cover";
-import { CAR_MODEL_URL, loadCarModel } from "./model";
+import { loadCarModel, resolveCarModelUrl } from "./model";
 
 /**
  * One scene, one set of numbers.
@@ -201,7 +201,7 @@ export class UnveilScene {
     // canvas fades in on `ready`) so the viewer never sees a swap.
     this.car = buildCar();
     this.cover = buildCover(this.car.root);
-    if (!CAR_MODEL_URL) {
+    if (!resolveCarModelUrl()) {
       this.scene.add(this.car.root, this.cover.mesh);
     }
 
@@ -211,9 +211,10 @@ export class UnveilScene {
   }
 
   private async maybeLoadModel() {
-    if (!CAR_MODEL_URL) return;
+    const url = resolveCarModelUrl();
+    if (!url) return;
     try {
-      const loaded = await loadCarModel(CAR_MODEL_URL);
+      const loaded = await loadCarModel(url);
       if (this.disposed) return;
       this.cover.dispose();
       this.car = loaded;

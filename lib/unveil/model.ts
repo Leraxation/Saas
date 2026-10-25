@@ -16,6 +16,16 @@ import { CAR, type CarParts } from "./car";
 export const CAR_MODEL_URL: string | null = "unveil/car.glb";
 
 /**
+ * The URL actually loaded. A host that cannot serve .glb files (the published
+ * preview) inlines the model as a data: URI and sets this global before the
+ * bundle runs.
+ */
+export function resolveCarModelUrl(): string | null {
+  const override = (globalThis as { __UNVEIL_CAR_URL?: string }).__UNVEIL_CAR_URL;
+  return override ?? CAR_MODEL_URL;
+}
+
+/**
  * How the loaded scene graph is carved into the parts the sequence moves.
  * Patterns match case-insensitively against "<mesh name> <parent name>".
  */
