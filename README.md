@@ -30,6 +30,14 @@ A dual-deck DJ mixer for YouTube, at **`/mixer`**. Paste any YouTube link on eac
 
 Playback uses the official YouTube IFrame Player API — nothing is downloaded or re-hosted.
 
+## Bonus: Vespera Unveiling (`/unveil`)
+
+A cinematic, scroll-controlled 3D car reveal at **`/unveil`**: a grand tourer under a silk cover, the cover pulled away as you scroll, an exploded view of body, skateboard and wheels, then reassembly, all in one pinned continuous shot that runs in reverse when you scroll back. Built with Three.js and a single scrubbed GSAP timeline. The car and the cover are procedural (no model library, no cloth simulation); [`app/unveil/README.md`](app/unveil/README.md) lists the external assets that would replace them and where they plug in.
+
+```bash
+npm run build:unveil   # single-file build → public/unveil-standalone.html
+```
+
 ## Bonus: Manpower Budget Planner (`manpower-planner/`)
 
 A standalone manpower planning and budgeting tool with a request form for department heads. It runs on localhost with plain Node.js (no dependencies, no database). See [`manpower-planner/README.md`](manpower-planner/README.md).
