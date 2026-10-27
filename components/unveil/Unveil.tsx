@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ASSET_NOTES, CALLOUTS, CHAPTER_COPY, MARQUE, PHOTOS, SPECS } from "@/lib/unveil/content";
+import { ASSET_NOTES, CALLOUTS, CHAPTER_COPY, MARQUE, PHOTOS, SHOWROOM_PHOTO, SPECS } from "@/lib/unveil/content";
 import { CHAPTERS } from "@/lib/unveil/timeline";
 
 /**
@@ -13,6 +13,24 @@ import { CHAPTERS } from "@/lib/unveil/timeline";
  * ScrollTrigger that pins this section. The heavy modules are imported inside
  * the effect so they never land in the server bundle.
  */
+/**
+ * On a failed load, try the fallback URL once; if that fails too, hide the
+ * figure the image sits in (or the image itself).
+ */
+function swapToFallback(fallback?: string) {
+  return (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    if (fallback && img.dataset.fallback !== "done") {
+      img.dataset.fallback = "done";
+      img.src = fallback;
+      return;
+    }
+    const fig = img.closest("figure");
+    if (fig) fig.hidden = true;
+    else img.hidden = true;
+  };
+}
+
 export default function Unveil() {
   const rootRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLElement>(null);
@@ -24,6 +42,7 @@ export default function Unveil() {
   const titleRef = useRef<HTMLSpanElement>(null);
   const railRef = useRef<HTMLSpanElement>(null);
   const modelErrorRef = useRef<HTMLSpanElement>(null);
+  const finalePhotoRef = useRef<HTMLImageElement>(null);
   const [webgl, setWebgl] = useState<"pending" | "ok" | "missing">("pending");
 
   useEffect(() => {
@@ -76,6 +95,7 @@ export default function Unveil() {
           {
             trigger: pin,
             cue: cueRef.current,
+            finalePhoto: finalePhotoRef.current,
             chapters: {
               cover: chapters.cover,
               reveal: chapters.reveal,
@@ -142,6 +162,14 @@ export default function Unveil() {
     <div className="u-root" ref={rootRef}>
       <section className="u-pin" ref={pinRef} data-chapter="cover" aria-label="Scroll-driven unveiling of the Vespera">
         <canvas ref={canvasRef} className="u-canvas" aria-hidden="true" />
+        <img
+          ref={finalePhotoRef}
+          className="u-finale-photo"
+          src={SHOWROOM_PHOTO.src}
+          alt={SHOWROOM_PHOTO.alt}
+          decoding="async"
+          onError={swapToFallback(SHOWROOM_PHOTO.fallback)}
+        />
         <div className="u-vignette" aria-hidden="true" />
 
         {webgl === "missing" && (
@@ -320,15 +348,7 @@ export default function Unveil() {
         <div className="u-photos">
           {PHOTOS.map((ph) => (
             <figure key={ph.src} className="u-photo">
-              <img
-                src={ph.src}
-                alt={ph.alt}
-                loading="lazy"
-                onError={(e) => {
-                  const fig = e.currentTarget.closest("figure");
-                  if (fig) fig.hidden = true;
-                }}
-              />
+              <img src={ph.src} alt={ph.alt} loading="lazy" onError={swapToFallback(ph.fallback)} />
               <figcaption>{ph.caption}</figcaption>
             </figure>
           ))}

@@ -65,12 +65,24 @@ export const SPECS: Array<{ label: string; value: string; note?: string }> = [
   { label: "Produced", value: "2009–2015", note: "Maranello" },
 ];
 
-export type Photo = { src: string; alt: string; caption: string; remote?: boolean };
+export type Photo = { src: string; alt: string; caption: string; fallback?: string };
+
+/**
+ * The hero photograph: the owner's 458 composited into the showroom by an AI
+ * image edit (1600 px WebP). Served from the site; the image service's CDN
+ * copy is the fallback for a host that does not carry the file.
+ */
+export const SHOWROOM_PHOTO = {
+  src: "unveil/showroom/ferrari-458-showroom.webp",
+  fallback:
+    "https://d8j0ntlcm91z4.cloudfront.net/user_3FF4sUHGETln9sIK24fQ8Tj9Uky/hf_20261025_191910_29a9fb82-5fd5-4052-9734-b288b0acadd9.png",
+  alt: "Red Ferrari 458 Italia in a dark showroom with a polished reflective floor",
+};
 
 /**
  * The owner's photographs. The first is the original; the second is the
- * same car composited into a showroom by an AI image edit. The second lives
- * on the image service's CDN, so it is hidden wherever that host is blocked.
+ * same car composited into a showroom by an AI image edit. Both are served
+ * from public/unveil; a photo that fails to load hides its figure.
  */
 export const PHOTOS: Photo[] = [
   {
@@ -79,10 +91,10 @@ export const PHOTOS: Photo[] = [
     caption: "As photographed",
   },
   {
-    src: "https://d8j0ntlcm91z4.cloudfront.net/user_3FF4sUHGETln9sIK24fQ8Tj9Uky/hf_20261025_191910_29a9fb82-5fd5-4052-9734-b288b0acadd9.png",
+    src: SHOWROOM_PHOTO.src,
+    fallback: SHOWROOM_PHOTO.fallback,
     alt: "The same Ferrari 458 Italia composited into a dark indoor showroom",
     caption: "In the showroom (AI composite)",
-    remote: true,
   },
 ];
 

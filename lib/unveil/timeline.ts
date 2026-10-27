@@ -34,6 +34,8 @@ export type TimelineDom = {
   /** The section ScrollTrigger pins. */
   trigger: HTMLElement;
   cue: HTMLElement | null;
+  /** The showroom photograph the 3D view dissolves into at the end. */
+  finalePhoto?: HTMLElement | null;
   chapters: Partial<Record<ChapterId | "finale", HTMLElement | null>>;
   callouts: HTMLElement[];
   onUpdate?: (progress: number, chapter: number) => void;
@@ -162,6 +164,14 @@ export function buildTimeline(p: SceneParams, dom: TimelineDom, opts: { reducedM
   gsap.set(c3, { clipPath: HIDE_BELOW, y: 20 });
   tl.to(c3, { clipPath: SHOW, y: 0, duration: 0.5, stagger: 0.1, ease: "power3.out" }, 7.7);
   tl.to(c3, { clipPath: HIDE_ABOVE, y: -16, duration: 0.4, stagger: 0.05, ease: "power2.in" }, 8.85);
+
+  // Finale: the rendered car dissolves into the photograph of the real one,
+  // which settles from a slight push-in; then the headline and the invitation.
+  if (dom.finalePhoto) {
+    gsap.set(dom.finalePhoto, { opacity: 0, scale: 1.08 });
+    tl.to(dom.finalePhoto, { opacity: 1, duration: 0.6, ease: "sine.inOut" }, 9.1);
+    tl.to(dom.finalePhoto, { scale: 1, duration: 0.9, ease: "sine.out" }, 9.1);
+  }
 
   // Finale: headline and the invitation, held.
   const c4 = lines(ch.finale);

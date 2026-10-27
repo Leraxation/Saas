@@ -84,6 +84,24 @@
   font-size: 0.95rem;
 }
 
+/* The photograph the finale dissolves into. Sits over the canvas, under the
+   vignette and the type; the timeline drives its opacity and scale. */
+.u-finale-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 55%;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  will-change: opacity, transform;
+}
+.u-finale-photo[hidden] {
+  display: none !important;
+}
+
 /* Model status: shown while the car loads, or if it never arrives. */
 .u-model {
   position: absolute;
@@ -379,6 +397,9 @@
 }
 .u-chapter--finale .u-lede {
   text-align: center;
+}
+.u-chapter--finale [data-line] {
+  text-shadow: 0 2px 18px rgba(7, 7, 10, 0.75);
 }
 
 .u-cta {
