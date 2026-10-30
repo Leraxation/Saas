@@ -24,3 +24,8 @@ public/vision2040/*.jpg
 
 # Frame sequence is generated locally, never committed
 public/vision2040/frames/
+
+# Agent skill run artifacts (playwright-cli, taste-skill, img2threejs)
+.playwright-cli/
+.taste-skill/
+.img2threejs/
